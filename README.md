@@ -67,6 +67,23 @@ This repository supplies the workflow, empty board, role/context templates, offl
 
 Install optional TypeScript tooling with `npm ci`. `npm run check` checks types; `npm test` runs offline policy/helper checks with fake data and mocked HTTP. These commands neither log in to websites nor submit applications.
 
+## Verification
+
+The initial version 1.0.0 was checked on 23 October 2026:
+
+| Check | Recorded result |
+| --- | --- |
+| TypeScript checking | Passed |
+| Offline automated checks | 27 passed using synthetic data and mocked HTTP |
+| Relocation | Fresh dependency installation, TypeScript checking and all 27 checks passed after copying the package to another directory containing spaces |
+| Private-file exclusions | Ignore rules covered representative role values, CVs, live tickets, inbox progress, credentials and browser-session paths |
+
+The offline checks cover submission evidence, role/CV identity, blocker resumption, multi-vacancy alert completion, pagination, individual-message deletion, sanitized errors and all six unlearned website routines. These results describe the recorded initial checks; they are not a claim that every later revision was retested.
+
+After the documentation cleanup, all 77 remaining local links and anchors resolved. The private-file exclusions were also rechecked when restoring this summary. Application code and dependencies were unchanged by those documentation edits.
+
+**Not verified:** live inbox access or deletion, website login/navigation, actual job submissions and unattended scheduled execution. Website routines remain unlearned scaffolds. Offline checks establish package behavior under their fixtures, not successful operation on a job portal.
+
 ## Reuse and privacy
 
 Fork or use this repository as a template, then create a private working copy for real candidate information. The public edition contains blank `.md` templates. Supply actual values using ignored `*.local.md` counterparts, and put CVs in their profile's ignored Documents files. The agent reads a local counterpart instead of its blank template, never both as competing sources. See [setup](SETUP.md#private-working-information).
