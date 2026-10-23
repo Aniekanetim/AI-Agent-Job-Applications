@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "exampleOnly": true,
+  "note": "Schema illustration only. Create actual state in ignored .local/inbox-state.json; never treat this example as a live alert or task.",
+  "lastCompletedMessage": null,
+  "messages": [
+    {
+      "inboxId": "configured-inbox-id",
+      "messageId": "provider-message-id",
+      "enumerationComplete": false,
+      "parsedAt": null,
+      "cleanupState": "notReady",
+      "vacancies": [
+        {
+          "vacancyKey": "message-local-vacancy-key",
+          "jobUrl": "https://example.invalid/jobs/vacancy",
+          "taskId": null,
+          "taskPath": null,
+          "disposition": "pending",
+          "confirmationReference": null,
+          "applicationRecordSaved": false,
+          "nonapplicationReason": null,
+          "instructionReference": null
+        }
+      ]
+    }
+  ]
+}

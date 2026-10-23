@@ -1,0 +1,29 @@
+# Keep workflow templates public; local values and operational records private.
+**/*.local.md
+**/*.local.json
+.local/
+**/.auth/
+**/storage-state*.json
+**/storageState*.json
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules/
+output/
+**/*.log
+**/*.tsbuildinfo
+mental_model/
+
+# All live tickets are private; retain only status-directory placeholders.
+/Task Board/Email Alerts/*
+!/Task Board/Email Alerts/.gitkeep
+/Task Board/To Do/*
+!/Task Board/To Do/.gitkeep
+/Task Board/Blocked/*
+!/Task Board/Blocked/.gitkeep
+/Task Board/Applied/*
+!/Task Board/Applied/.gitkeep
+
+# Role document indexes are templates; actual documents must not be published.
+/Job Context/Candidate/Role Profiles/**/Documents/*
+!/Job Context/Candidate/Role Profiles/**/Documents/README.md

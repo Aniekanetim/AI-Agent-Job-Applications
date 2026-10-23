@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "types": ["node"],
+    "rootDir": ".",
+    "outDir": ".local/build",
+    "skipLibCheck": true,
+    "noEmitOnError": true
+  },
+  "include": ["automation/**/*.ts", "Site Architecture Context/**/*.ts"],
+  "exclude": ["node_modules", ".local", "output"]
+}
