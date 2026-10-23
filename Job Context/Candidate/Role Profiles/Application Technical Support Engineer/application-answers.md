@@ -1,6 +1,6 @@
 # Application Technical Support Engineer: application answers
 
-**State:** blank template. Supply application-answers.local.md with truthful answers and relevant conditions.
+**State:** blank template. [Onboarding](../../../../Application%20Workflow/onboarding-workflow.md) reuses supplied facts, asks for missing screening answers and records the actual answers and conditions in application-answers.local.md.
 
 | Question / subject | Exact factual answer | Applicable country / role / condition | Source / updated |
 | --- | --- | --- | --- |

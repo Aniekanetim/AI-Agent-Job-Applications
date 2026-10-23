@@ -1,6 +1,6 @@
 # Role routing
 
-**State:** template; no enabled roles or routing policy. Put actual values in ignored `role-routing.local.md`. Keep only selection metadata here, not candidate biographies or full answers.
+**State:** template; no enabled roles or routing policy. [Onboarding](../../Application%20Workflow/onboarding-workflow.md) records your selected roles in ignored `role-routing.local.md`. Keep only selection metadata here, not candidate biographies or full answers.
 
 | Role ID | Profile path relative to Candidate | Enabled | Titles / responsibility signals | Selection order for overlapping fits |
 | --- | --- | --- | --- | --- |

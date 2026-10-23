@@ -2,29 +2,33 @@
 
 The repository is a reusable package. It starts with no connected inbox, enabled candidate profile, known website flow, live ticket or schedule. An AI agent with file, browser and authorized inbox access performs the work; installing Node dependencies alone does not start an agent.
 
+To begin, tell your agent: “Set this up with my CV. Ask for the missing details and save my answers.” It follows [candidate onboarding](Application%20Workflow/onboarding-workflow.md). The steps below explain what the agent sets up; you do not need to populate the context files manually.
+
 ## 1. Create your private working copy
 
 Clone, fork or use the repository template. Open its actual root with your agent and read [AGENTS.md](AGENTS.md). Read README, AGENTS and SETUP at a consistent revision. Record the workflow revision in private [shared progress](unified_project_context.md), separately from candidate-profile/CV versions and website observations. Keep the public template free of personal records. For integration into an existing project, follow [section 6](#6-use-with-another-agent-or-project).
 
 ## Private working information
 
-For every human template `name.md`, put real values in the adjacent ignored `name.local.md`. For example, use `Job Context/Candidate/role-routing.local.md` and `Role Profiles/Software QA Engineer/role-profile.local.md`. The local file replaces the template at read time; do not merge contradictory copies or populate both. This preserves the approved folder organization while keeping public templates blank.
+For every human template `name.md`, the agent saves supplied values in the adjacent ignored `name.local.md`. For example, it uses `Job Context/Candidate/role-routing.local.md` and `Role Profiles/Software QA Engineer/role-profile.local.md`. The local file replaces the template at read time; do not merge contradictory copies or populate both. This preserves the approved folder organization while keeping public templates blank.
 
-Supply actual CV files inside the selected role's Documents directory. Put their exact filename, format, date/version and SHA-256 in that directory's `README.local.md`. Use local paths for secure external documents if preferred. Actual CVs are not included in the package. Source CVs and supporting facts must agree; do not invent missing qualifications.
+Provide the CV file or its accessible path. The agent preserves it, calculates its SHA-256 and records the exact filename, format, date/version and hash in the role's `Documents/README.local.md`. It can retain a secure external path or make an unchanged private copy in Documents. Actual CVs are not included in the package. Source CVs and supporting facts must agree; do not invent missing qualifications.
 
 Live `Task Board/<status>/*.md`, `unified_project_context.local.md`, `.local/`, `.auth/`, credentials and browser storage are ignored. Use `git check-ignore --no-index <path>` to confirm before saving private information. Keep `unified_project_context.md` as the public unconfigured template; record actual setup/progress in its local counterpart. A tracked file remains tracked regardless of ignore rules.
 
-## 2. Configure each independent role
+## 2. Answer the onboarding questions
 
-Follow [candidate setup](Job%20Context/Candidate/README.md). Enable only supplied profiles in role-routing.local.md. Complete the selected profile's identity, experience, preferences, answers and application instructions, including handling of unsuitable/closed vacancies, account registration and overlapping roles. A role's Documents/README.local.md identifies its actual CV. There is no Shared candidate folder.
+The agent first reads supplied CVs and any existing [candidate context](Job%20Context/Candidate/README.md). It then asks one to three relevant questions at a time about missing identity details, job preferences, screening answers and application instructions. Answers are saved as they arrive. It does not ask you to retype CV facts or open a file to add each answer.
 
-The supplied QA and technical-support directories are blank examples. Add another role by copying that structure with empty templates and supplying its own local values. Disable or remove an unused example profile in your working copy. A profile being present does not make it enabled.
+Select the roles and CVs you want to use. The agent configures one independent profile per selected role, adds a new role directory when needed and enables only supplied profiles in private role routing. The QA and support folders are blank examples, not enabled roles. There is no Shared candidate folder.
+
+You can leave optional preferences unspecified or answer later. Missing mandatory information remains a specific dependency. Private `.local/onboarding-state.json` records pending/deferred question references and the resumption point, not another copy of your answers. Existing populated profiles are reused, and an interrupted session resumes its gaps. Onboarding has no approval gate and does not submit applications or activate a schedule by itself.
 
 ## 3. Connect websites and inbox
 
-Complete the relevant [job-board access instructions](Job%20Context/README.md) using local counterparts. Reference a secure credential store or existing authorized browser session. Do not paste passwords into tickets or public files. Employer destinations can have their own access requirements, recorded as nonsecret references in the parent platform's local instructions.
+Tell the agent which job board or vacancy to use. It asks for the relevant access action or secure-store reference and updates the private [job-board access instructions](Job%20Context/README.md). Do not paste passwords into tickets or public files. Employer destinations can have their own access requirements, recorded as nonsecret references in the parent platform's local instructions.
 
-Configure [automation/README.md](automation/README.md): actual AgentMail inbox, secret reference, sender selection rules and cadence. An address such as `pass@agentmail.to` is a placeholder until the user supplies an actual inbox. Use an existing connector or the portable HTTP helper. Pagination and deletion rules are documented there. Do not run a send-email smoke test or delete live mail during setup.
+For email-alert mode, the agent asks for the actual AgentMail inbox, secret reference and alert-selection rules using [automation/README.md](automation/README.md). An address such as `pass@agentmail.to` is a placeholder until the user supplies an actual inbox. Manual-task mode does not require an inbox. Use an existing connector or the portable HTTP helper. Pagination and deletion rules are documented there. Do not run a send-email smoke test or delete live mail during setup.
 
 ## 4. Prepare browser tooling
 
@@ -48,11 +52,11 @@ The agent can initially discover with its authorized browser tools. Generated Pl
 
 Create a real ticket from the inline [board template](Task%20Board/README.md#ticket-template) in To Do, or read the configured alert inbox. Normal execution needs no review gate. Missing required information goes to Blocked with the exact context path. Discovery runs as needed under the same application instructions.
 
-After the manual procedure is usable, configure periodic check-ins in the chosen agent/scheduler with [the check-in prompt](automation/check-in-prompt.md). Cadence, timezone and target working root must be supplied for this setup. Copying files does not transfer an existing schedule. Do not configure a second worker against the same inbox/board without coordinating claims.
+After setup is usable, configure periodic check-ins when requested in the chosen agent/scheduler with [the check-in prompt](automation/check-in-prompt.md). Cadence, timezone and target working root must be supplied for this setup. Copying files does not transfer an existing schedule. Do not configure a second worker against the same inbox/board without coordinating claims.
 
 ## Setup complete means
 
-An agent can locate the chosen role and CV, read its instructions, access the actual target and record private tasks. Inbox and browser capabilities are verified only after actual access. No submission or successful application is established by this checklist or the offline tests.
+Profile setup means the agent can locate the selected role, supplied facts and designated CV, with optional deferrals recorded. Application readiness additionally needs instructions and access for the actual task; email mode also needs its inbox. Onboarding reports that distinction. Inbox and browser capabilities are verified only after actual access. No submission or successful application is established by this checklist or the offline tests.
 
 ## 6. Use with another agent or project
 
@@ -60,7 +64,7 @@ Point the agent to this repository's [README and adoption prompt](README.md#star
 
 For an existing project, inspect and preserve its working contract, README, candidate data, tasks and application records before merging this workflow. Resolve instruction conflicts explicitly rather than overwriting files. If the workflow is nested, read its AGENTS.md explicitly unless the agent is known to discover it automatically.
 
-For a different candidate or independent setup, begin with empty live queues and no copied outcomes. Supply that candidate's own role profiles, routing, CVs, platform accounts and inbox. Do not inherit another person's facts, application records, authority or schedule. Follow sections 2–5 to begin execution; missing tools or inputs become specific dependencies, not claims of success.
+For a different candidate or independent setup, begin with empty live queues and no copied outcomes. Run onboarding with that candidate's own CVs, answers and access. Do not inherit another person's facts, application records, authority or schedule. Follow sections 2–5 to begin execution; missing tools or inputs become specific dependencies, not claims of success.
 
 ## 7. Move the same setup to another machine
 
@@ -68,6 +72,7 @@ A public clone does not contain ignored operational information. Transfer the fo
 
 - Actual role-profile `*.local.md` files and CV/supporting documents.
 - Live board tickets, private shared progress and `.local/inbox-state.json`.
+- Private `.local/onboarding-state.json` when setup has pending questions or deferrals.
 - Relevant restricted evidence and learned site maps/code with their observation versions.
 
 Preserve task IDs, source-message/vacancy associations, chosen role/CV versions, questions, confirmations, cleanup state and checkpoints. Keep credentials and reusable browser sessions out of published context; reconnect authentication securely on the destination machine.

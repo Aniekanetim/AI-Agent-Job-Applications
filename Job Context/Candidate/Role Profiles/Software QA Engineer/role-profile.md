@@ -1,6 +1,6 @@
 # Software QA Engineer: candidate profile
 
-**State:** blank template; profile disabled until the user supplies private values and enables it in role routing. Use role-profile.local.md instead of editing this public file.
+**State:** blank template; profile disabled. [Onboarding](../../../../Application%20Workflow/onboarding-workflow.md) records supplied CV facts and your answers in role-profile.local.md, then enables your selected role when its basic context is usable. This public template stays blank.
 
 | Field | Supplied value |
 | --- | --- |

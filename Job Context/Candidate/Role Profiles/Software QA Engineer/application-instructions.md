@@ -1,6 +1,6 @@
 # Software QA Engineer: application instructions
 
-**State:** blank template. Supply application-instructions.local.md. No per-application review gate is required after these operating instructions are supplied.
+**State:** blank template. [Onboarding](../../../../Application%20Workflow/onboarding-workflow.md) asks for your operating instructions and saves them in application-instructions.local.md. No per-application review gate is required after applicable instructions are supplied.
 
 | Instruction | Actual candidate direction |
 | --- | --- |

@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-job-applications",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Portable agent workflow, inbox helper and offline completion checks. No live site integrations bundled.",

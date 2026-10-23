@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "scope": null,
+  "phase": "notStarted",
+  "selectedRoles": [],
+  "currentRoleId": null,
+  "pendingQuestions": [],
+  "deferredQuestions": [],
+  "contextRevisions": {},
+  "updatedAt": null
+}

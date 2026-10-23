@@ -4,13 +4,15 @@
 
 Read README.md, SETUP.md, unified_project_context.md, Job Context/README.md, Task Board/README.md and Application Workflow/application-workflow.md. Read automation/README.md before inbox work and Application Workflow/discovery-workflow.md before learning a site. Existing user instructions and scoped task instructions remain authoritative.
 
+On first adoption, inspect existing candidate context and follow [candidate onboarding](Application%20Workflow/onboarding-workflow.md) before executing an application that needs it. Import supplied CV information, ask only relevant missing questions in small batches and write the user's answers to private `*.local.md` counterparts automatically. Do not require users to edit context files. Resume existing setup instead of restarting; unchanged pending questions stay quiet. Keep onboarding progress in ignored `.local/onboarding-state.json` without duplicating candidate answers. If the current request is only profile setup, stop at that scope.
+
 The agent operates autonomously within configured candidate instructions without per-application review gates. Do not request repeated permission for profile selection, factual tailoring, discovery, submission or completed-alert deletion already covered by those instructions. Missing facts, unclear instructions, inaccessible accounts and tool restrictions are dependencies, not routine approval stages. An unconfigured template is not authorization to impersonate a candidate or use an arbitrary inbox.
 
 ## Read only the needed context
 
 Use Candidate/role-routing.md under Job Context to identify enabled profiles. Read the selected profile's role-profile.md, experience, preferences, answers, instructions and document index. There is no Candidate/Shared folder or merged candidate baseline. Do not load other profiles' complete documents for every vacancy or mix their CVs/answers by default. Routing contains paths and selection rules, not duplicated biographies. Record the chosen profile, relevant file versions and exact CV version/hash per task.
 
-For human-maintained files, an existing `name.local.md` is the sole working version of `name.md`; otherwise read the template and identify any missing values. Templates remain blank in the public repository. A nonempty local file is not automatically complete: check required values and the designated CV. Local overrides are private storage counterparts, not a second shared context. Do not write supplied candidate facts back into public templates. Preserve the human's profile and instructions; suggest a specific needed update on a Blocked task instead of inventing it.
+For candidate-supplied context, an existing `name.local.md` is the sole working version of `name.md`; otherwise read the template and identify any missing values. Templates remain blank in the public repository. A nonempty local file is not automatically complete: check required values and the designated CV. Local overrides are private storage counterparts, not a second shared context. Do not write supplied candidate facts back into public templates. Preserve the human's profile and instructions. Ask for a missing answer conversationally, save the actual reply in its canonical private file and verify it before resolving a Blocked task; never invent it.
 
 ## Intake and board
 

@@ -1,6 +1,6 @@
 # CryptoJobsList: access and application instructions
 
-**State:** template; no account or site access verified. Supply access-and-instructions.local.md for the actual account. Navigation knowledge belongs in Site Architecture Context, not here.
+**State:** template; no account or site access verified. Tell the agent the relevant access instructions during onboarding; it records nonsecret account/session references in access-and-instructions.local.md. Navigation knowledge belongs in Site Architecture Context, not here.
 
 | Field | Actual value |
 | --- | --- |

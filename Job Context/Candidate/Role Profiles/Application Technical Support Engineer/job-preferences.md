@@ -1,6 +1,6 @@
 # Application Technical Support Engineer: job preferences
 
-**State:** blank template. Supply job-preferences.local.md.
+**State:** blank template. [Onboarding](../../../../Application%20Workflow/onboarding-workflow.md) asks about relevant preferences and saves your answers in job-preferences.local.md. Unspecified preferences remain unknown.
 
 | Criterion | Value / permitted range | Hard constraint or preference |
 | --- | --- | --- |

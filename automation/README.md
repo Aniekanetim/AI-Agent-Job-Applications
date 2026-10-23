@@ -2,6 +2,8 @@
 
 This package supplies a check-in procedure, a portable AgentMail HTTP helper and offline completion checks. It creates no background service, email account or scheduled job. A browser-capable AI agent executes [the application workflow](../Application%20Workflow/application-workflow.md).
 
+Candidate setup uses [conversational onboarding](../Application%20Workflow/onboarding-workflow.md). The agent saves CV-derived facts and user answers in private role files. It keeps only question references and resumption metadata in ignored `.local/onboarding-state.json`; [onboarding-state.example.json](onboarding-state.example.json) is an empty starting format. Missing inbox configuration affects email mode, not profile setup or valid manual tasks.
+
 ## Inbox access
 
 Use an actual user-provided AgentMail inbox and secret-store reference. Set AGENTMAIL_API_KEY in the current process or use the available secure connector. Do not put the key in a ticket, code, command history or public context. This project has not connected to an inbox. The example pass@agentmail.to is not a configured identity.
@@ -45,4 +47,4 @@ Use Authorization: Bearer with a secure runtime key. The helper never includes r
 
 After setup, configure the selected agent's existing scheduler with [check-in-prompt.md](check-in-prompt.md), the actual project root, desired interval and timezone. No schedule has been configured here. A scheduler launches the agent's check-in; it does not install browser/inbox capabilities.
 
-The check-in visits intake and resolved blockers and retries eligible cleanup. It does not ask for review-gate approvals. An unchanged empty/blocked run makes no file changes. If the scheduler supports quiet results, notify only meaningful applications, new blockers, failures or changes. Store actual cadence/schedule identity privately in project progress, not as another user's default.
+The check-in visits intake and resolved blockers and retries eligible cleanup. It resumes onboarding only for a relevant new gap or actual answer; an unchanged pending onboarding question stays quiet. It does not ask for review-gate approvals. An unchanged empty/blocked run makes no file changes. If the scheduler supports quiet results, notify only meaningful applications, new blockers, failures or changes. Store actual cadence/schedule identity privately in project progress, not as another user's default.

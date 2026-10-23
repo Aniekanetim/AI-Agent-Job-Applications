@@ -2,25 +2,28 @@
 
 A portable, autonomous job-application workflow. Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
 
-**Version:** 1.0.0 — 23 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
+**Version:** 1.1.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
 ## Start here
 
-1. Follow [SETUP.md](SETUP.md) in a private working copy.
-2. Populate the relevant [candidate role profiles](Job%20Context/Candidate/README.md), including their CVs, answers and application instructions.
-3. Configure [platform access](Job%20Context/README.md) and the [alert inbox](automation/README.md#inbox-access).
-4. Give your agent the adoption prompt below. It can start from a manual ticket without an inbox.
-5. Configure periodic check-ins separately when the inbox, context and browser access are ready.
+1. Give a file- and browser-capable agent the adoption prompt below. It will help create or open a private working copy using [SETUP.md](SETUP.md).
+2. Tell it which roles you want and provide the CV for each. [Onboarding](Application%20Workflow/onboarding-workflow.md) extracts the known facts, asks short follow-up questions and saves your private [candidate profiles](Job%20Context/Candidate/README.md). You do not need to edit Markdown files.
+3. Provide a job task or choose email alerts. The agent asks for relevant account access when needed; a manual task needs no inbox.
+4. Request periodic check-ins separately when the context and access are ready.
 
 ```text
 Adopt https://github.com/Aniekanetim/AI-Agent-Job-Applications as my
 job-application workflow. Read AGENTS.md, SETUP.md,
 unified_project_context.md, Job Context/README.md, Task Board/README.md and
 Application Workflow/application-workflow.md. Preserve existing project files.
-Use my configured role profiles and application instructions. Process job-alert
-emails and To Do tickets autonomously, without review gates. Reuse relevant
+On first use, follow Application Workflow/onboarding-workflow.md. Read any CVs
+I supply, reuse existing profile answers, ask only relevant missing questions in
+small batches and save my replies into the private candidate files automatically.
+Resume unfinished onboarding without repeating unchanged questions. Respect a
+profile-setup-only request. Use my supplied application instructions for live work.
+Process job-alert emails and To Do tickets autonomously, without review gates. Reuse relevant
 Site Architecture Context and its Playwright routines; discover missing or changed
 steps using Application Workflow/discovery-workflow.md. Move unresolved tasks to
 Blocked with the exact context file and action needed. Move only confirmed
@@ -37,7 +40,8 @@ For URL-only adoption, forks and integration, see [use with another agent or pro
 | Component | Purpose |
 | --- | --- |
 | [Task Board](Task%20Board/README.md) | Email Alerts and To Do are the two intake sources; Blocked and Applied retain outcomes and progress |
-| [Job Context](Job%20Context/README.md) | Human-maintained role profiles, CV references, platform access and application instructions |
+| [Job Context](Job%20Context/README.md) | Candidate-supplied profiles, CV references, platform access and application instructions, saved by the agent |
+| [Candidate onboarding](Application%20Workflow/onboarding-workflow.md) | Conversational CV import, targeted follow-up questions and automatic private context updates |
 | [Site Architecture Context](Site%20Architecture%20Context/README.md) | Agent-maintained navigation maps and Playwright TypeScript routines, including external application destinations |
 | [Application workflow](Application%20Workflow/application-workflow.md) | Role selection, form completion, submission verification, blocking and resumption |
 | [Discovery workflow](Application%20Workflow/discovery-workflow.md) | Learn unfamiliar or changed application steps and preserve reusable knowledge |
@@ -63,13 +67,13 @@ A source email can contain several vacancies. The agent keeps one small progress
 
 ## Available now and learned later
 
-This repository supplies the workflow, empty board, role/context templates, offline-tested completion rules, an AgentMail HTTP helper and TypeScript website scaffolds. It is not a background service or a universal prebuilt application bot. A browser-capable AI agent runs the workflow. Portal-specific selectors and application routines are learned from actual access; the initial routines deliberately report that discovery is required.
+This repository supplies conversational onboarding, the application workflow, an empty board, role/context templates, offline-tested completion rules, an AgentMail HTTP helper and TypeScript website scaffolds. An AI agent runs onboarding in its conversation and writes the files; there is no separate onboarding web app or background service. Portal-specific selectors and application routines are learned from actual access; the initial routines deliberately report that discovery is required.
 
 Install optional TypeScript tooling with `npm ci`. `npm run check` checks types; `npm test` runs offline policy/helper checks with fake data and mocked HTTP. These commands neither log in to websites nor submit applications.
 
 ## Reuse and privacy
 
-Fork or use this repository as a template, then create a private working copy for real candidate information. The public edition contains blank `.md` templates. Supply actual values using ignored `*.local.md` counterparts, and put CVs in their profile's ignored Documents files. The agent reads a local counterpart instead of its blank template, never both as competing sources. See [setup](SETUP.md#private-working-information).
+Fork or use this repository as a template, then create a private working copy for real candidate information. The public edition contains blank `.md` templates. Give your CV and answers to the agent; it writes ignored `*.local.md` counterparts and records the designated private CV. Direct file editing remains optional. The agent reads a local counterpart instead of its blank template, never both as competing sources. See [setup](SETUP.md#private-working-information).
 
 Credentials, inbox progress, task tickets, application evidence, CVs and reusable browser state are excluded from Git by default. When moving machines, transfer the private working information separately and reconnect authentication. [Moving to another machine](SETUP.md#7-move-the-same-setup-to-another-machine) explains resumption.
 

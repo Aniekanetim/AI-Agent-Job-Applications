@@ -19,7 +19,7 @@ Keep one stable descriptive ID/filename, full history and original email associa
 
 ## Check-in procedure
 
-1. Read AGENTS, private shared progress when present, the human context index and application workflow. Check configured inbox access separately; its absence does not prevent a valid manual task.
+1. Read AGENTS, private shared progress when present, the human context index and application workflow. If candidate context is missing, follow [onboarding](../Application%20Workflow/onboarding-workflow.md); preserve existing setup and do not repeat unchanged pending questions. Check configured inbox access separately; its absence does not prevent a valid manual task.
 2. Resume eligible work claimed by this worker first. Respect another worker's claim; never assume silence means its final-submit action did not occur.
 3. Read each Blocked task's exact question and named source change/response. Recheck only affected dependencies, not every CV. If resolved, append the actual resolution and return it to original intake. An unchanged blocker causes no rewrite or repeated question.
 4. Paginate configured alert headers. Use the private active-message map to find an existing task for this exact message/vacancy. Extract new alerts once and record all vacancy dispositions; do not compare across unrelated email/manual tasks or historical Applied records.
@@ -34,7 +34,7 @@ The initial live board is empty. Directory placeholders and the template below a
 
 A blocker states the observed issue, last completed action, exact required input/access, canonical role/platform context path, source version checked, resume checkpoint and original intake. A role mismatch points to role-routing; a mandatory missing answer points to the selected profile's application-answers; a missing CV points to its document index. A login challenge can name the platform's access-and-instructions with the human sign-in action.
 
-The user updates the named local context file or supplies the required access. Preserve that answer/action and actual resolution check on the existing ticket. A context-file timestamp change alone is not resolution. If an attempted submission has an uncertain outcome, establish the result for that same vacancy before resuming any submission action.
+The user can provide the answer in conversation or supply the required access action. The agent saves the answer in the named local context file and preserves the response source and actual resolution check on the existing ticket. Direct file editing remains optional. A context-file timestamp change alone is not resolution. If an attempted submission has an uncertain outcome, establish the result for that same vacancy before resuming any submission action.
 
 A discoverable changed form is not automatically a user blocker. The agent investigates it through the discovery workflow. If knowledge cannot be obtained because access/tools are unavailable, state that actual dependency.
 

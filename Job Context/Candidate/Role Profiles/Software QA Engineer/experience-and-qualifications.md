@@ -1,6 +1,6 @@
 # Software QA Engineer: experience and qualifications
 
-**State:** blank template. Supply experience-and-qualifications.local.md with actual facts for this role.
+**State:** blank template. [Onboarding](../../../../Application%20Workflow/onboarding-workflow.md) extracts the relevant facts from your CV, asks about unresolved details and saves experience-and-qualifications.local.md.
 
 | Employer / actual title | Dates | Relevant responsibilities and contributions | Skills / tools | Source reference |
 | --- | --- | --- | --- | --- |

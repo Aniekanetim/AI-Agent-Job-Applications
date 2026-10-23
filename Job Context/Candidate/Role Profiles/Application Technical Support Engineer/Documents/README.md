@@ -1,6 +1,6 @@
 # Application Technical Support Engineer: application documents
 
-**State:** no CV supplied. Supply README.local.md here and the actual local/private files. Do not create a dummy CV or infer one from another role.
+**State:** no CV supplied. Give the agent your CV or its accessible path during [onboarding](../../../../../Application%20Workflow/onboarding-workflow.md). It records the exact document and hash in README.local.md. Do not create a dummy CV or infer one from another role.
 
 | Document purpose | Exact filename or secure local path | Format | Version / date | SHA-256 |
 | --- | --- | --- | --- | --- |
