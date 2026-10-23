@@ -11,7 +11,7 @@ The board says what to do. [The application workflow](../Application%20Workflow/
 | Blocked | A concrete dependency prevents completion | Read linked changes/responses and resume only when resolved |
 | Applied | Confirmed successful submissions | Retain outcome; do not routinely scan as an intake step |
 
-Exactly four status folders. New work has two sources: the configured inbox and To Do. Blocked is interrupted work, not a third intake channel. There is no Review, Rejected, Dev Todo or Retest folder.
+Exactly four status folders. New work has two sources: the configured inbox and To Do. Blocked is interrupted work, not a third intake channel.
 
 Move a confirmed submission from its intake to Applied. Move an unresolved dependency to Blocked; after resolution, return it to its recorded original intake and resume. The containing folder is status; do not maintain a conflicting second status field. A task can have a checkpoint/disposition without creating another folder.
 

@@ -43,6 +43,6 @@ Use Authorization: Bearer with a secure runtime key. The helper never includes r
 
 ## Optional periodic check-ins
 
-After setup, configure the selected agent's existing scheduler with [check-in-prompt.md](check-in-prompt.md), the actual project root, desired interval and timezone. No schedule has been configured here and no QA schedule was reused or changed. A scheduler launches the agent's check-in; it does not install browser/inbox capabilities.
+After setup, configure the selected agent's existing scheduler with [check-in-prompt.md](check-in-prompt.md), the actual project root, desired interval and timezone. No schedule has been configured here. A scheduler launches the agent's check-in; it does not install browser/inbox capabilities.
 
 The check-in visits intake and resolved blockers and retries eligible cleanup. It does not ask for review-gate approvals. An unchanged empty/blocked run makes no file changes. If the scheduler supports quiet results, notify only meaningful applications, new blockers, failures or changes. Store actual cadence/schedule identity privately in project progress, not as another user's default.

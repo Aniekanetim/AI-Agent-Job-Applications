@@ -1,6 +1,6 @@
 # AI Agent Job Applications
 
-A portable, autonomous job-application workflow adapted from [AI Agent Software QA](https://github.com/Aniekanetim/AI-Agent-Software-QA). Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
+A portable, autonomous job-application workflow. Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
 
 **Version:** 1.0.0 — 23 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
 
@@ -30,7 +30,7 @@ Do not invent candidate facts, claim unobserved submissions or activate a schedu
 from this prompt alone. Keep candidate data, tickets, credentials and sessions private.
 ```
 
-For URL-only adoption, forks and integration, see [adopt from the repository](docs/adopt-from-repository.md).
+For URL-only adoption, forks and integration, see [use with another agent or project](SETUP.md#6-use-with-another-agent-or-project).
 
 ## What supplies work, and what explains execution
 
@@ -44,7 +44,7 @@ For URL-only adoption, forks and integration, see [adopt from the repository](do
 | [Check-ins and inbox integration](automation/README.md) | Inbox pagination, progress records, message cleanup and optional scheduling |
 | [Shared progress](unified_project_context.md) | Current setup, operational checkpoint and links, without duplicating candidate documents |
 
-The agent acts within the candidate's supplied instructions without QA-style review gates. A missing fact or access requirement is a specific dependency: record it in Blocked and continue other eligible work. Website discovery does not authorize inventing qualifications, changing candidate instructions, paying fees or sending unrelated messages.
+The agent acts within the candidate's supplied instructions without routine review gates. A missing fact or access requirement is a specific dependency: record it in Blocked and continue other eligible work. Website discovery does not authorize inventing qualifications, changing candidate instructions, paying fees or sending unrelated messages.
 
 ```text
 Email alert / manual task -> select role profile -> use site knowledge -> submit
@@ -65,14 +65,14 @@ A source email can contain several vacancies. The agent keeps one small progress
 
 This repository supplies the workflow, empty board, role/context templates, offline-tested completion rules, an AgentMail HTTP helper and TypeScript website scaffolds. It is not a background service or a universal prebuilt application bot. A browser-capable AI agent runs the workflow. Portal-specific selectors and application routines are learned from actual access; the initial routines deliberately report that discovery is required.
 
-Install optional TypeScript tooling with `npm ci`. `npm run check` checks types; `npm test` runs offline policy/helper checks with fake data and mocked HTTP. These commands neither log in to websites nor submit applications. See [implementation and verification](docs/implementation-notes.md).
+Install optional TypeScript tooling with `npm ci`. `npm run check` checks types; `npm test` runs offline policy/helper checks with fake data and mocked HTTP. These commands neither log in to websites nor submit applications.
 
 ## Reuse and privacy
 
 Fork or use this repository as a template, then create a private working copy for real candidate information. The public edition contains blank `.md` templates. Supply actual values using ignored `*.local.md` counterparts, and put CVs in their profile's ignored Documents files. The agent reads a local counterpart instead of its blank template, never both as competing sources. See [setup](SETUP.md#private-working-information).
 
-Credentials, inbox progress, task tickets, application evidence, CVs and reusable browser state are excluded from Git by default. When moving machines, transfer the private working information separately and reconnect authentication. [Portability](docs/portability.md) explains resumption.
+Credentials, inbox progress, task tickets, application evidence, CVs and reusable browser state are excluded from Git by default. When moving machines, transfer the private working information separately and reconnect authentication. [Moving to another machine](SETUP.md#7-move-the-same-setup-to-another-machine) explains resumption.
 
-## License and source
+## License
 
-[MIT license](LICENSE). Adapted from source version 1.2.0 at revision `8771364309e9e236fd5bb3020ba72da093e52f79`. The source QA repository and its schedules remain independent.
+[MIT license](LICENSE).

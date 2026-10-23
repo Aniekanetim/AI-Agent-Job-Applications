@@ -1,6 +1,6 @@
 # Application-site discovery workflow
 
-Adapted from the upstream Product Discovery procedure, using the same distinction between human facts/instructions and agent observations. Here discovery supports applications directly and needs no separate request file, QA board or review gate. Its objective and checkpoint stay on the application task.
+Discovery learns the website navigation needed to complete an application. Human Job Context supplies candidate facts and instructions; agent-maintained site knowledge records actual observations. The learning objective and checkpoint stay on the application task, without a separate request file or review gate.
 
 ## 1. Read what is already known
 

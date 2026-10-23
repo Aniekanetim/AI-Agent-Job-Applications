@@ -4,7 +4,7 @@ The repository is a reusable package. It starts with no connected inbox, enabled
 
 ## 1. Create your private working copy
 
-Clone, fork or use the repository template. Open its actual root with your agent and read [AGENTS.md](AGENTS.md). Preserve existing files if adopting into another project. Record the workflow revision in [shared progress](unified_project_context.md). Keep the public template free of personal records.
+Clone, fork or use the repository template. Open its actual root with your agent and read [AGENTS.md](AGENTS.md). Read README, AGENTS and SETUP at a consistent revision. Record the workflow revision in private [shared progress](unified_project_context.md), separately from candidate-profile/CV versions and website observations. Keep the public template free of personal records. For integration into an existing project, follow [section 6](#6-use-with-another-agent-or-project).
 
 ## Private working information
 
@@ -28,7 +28,7 @@ Configure [automation/README.md](automation/README.md): actual AgentMail inbox, 
 
 ## 4. Prepare browser tooling
 
-Use a browser-capable agent and available browser tools. The TypeScript skeletons use Playwright library page objects, not QA test cases. For local code validation:
+Use a browser-capable agent and available browser tools. The TypeScript skeletons use Playwright library page objects for website navigation. For local code validation:
 
 ```shell
 npm ci
@@ -48,8 +48,34 @@ The agent can initially discover with its authorized browser tools. Generated Pl
 
 Create a real ticket from the inline [board template](Task%20Board/README.md#ticket-template) in To Do, or read the configured alert inbox. Normal execution needs no review gate. Missing required information goes to Blocked with the exact context path. Discovery runs as needed under the same application instructions.
 
-After the manual procedure is usable, configure periodic check-ins in the chosen agent/scheduler with [the check-in prompt](automation/check-in-prompt.md). Cadence, timezone and target working root must be supplied for this new project. No schedule from the QA project transfers automatically. Do not configure a second worker against the same inbox/board without coordinating claims.
+After the manual procedure is usable, configure periodic check-ins in the chosen agent/scheduler with [the check-in prompt](automation/check-in-prompt.md). Cadence, timezone and target working root must be supplied for this setup. Copying files does not transfer an existing schedule. Do not configure a second worker against the same inbox/board without coordinating claims.
 
 ## Setup complete means
 
 An agent can locate the chosen role and CV, read its instructions, access the actual target and record private tasks. Inbox and browser capabilities are verified only after actual access. No submission or successful application is established by this checklist or the offline tests.
+
+## 6. Use with another agent or project
+
+Point the agent to this repository's [README and adoption prompt](README.md#start-here), or give it a fork, template copy or clone. Reading the URL supplies instructions; it does not create local files, authenticate accounts or activate a schedule. The agent needs a writable working copy plus the browser and inbox tools required by the task.
+
+For an existing project, inspect and preserve its working contract, README, candidate data, tasks and application records before merging this workflow. Resolve instruction conflicts explicitly rather than overwriting files. If the workflow is nested, read its AGENTS.md explicitly unless the agent is known to discover it automatically.
+
+For a different candidate or independent setup, begin with empty live queues and no copied outcomes. Supply that candidate's own role profiles, routing, CVs, platform accounts and inbox. Do not inherit another person's facts, application records, authority or schedule. Follow sections 2–5 to begin execution; missing tools or inputs become specific dependencies, not claims of success.
+
+## 7. Move the same setup to another machine
+
+A public clone does not contain ignored operational information. Transfer the following through a private mechanism:
+
+- Actual role-profile `*.local.md` files and CV/supporting documents.
+- Live board tickets, private shared progress and `.local/inbox-state.json`.
+- Relevant restricted evidence and learned site maps/code with their observation versions.
+
+Preserve task IDs, source-message/vacancy associations, chosen role/CV versions, questions, confirmations, cleanup state and checkpoints. Keep credentials and reusable browser sessions out of published context; reconnect authentication securely on the destination machine.
+
+Recheck actual document paths, CV hashes, tools, website conditions and worker ownership. Read any Submission attempted checkpoint before resuming. Establish an uncertain result for that same vacancy rather than submitting again. Retry outstanding email cleanup using its existing message reference without repeating the application.
+
+If an old scheduler still runs, coordinate ownership before starting another worker. File transfer neither moves nor disables it. Configure the destination schedule only when requested, using its actual root, cadence and timezone.
+
+## 8. Maintain a reusable template
+
+Keep public role templates blank and live board folders empty. Mark initial website routines unlearned. Publish sanitized workflow/code improvements deliberately; do not push candidate records or authenticated evidence. Record a newly adopted workflow version without rewriting ongoing task history or claiming old observations were freshly verified.

@@ -4,7 +4,7 @@
 
 Read README.md, SETUP.md, unified_project_context.md, Job Context/README.md, Task Board/README.md and Application Workflow/application-workflow.md. Read automation/README.md before inbox work and Application Workflow/discovery-workflow.md before learning a site. Existing user instructions and scoped task instructions remain authoritative.
 
-The agent operates autonomously within configured candidate instructions. There are no QA scope, design, findings, retest, release or per-application review gates. Do not request repeated permission for profile selection, factual tailoring, discovery, submission or completed-alert deletion already covered by those instructions. Missing facts, unclear instructions, inaccessible accounts and tool restrictions are dependencies, not routine approval stages. An unconfigured template is not authorization to impersonate a candidate or use an arbitrary inbox.
+The agent operates autonomously within configured candidate instructions without per-application review gates. Do not request repeated permission for profile selection, factual tailoring, discovery, submission or completed-alert deletion already covered by those instructions. Missing facts, unclear instructions, inaccessible accounts and tool restrictions are dependencies, not routine approval stages. An unconfigured template is not authorization to impersonate a candidate or use an arbitrary inbox.
 
 ## Read only the needed context
 
@@ -42,4 +42,4 @@ Delete only that completed source message after every vacancy has a permitted, p
 
 Keep actual role values in ignored `*.local.md`, CVs in ignored document files, live tickets in ignored board files, and tokens/session state/evidence in ignored `.local/`, `.auth/` or a secure external store. Exclusion does not remove already tracked secrets; inspect the staged list before publication. Never print API keys or raw authenticated traffic. Do not send email merely to test a connector. Application outreach beyond the assigned application channel needs an applicable user instruction.
 
-On transfer, read current tickets and progress, recheck paths/CV versions/access and resume the checkpoint. Copying this repository transfers no personal data, account session, schedule or observed site knowledge. Do not import QA case results, historical approvals or live source-project tickets. No-op check-ins leave files unchanged. Record material progress, real blockers and actual submissions; distinguish offline package tests from live application outcomes.
+On transfer, read current tickets and progress, recheck paths/CV versions/access and resume the checkpoint. A fresh clone does not include ignored personal data, account sessions, schedules or unpublished site knowledge. Do not import another candidate's facts, application records or tasks. No-op check-ins leave files unchanged. Record material progress, real blockers and actual submissions; distinguish offline package tests from live application outcomes.

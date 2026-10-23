@@ -6,6 +6,4 @@ The [Task Board](../Task%20Board/README.md) says what to do. [Job Context](../Jo
 2. Use [discovery-workflow.md](discovery-workflow.md) when website knowledge is missing or no longer fits the live page.
 3. Resume the same task checkpoint after learning or a resolved blocker.
 
-There are no QA-style review gates or per-application confirmation stages. Ask for a specific missing input only when it prevents progress. Final form inspection and confirmation checks are actions the agent performs, not requests for the user to approve every submission.
-
-These procedures adapt the upstream discovery/context/resumption mechanisms. They do not import its defect, retest, release or human QA approval lifecycle. See [adaptation notes](../docs/implementation-notes.md).
+There are no routine review gates or per-application confirmation stages. Ask for a specific missing input only when it prevents progress. Final form inspection and confirmation checks are actions the agent performs, not requests for the user to approve every submission.
