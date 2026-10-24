@@ -32,7 +32,7 @@ function workspace(t: TestContext, contents?: string): string {
   return root;
 }
 
-test("inbox setup requires this copy's private environment file", t => {
+test("inbox setup requires project credentials or a selected existing connection", t => {
   assert.throws(() => readInboxConfig(workspace(t)), InboxConfigurationError);
 });
 
@@ -110,14 +110,15 @@ test("unexpected and network failure output is sanitized", () => {
     message: "AgentMail access could not be verified (network or response error)." });
 });
 
-test("the CLI does not fall back to credentials inherited from another agent", t => {
+test("the CLI detects inherited credentials without silently selecting their account", t => {
   const root = workspace(t);
   const entry = fileURLToPath(new URL("../email/agentmail/setup.js", import.meta.url));
   const result = spawnSync(process.execPath, [entry], { cwd: root, encoding: "utf8",
-    env: { ...process.env, AGENTMAIL_INBOX_ID: inboxId, AGENTMAIL_API_KEY: apiKey } });
-  assert.equal(result.status, 2);
+    env: { ...process.env, USERPROFILE: root, HOME: root, CODEX_HOME: join(root, ".codex"),
+      AGENTMAIL_INBOX_ID: inboxId, AGENTMAIL_API_KEY: apiKey } });
+  assert.equal(result.status, 4);
   assert.equal(result.stdout, "");
-  assert.match(result.stderr, /private automation\/\.env file/);
+  assert.equal(JSON.parse(result.stderr).needsAgentConnection, true);
   assert.equal(result.stderr.includes(apiKey), false);
   assert.equal(result.stderr.includes(inboxId), false);
 });

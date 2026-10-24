@@ -18,10 +18,13 @@ Read .local/onboarding-state.json when present; do not repeat unchanged pending
 questions or reset existing profiles. Keep progress references separate from answers.
 Profile setup or a manual task does not require inbox configuration. Onboarding
 does not itself authorize a live application or activate a schedule.
-For email mode, use automation/email/agentmail/setup.md. The user supplies the API key;
-discover/provision and privately bind the inbox automatically. Do not ask for an
-inbox ID. Check access without sending/deleting mail; never borrow another skill's
-credentials. Resume unchanged setup dependencies only after a relevant change.
+For email mode, use automation/email/agentmail/setup.md. Detect existing configured
+AgentMail integrations and connected tools before asking for a key. Reuse suitable
+authorized access through its existing source; save references, not copied secrets.
+Read actual skill restrictions and verify access; detection alone is not readiness.
+Only if no usable integration exists should onboarding request an API key. Discover
+and bind the inbox without asking for its ID. Send/delete no mail during setup.
+Resume unchanged setup dependencies only after a relevant change.
 
 Resume eligible claimed work. Check Blocked tasks for actual answers/context
 changes that resolve the named dependency; return resolved tasks to original intake.

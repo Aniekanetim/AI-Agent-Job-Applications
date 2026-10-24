@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
 import { AgentMailError, AgentMailInbox, type Fetch } from "./client.js";
 import { listAccessibleInboxes, createIntakeInbox, type InboxSummary } from "./inboxes.js";
+import { credentialsFromSource, savedCredentialSource, saveCredentialSource,
+  detectExistingConnections, ConnectionSourceError, type CredentialSource } from "./connection.js";
 
 export interface InboxConfig {
   readonly inboxId?: string;
@@ -13,23 +15,31 @@ export interface InboxConfig {
 
 export class InboxConfigurationError extends Error {
   constructor() {
-    super("Configure AGENTMAIL_API_KEY in the private automation/.env file; the agent discovers the inbox.");
+    super("No AgentMail connection is selected. Run inbox:detect before requesting an API key in private automation/.env.");
     this.name = "InboxConfigurationError";
   }
 }
 
-/** Read this working copy only; never inherit another skill's account or secrets. */
-export function readInboxConfig(workingRoot: string): InboxConfig {
-  let values: ReturnType<typeof parseEnv>;
+/** Prefer project configuration, then the existing source explicitly bound by the agent. */
+export function readInboxConnection(workingRoot: string): { config: InboxConfig; source: CredentialSource } {
+  const path = resolve(workingRoot, "automation", ".env");
+  let values: ReturnType<typeof parseEnv> = {};
   try {
-    values = parseEnv(readFileSync(resolve(workingRoot, "automation", ".env"), "utf8"));
+    values = parseEnv(readFileSync(path, "utf8"));
   } catch {
-    throw new InboxConfigurationError();
+    if (existsSync(path)) throw new ConnectionSourceError();
   }
   const inboxId = values.AGENTMAIL_INBOX_ID?.trim();
   const apiKey = values.AGENTMAIL_API_KEY?.trim();
-  if (!apiKey) throw new InboxConfigurationError();
-  return { ...(inboxId ? { inboxId } : {}), apiKey };
+  if (apiKey) return { config: { ...(inboxId ? { inboxId } : {}),
+    ...credentialsFromSource({ type: "envFile", path }) }, source: { type: "envFile", path } };
+  const source = savedCredentialSource(workingRoot);
+  if (source) return { config: credentialsFromSource(source), source };
+  throw new InboxConfigurationError();
+}
+
+export function readInboxConfig(workingRoot: string): InboxConfig {
+  return readInboxConnection(workingRoot).config;
 }
 
 export class InboxSelectionRequired extends Error {
@@ -149,6 +159,7 @@ export function inboxCheckFailure(error: unknown): { exitCode: number; message: 
   if (error instanceof InboxConfigurationError) return { exitCode: 2, message: error.message };
   if (error instanceof InboxSelectionRequired) return { exitCode: 3, message: error.message };
   if (error instanceof InboxSetupStateError) return { exitCode: 3, message: error.message };
+  if (error instanceof ConnectionSourceError) return { exitCode: 3, message: error.message };
   if (error instanceof AgentMailError) {
     return { exitCode: 1, message: error.status === undefined
       ? "AgentMail access could not be verified (network or response error)."
@@ -160,9 +171,18 @@ export function inboxCheckFailure(error: unknown): { exitCode: number; message: 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const root = process.cwd();
-    const config = readInboxConfig(root);
     const args = process.argv.slice(2);
     const allowCreate = args.includes("--setup");
+    const file = args.indexOf("--credential-file");
+    const useEnvironment = args.includes("--use-environment");
+    if ((file >= 0 && (!args[file + 1] || args[file + 1].startsWith("--"))) ||
+      (file >= 0 && useEnvironment)) throw new ConnectionSourceError();
+    const explicit: CredentialSource | undefined = file >= 0
+      ? { type: "envFile", path: resolve(root, args[file + 1]) }
+      : useEnvironment ? { type: "environment" } : undefined;
+    const connection = explicit ? { source: explicit, config: credentialsFromSource(explicit) }
+      : readInboxConnection(root);
+    const { config } = connection;
     const selected = args.indexOf("--select");
     if (selected >= 0 && (!allowCreate || !args[selected + 1] || args[selected + 1].startsWith("--"))) {
       throw new InboxSetupStateError();
@@ -171,13 +191,22 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       allowCreate, selectedInboxId: selected >= 0 ? args[selected + 1] : undefined,
     });
     const access = await checkInboxAccess({ ...config, inboxId: resolved.inbox_id });
+    if (allowCreate) saveCredentialSource(root, connection.source);
     console.log(JSON.stringify({ ...access, inboxId: resolved.inbox_id,
+      connectionSource: connection.source,
       ...(resolved.email ? { email: resolved.email } : {}) }));
   } catch (error) {
     const failure = inboxCheckFailure(error);
-    if (error instanceof InboxSelectionRequired) {
+    if (error instanceof InboxConfigurationError) {
+      const discovery = detectExistingConnections(process.cwd());
+      if (discovery.existingSetupFound || discovery.savedReferenceNeedsAttention ||
+        discovery.candidates.some(item => item.state === "unreadable")) {
+        console.error(JSON.stringify({ needsAgentConnection: true, ...discovery }));
+        process.exitCode = 4;
+      } else { console.error(failure.message); process.exitCode = failure.exitCode; }
+    } else if (error instanceof InboxSelectionRequired) {
       console.error(JSON.stringify({ needsAgentSelection: true, candidates: error.candidates }));
-    } else console.error(failure.message);
-    process.exitCode = failure.exitCode;
+      process.exitCode = failure.exitCode;
+    } else { console.error(failure.message); process.exitCode = failure.exitCode; }
   }
 }

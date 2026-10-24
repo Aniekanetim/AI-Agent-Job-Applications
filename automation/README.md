@@ -9,7 +9,7 @@ A file- and browser-capable AI agent runs the [application workflow](../Applicat
 | Task execution | [Workflow](../Application%20Workflow/application-workflow.md), [board](../Task%20Board/README.md) and context instructions | An AI agent with a writable working copy and authorized tools |
 | Browser automation | Playwright dependency and [site-specific TypeScript scaffolds](../Site%20Architecture%20Context/README.md) | Browser access, sessions and an installed browser for Playwright execution; actual site routines are learned through discovery |
 | Supporting code | TypeScript sources, npm scripts and pinned tooling in [package.json](../package.json) | Node.js 22 or later and npm when running these utilities |
-| Email-alert intake | [AgentMail clients and setup](email/agentmail/setup.md), inbox discovery, progress format and completed-message cleanup | An AgentMail account and API key; only email mode needs them |
+| Email-alert intake | [AgentMail clients and setup](email/agentmail/setup.md), inbox discovery, progress format and completed-message cleanup | Existing suitable AgentMail integration, or an account/API key when none can be reused; only email mode needs mail access |
 | Candidate onboarding | [Conversational procedure](../Application%20Workflow/onboarding-workflow.md) and [progress example](onboarding/onboarding-state.example.json) | CVs, candidate answers and the agent's document tools; scanned PDFs need available OCR or vision |
 | Periodic check-ins | [Scheduler prompt](scheduling/check-in-prompt.md) and resumption instructions | The selected agent environment's scheduler, with the requested cadence, timezone and working root |
 
@@ -24,6 +24,7 @@ automation/
 ├── email/
 │   └── agentmail/
 │       ├── README.md
+│       ├── connection.ts
 │       ├── client.ts
 │       ├── inboxes.ts
 │       ├── setup.ts
@@ -36,6 +37,7 @@ automation/
 ├── scheduling/
 │   └── check-in-prompt.md
 └── tests/
+    ├── agentmail-connection.test.ts
     ├── agentmail.test.ts
     ├── agentmail-setup.test.ts
     └── application-state.test.ts
@@ -53,7 +55,7 @@ Site-specific page objects and application routines stay with their observed nav
 
 Follow [SETUP.md](../SETUP.md) for first use. The agent onboards the candidate, reads the task and prepares only the capabilities that task needs. Profile setup does not require an inbox or portal login. A manual application needs browser access and the selected profile; email mode also needs mail access.
 
-For email mode, the user supplies only `AGENTMAIL_API_KEY` in ignored `automation/.env`, using [.env.example](.env.example). The agent follows [AgentMail setup](email/agentmail/setup.md) to discover or provision an inbox and save its identity privately. Do not ask the user to find or enter an inbox ID. A separate AgentMail skill installation is unnecessary for the included clients.
+For email mode, the agent first runs `npm run inbox:detect` and checks available connected tools/skills. It reuses a suitable existing integration through its original source. Only when none is usable does the user supply `AGENTMAIL_API_KEY` in ignored `automation/.env`, using [.env.example](.env.example). The agent follows [AgentMail setup](email/agentmail/setup.md) to discover or provision an inbox and save its identity privately. Do not ask the user to find or enter an inbox ID. A separate AgentMail skill installation is unnecessary for the included clients.
 
 For browser execution, use the agent's authorized browser tools or Playwright with an installed browser, as explained in [browser setup](../SETUP.md#4-prepare-browser-tooling). The agent learns unfamiliar website flows through [discovery](../Application%20Workflow/discovery-workflow.md). Website passwords remain in the relevant board's private configuration, separate from the mail API key.
 
@@ -70,10 +72,11 @@ npm run build
 
 `check` validates types. `test` runs the offline checks. `build` writes compiled code to ignored `.local/build/`; it starts no worker. The AgentMail module is `.local/build/automation/email/agentmail/client.js` and shared state rules are `.local/build/automation/workflow/application-state.js`.
 
-Email commands use the project's private API key and contact AgentMail:
+Detection reads local configuration metadata without network requests or writes. Setup/check commands use the configured project key or an existing source selected by the agent; they contact AgentMail:
 
 | Command | Action |
 | --- | --- |
+| `npm run inbox:detect` | Detect existing local setup and return nonsecret metadata; verify connected-tool access separately |
 | `npm run inbox:setup` | Discover or provision an intake inbox, save its binding and check header access |
 | `npm run inbox:check` | Discover an existing inbox and check headers without provisioning or saving a binding |
 
@@ -87,12 +90,13 @@ The source layout is separate from private runtime storage:
 | --- | --- |
 | `automation/.env` | This working copy's AgentMail API key |
 | `.local/agentmail-intake.json` | Resolved inbox binding and any creation identity |
+| `.local/agentmail-connection.json` | Selected existing credential source reference; no key value |
 | `.local/inbox-state.json` | Active alert-to-vacancy/task associations and cleanup checkpoints |
 | `.local/onboarding-state.json` | Pending/deferred question references and onboarding resumption point |
 | Candidate `*.local.md` files and private Documents | Candidate facts, instructions and designated CVs |
 | Live Task Board files | Application checkpoints, blockers, confirmations and history |
 
-Preserve these locations and existing values when updating the package. Do not copy another project or global skill's credentials. Keep only secret references in Markdown and retain actual candidate data, browser sessions and evidence outside public Git. An example file or offline passing check does not establish live access or a completed application.
+Preserve these locations and existing values when updating the package. Reuse an existing integration only within its actual permissions, through its original source or connector. Do not copy another project or global skill's credentials. Keep only secret references in Markdown and retain actual candidate data, browser sessions and evidence outside public Git. An example file or offline passing check does not establish live access or a completed application.
 
 ## Optional periodic check-ins
 

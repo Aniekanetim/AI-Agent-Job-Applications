@@ -4,7 +4,7 @@ Use this integration for job-alert emails. Manual To Do tasks need no inbox. Sta
 
 ## Inbox access
 
-Follow [AgentMail onboarding and setup](setup.md) when email alerts are selected. The user's only required mail-setup input is `AGENTMAIL_API_KEY` in ignored `automation/.env`, based on [.env.example](../../.env.example). The agent runs `npm run inbox:setup` to discover/provision and bind a suitable mailbox. Users are never asked to look up or enter an inbox ID. `npm run inbox:check` remains read-only. Both commands load this project's key explicitly, without borrowing a global skill's account.
+Follow [AgentMail onboarding and setup](setup.md) when email alerts are selected. First detect existing configured AgentMail access with `npm run inbox:detect` and the agent environment’s connected-tool/skill inventory. Reuse a suitable integration through its original source. Only when none is usable is `AGENTMAIL_API_KEY` needed in ignored `automation/.env`, based on [.env.example](../../.env.example). The agent runs `npm run inbox:setup` to discover/provision and bind a suitable mailbox. Users are never asked to look up or enter an inbox ID. `npm run inbox:check` remains read-only. Both commands use project configuration or a deliberately selected existing source. They do not silently switch accounts or copy a host skill’s key.
 
 Use the discovered, privately bound inbox and authorized access. Do not put the key in a ticket, code, command history or public context. This public template has no actual key or connected inbox. A skill being installed or an offline check passing does not establish live inbox access.
 
