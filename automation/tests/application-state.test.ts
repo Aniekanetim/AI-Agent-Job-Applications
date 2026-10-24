@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { assertTaskMove, canMarkApplied, messageReadyForDeletion, DiscoveryRequired,
-  type ApplicationTask, type MessageProgress } from "./application-state.js";
+  type ApplicationTask, type MessageProgress } from "../workflow/application-state.js";
 
 // Synthetic fixture values, not candidate data or real application evidence.
 const confirmed = (): ApplicationTask => ({
@@ -127,7 +127,7 @@ test("all six initial site adapters require discovery before any browser action"
     "LinkedIn/Application destinations/Workday",
     "LinkedIn/Application destinations/Employer career site"];
   for (const path of paths) {
-    const module = await import(`../Site Architecture Context/${path}/playwright/application-flow.js`);
+    const module = await import(`../../Site Architecture Context/${path}/playwright/application-flow.js`);
     const page = new Proxy({}, { get() { assert.fail("Unlearned code touched a browser"); } });
     await assert.rejects(module.executeApplication(page, {}), DiscoveryRequired);
   }

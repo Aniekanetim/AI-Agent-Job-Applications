@@ -8,7 +8,7 @@ It needs a writable private working copy and an agent that can read the supplied
 
 Read [AGENTS.md](../AGENTS.md), private shared progress when present and role routing. Prefer each `*.local.md` counterpart over its public template. Inspect only the selected role's context and designated CV. Do not restart a questionnaire because a new session opened or an onboarding-state file is absent.
 
-Use `.local/onboarding-state.json` for the current scope, role IDs, question IDs, affected context paths, source revisions and the resumption point. The [empty state example](../automation/onboarding-state.example.json) contains no candidate answers. Keep facts and instructions only in their canonical role files; progress must not become another candidate biography.
+Use `.local/onboarding-state.json` for the current scope, role IDs, question IDs, affected context paths, source revisions and the resumption point. The [empty state example](../automation/onboarding/onboarding-state.example.json) contains no candidate answers. Keep facts and instructions only in their canonical role files; progress must not become another candidate biography.
 
 Check the actual content, not just file existence. Blank, Not supplied, conflicting or unreadable values are unresolved. A recorded answer is usable only under its stated role/country conditions. Preserve existing facts, preferences, instructions, CVs and application tickets. Another candidate requires a separate private working copy.
 
@@ -62,7 +62,7 @@ Candidate filenames in this table are relative to `Job Context/Candidate/Role Pr
 
 For password-based sign-in, offer the board's [local `.env` setup](../Job%20Context/Job%20Boards/README.md). Create the ignored file from its commented example only if it is absent, then ask the user to enter the values locally. Store only the file/key reference in access Markdown. Do not ask for passwords in ordinary chat or copy them into candidate answers. An existing authorized session or secure credential store remains an alternative.
 
-If the user selects email-alert tasks, run [AgentMail setup](../automation/agentmail-setup.md). The user supplies only the API key privately; the agent handles integration, discovers/provisions the mailbox, saves its identity and checks access. Do not ask for an inbox ID. Use supplied target boards/instructions to establish the relevant alerts. Manual-task mode skips this branch.
+If the user selects email-alert tasks, run [AgentMail setup](../automation/email/agentmail/setup.md). The user supplies only the API key privately; the agent handles integration, discovers/provisions the mailbox, saves its identity and checks access. Do not ask for an inbox ID. Use supplied target boards/instructions to establish the relevant alerts. Manual-task mode skips this branch.
 
 For example, after extracting a QA CV whose preferences and screening answers are missing, ask:
 
@@ -95,7 +95,7 @@ For file-copy operations, preserve existing documents and never overwrite a diff
 
 State the configured scope accurately: profile setup, manual applications, or email-alert applications. Summarize what was saved, which roles/CVs are available, and any deferred answers or access dependencies. This is an informative handoff, not a mandatory approval gate. A correction can be supplied conversationally at any time.
 
-For profile setup, stop after the supplied facts and chosen follow-ups are saved. Do not require a portal account, inbox or schedule. For manual applications, obtain the applicable operating instructions and actual target access when needed. Email-alert mode additionally needs the configured inbox, permitted alert selection and [inbox procedure](../automation/README.md#inbox-access). Scheduling is separate and starts only when requested.
+For profile setup, stop after the supplied facts and chosen follow-ups are saved. Do not require a portal account, inbox or schedule. For manual applications, obtain the applicable operating instructions and actual target access when needed. Email-alert mode additionally needs the configured inbox, permitted alert selection and [inbox procedure](../automation/email/agentmail/README.md#inbox-access). Scheduling is separate and starts only when requested.
 
 Mark onboarding complete only for its configured scope when required information is available and optional deferrals are recorded. “Complete” never means every future employer question is answered or a live application succeeded. Missing scope-required information remains waiting for the user's answer. If no application task exists, keep that dependency in private onboarding progress; do not create a fake job ticket or a fifth board folder.
 
@@ -105,7 +105,7 @@ On later adoption or check-ins, reuse populated profiles. Reopen only the affect
 
 ## Private progress format
 
-Copy [the empty example](../automation/onboarding-state.example.json) to ignored `.local/onboarding-state.json` when there is a real onboarding change. Store no answers or credentials in this file.
+Copy [the empty example](../automation/onboarding/onboarding-state.example.json) to ignored `.local/onboarding-state.json` when there is a real onboarding change. Store no answers or credentials in this file.
 
 | Field | Meaning |
 | --- | --- |

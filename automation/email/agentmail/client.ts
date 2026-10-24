@@ -1,4 +1,4 @@
-import { messageReadyForDeletion, type MessageProgress } from "./application-state.js";
+import { messageReadyForDeletion, type MessageProgress } from "../../workflow/application-state.js";
 
 export interface MessageHeader {
   inbox_id: string;

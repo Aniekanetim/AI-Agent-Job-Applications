@@ -1,4 +1,4 @@
-import { AgentMailError, type Fetch } from "./agentmail.js";
+import { AgentMailError, type Fetch } from "./client.js";
 
 export interface InboxSummary {
   inbox_id: string;

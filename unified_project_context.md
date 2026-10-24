@@ -1,12 +1,12 @@
 # Job-application shared progress
 
-**Package:** 1.4.0. **Date:** 24 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
+**Package:** 1.5.0. **Date:** 24 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
 
 | Item | Current template state |
 | --- | --- |
 | Candidate / enabled roles | Not supplied; example role folders are disabled |
 | Onboarding | Not started; the agent follows [conversational onboarding](Application%20Workflow/onboarding-workflow.md) and saves private context |
-| AgentMail inbox / access | Not discovered or connected; [setup](automation/agentmail-setup.md) needs only a private API key and handles inbox discovery/provisioning |
+| AgentMail inbox / access | Not discovered or connected; [setup](automation/email/agentmail/setup.md) needs only a private API key and handles inbox discovery/provisioning |
 | Platform accounts | Not supplied; no live access performed |
 | Browser credential templates | Commented per-board `.env.example` files; actual `.env` values stay private and unconfigured |
 | Website knowledge | All included maps/routines unlearned |

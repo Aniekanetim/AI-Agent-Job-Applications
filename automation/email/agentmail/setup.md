@@ -4,9 +4,9 @@ For email alerts, the user supplies only their AgentMail API key in private `aut
 
 ## 1. Collect the API key privately
 
-The agent creates ignored `automation/.env` from [.env.example](.env.example) only if the file is absent. The user enters their key locally and uncomments `AGENTMAIL_API_KEY`. Keep the key out of chat, Markdown, tickets, command arguments and logs. The client reads only this working copy's file; never copy credentials from a global skill or another project.
+The agent creates ignored `automation/.env` from [.env.example](../../.env.example) only if the file is absent. The user enters their key locally and uncomments `AGENTMAIL_API_KEY`. Keep the key out of chat, Markdown, tickets, command arguments and logs. The client reads only this working copy's file; never copy credentials from a global skill or another project.
 
-The included [HTTP client](agentmail.ts) and [inbox discovery client](agentmail-inboxes.ts) make a separate skill installation unnecessary for this path. If an authorized AgentMail skill/connector is already available, the agent can use equivalent operations under its actual permissions. Check its capabilities without making the user choose a technical integration. [Official skill installation](https://www.agentmail.to/docs/integrations/skills) remains an optional agent-managed alternative:
+The included [HTTP client](client.ts) and [inbox discovery client](inboxes.ts) make a separate skill installation unnecessary for this path. If an authorized AgentMail skill/connector is already available, the agent can use equivalent operations under its actual permissions. Check its capabilities without making the user choose a technical integration. [Official skill installation](https://www.agentmail.to/docs/integrations/skills) remains an optional agent-managed alternative:
 
 ```shell
 npx skills add agentmail-to/agentmail-skills
@@ -37,7 +37,7 @@ npm ci
 npm run inbox:setup
 ```
 
-This builds the [setup runner](agentmail-setup.ts), discovers the mailbox, provisions one only when needed, stores its binding and checks paginated message-header access. It sends no emails, deletes no mail, reads no message bodies and starts no schedule. An empty inbox can be reachable while still awaiting its first alert.
+This builds the [setup runner](setup.ts), discovers the mailbox, provisions one only when needed, stores its binding and checks paginated message-header access. It sends no emails, deletes no mail, reads no message bodies and starts no schedule. An empty inbox can be reachable while still awaiting its first alert.
 
 `npm run inbox:check` is the read-only alternative: it lists inboxes and checks headers without provisioning or writing binding state. A first setup with no mailbox uses `inbox:setup` instead. For an ambiguous candidate list, the agent can use the runner's `--select` option with an ID it has obtained from the provider; this is internal routing, not a user onboarding field.
 

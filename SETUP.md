@@ -1,6 +1,6 @@
 # Set up a working copy
 
-The repository is a reusable package. It starts with no connected inbox, enabled candidate profile, known website flow, live ticket or schedule. An AI agent with file, browser and authorized inbox access performs the work; installing Node dependencies alone does not start an agent.
+The repository is a reusable package. It starts with no connected inbox, enabled candidate profile, known website flow, live ticket or schedule. An AI agent with file and browser access performs the work; email mode also needs authorized inbox access. Installing Node dependencies alone does not start an agent.
 
 To begin, tell your agent: “Set this up with my CV. Ask for the missing details and save my answers.” It follows [candidate onboarding](Application%20Workflow/onboarding-workflow.md). The steps below explain what the agent sets up; you do not need to populate the context files manually.
 
@@ -28,11 +28,11 @@ You can leave optional preferences unspecified or answer later. Missing mandator
 
 Tell the agent which job board or vacancy to use. It asks for the relevant access action, local `.env` reference or secure-store reference and updates the private [job-board access instructions](Job%20Context/Job%20Boards/README.md). Each board includes a commented `.env.example`. The agent creates a local `.env` from it only when absent; uncomment the email/password placeholders and enter the real values in that ignored file. The authentication runner must explicitly load the selected file at runtime. Keep passwords out of tickets, Markdown and public templates. Employer destinations have separate access requirements; a board password is not automatically their password.
 
-For email-alert mode, follow [AgentMail onboarding and skill setup](automation/agentmail-setup.md). Enter only `AGENTMAIL_API_KEY` in private `automation/.env`, using the commented [example](automation/.env.example). The agent runs `npm run inbox:setup` to discover a suitable inbox, provision one if none exists, save its identity and verify header access. Users do not need to find or enter inbox IDs or install a separate skill for the included client. `npm run inbox:check` remains read-only. Manual-task mode needs no inbox. Setup sends no test email, deletes no mail and starts no schedule.
+For email-alert mode, follow [AgentMail setup](automation/email/agentmail/setup.md). Enter only `AGENTMAIL_API_KEY` in private `automation/.env`, using the commented [example](automation/.env.example). The agent runs `npm run inbox:setup` to discover a suitable inbox, provision one if none exists, save its identity and verify header access. Users do not need to find or enter inbox IDs or install a separate skill for the included client. `npm run inbox:check` remains read-only. Manual-task mode needs no inbox. Setup sends no test email, deletes no mail and starts no schedule.
 
 ## 4. Prepare browser tooling
 
-Use a browser-capable agent and available browser tools. The TypeScript skeletons use Playwright library page objects for website navigation. For local code validation:
+Use a browser-capable agent and available browser tools. The TypeScript skeletons use Playwright library page objects for website navigation. For the included code utilities, use Node.js 22 or later and npm. The [automation component map](automation/README.md#what-runs-where) explains the required capabilities and where they come from. For local code validation:
 
 ```shell
 npm ci
@@ -52,7 +52,7 @@ The agent can initially discover with its authorized browser tools. Generated Pl
 
 Create a real ticket from the inline [board template](Task%20Board/README.md#ticket-template) in To Do, or read the configured alert inbox. Normal execution needs no review gate. Missing required information goes to Blocked with the exact context path. Discovery runs as needed under the same application instructions.
 
-After setup is usable, configure periodic check-ins when requested in the chosen agent/scheduler with [the check-in prompt](automation/check-in-prompt.md). Cadence, timezone and target working root must be supplied for this setup. Copying files does not transfer an existing schedule. Do not configure a second worker against the same inbox/board without coordinating claims.
+After setup is usable, configure periodic check-ins when requested in the chosen agent/scheduler with [the check-in prompt](automation/scheduling/check-in-prompt.md). Cadence, timezone and target working root must be supplied for this setup. Copying files does not transfer an existing schedule. Do not configure a second worker against the same inbox/board without coordinating claims.
 
 ## Setup complete means
 

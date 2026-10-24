@@ -3,8 +3,8 @@ import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
-import { AgentMailError, AgentMailInbox, type Fetch } from "./agentmail.js";
-import { listAccessibleInboxes, createIntakeInbox, type InboxSummary } from "./agentmail-inboxes.js";
+import { AgentMailError, AgentMailInbox, type Fetch } from "./client.js";
+import { listAccessibleInboxes, createIntakeInbox, type InboxSummary } from "./inboxes.js";
 
 export interface InboxConfig {
   readonly inboxId?: string;

@@ -2,7 +2,7 @@
 
 A portable, autonomous job-application workflow. Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
 
-**Version:** 1.4.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
+**Version:** 1.5.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
@@ -10,7 +10,7 @@ A portable, autonomous job-application workflow. Job-alert emails and manual tic
 
 1. Give a file- and browser-capable agent the adoption prompt below. It will help create or open a private working copy using [SETUP.md](SETUP.md).
 2. Tell it which roles you want. [Onboarding](Application%20Workflow/onboarding-workflow.md) asks for each role's PDF, DOCX or TXT CV, saves the unchanged original in its private Documents folder, checks extraction and fills the [candidate profiles](Job%20Context/Candidate/README.md). It asks short follow-ups; you do not need to edit Markdown files.
-3. Provide a job task or choose email alerts. For [AgentMail setup](automation/agentmail-setup.md), supply only your API key in private `automation/.env`; the agent discovers or provisions the inbox and stores its identity. You do not need an inbox ID or a separate skill installation. [Per-board `.env` files](Job%20Context/Job%20Boards/README.md) hold separate website login details. A manual task needs no inbox.
+3. Provide a job task or choose email alerts. For [AgentMail setup](automation/email/agentmail/setup.md), supply only your API key in private `automation/.env`; the agent discovers or provisions the inbox and stores its identity. You do not need an inbox ID or a separate skill installation. [Per-board `.env` files](Job%20Context/Job%20Boards/README.md) hold separate website login details. A manual task needs no inbox.
 4. Request periodic check-ins separately when the context and access are ready.
 
 ```text
@@ -30,8 +30,9 @@ Site Architecture Context and its Playwright routines; discover missing or chang
 steps using Application Workflow/discovery-workflow.md. Move unresolved tasks to
 Blocked with the exact context file and action needed. Move only confirmed
 submissions to Applied. Delete a source alert only after every vacancy in it is
-accounted for under my instructions. Read automation/README.md before inbox work.
-For email-alert mode, follow automation/agentmail-setup.md. Ask only for my API key
+accounted for under my instructions. Read automation/README.md for component requirements,
+supporting utilities and scheduling.
+For email-alert mode, follow automation/email/agentmail/setup.md. Ask only for my API key
 in the private file; discover/provision and bind the inbox automatically. Do not ask
 me to enter an inbox ID. Setup sends no mail and deletes no messages.
 Do not invent candidate facts, claim unobserved submissions or activate a schedule
@@ -50,7 +51,7 @@ For URL-only adoption, forks and integration, see [use with another agent or pro
 | [Site Architecture Context](Site%20Architecture%20Context/README.md) | Agent-maintained navigation maps and Playwright TypeScript routines, including external application destinations |
 | [Application workflow](Application%20Workflow/application-workflow.md) | Role selection, form completion, submission verification, blocking and resumption |
 | [Discovery workflow](Application%20Workflow/discovery-workflow.md) | Learn unfamiliar or changed application steps and preserve reusable knowledge |
-| [Check-ins and inbox integration](automation/README.md) | Inbox pagination, progress records, message cleanup and optional scheduling |
+| [Automation components](automation/README.md) | Capability requirements, browser tooling, email integration, state helpers and optional scheduling |
 | [Shared progress](unified_project_context.md) | Current setup, operational checkpoint and links, without duplicating candidate documents |
 
 The agent acts within the candidate's supplied instructions without routine review gates. A missing fact or access requirement is a specific dependency: record it in Blocked and continue other eligible work. Website discovery does not authorize inventing qualifications, changing candidate instructions, paying fees or sending unrelated messages.

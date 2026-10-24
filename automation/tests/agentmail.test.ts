@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AgentMailInbox, AgentMailError, type Fetch } from "./agentmail.js";
-import type { MessageProgress } from "./application-state.js";
+import { AgentMailInbox, AgentMailError, type Fetch } from "../email/agentmail/client.js";
+import type { MessageProgress } from "../workflow/application-state.js";
 
 const inboxId = "fixture+alerts@example.invalid";
 const fakeKey = "offline-fixture-key-not-a-credential";

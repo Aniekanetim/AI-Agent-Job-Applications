@@ -1,5 +1,5 @@
 import type { Page } from "playwright";
-import { DiscoveryRequired } from "../../../automation/application-state.js";
+import { DiscoveryRequired } from "../../../automation/workflow/application-state.js";
 
 export const knowledgeState = "unlearned" as const;
 

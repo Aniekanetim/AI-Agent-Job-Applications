@@ -5,10 +5,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { AgentMailError } from "./agentmail.js";
+import { AgentMailError } from "../email/agentmail/client.js";
 import { readInboxConfig, checkInboxAccess, resolveIntakeInbox, inboxCheckFailure,
-  InboxConfigurationError, InboxSelectionRequired, InboxSetupStateError } from "./agentmail-setup.js";
-import type { InboxSummary } from "./agentmail-inboxes.js";
+  InboxConfigurationError, InboxSelectionRequired, InboxSetupStateError } from "../email/agentmail/setup.js";
+import type { InboxSummary } from "../email/agentmail/inboxes.js";
 
 const inboxId = "fixture-alerts@example.invalid";
 const apiKey = "synthetic # $ key";
@@ -112,7 +112,7 @@ test("unexpected and network failure output is sanitized", () => {
 
 test("the CLI does not fall back to credentials inherited from another agent", t => {
   const root = workspace(t);
-  const entry = fileURLToPath(new URL("./agentmail-setup.js", import.meta.url));
+  const entry = fileURLToPath(new URL("../email/agentmail/setup.js", import.meta.url));
   const result = spawnSync(process.execPath, [entry], { cwd: root, encoding: "utf8",
     env: { ...process.env, AGENTMAIL_INBOX_ID: inboxId, AGENTMAIL_API_KEY: apiKey } });
   assert.equal(result.status, 2);
