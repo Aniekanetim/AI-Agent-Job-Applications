@@ -55,7 +55,7 @@ Site-specific page objects and application routines stay with their observed nav
 
 Follow [SETUP.md](../SETUP.md) for first use. The agent onboards the candidate, reads the task and prepares only the capabilities that task needs. Profile setup does not require an inbox or portal login. A manual application needs browser access and the selected profile; email mode also needs mail access.
 
-For email mode, the agent first runs `npm run inbox:detect` and checks available connected tools/skills. It reuses a suitable existing integration through its original source. Only when none is usable does the user supply `AGENTMAIL_API_KEY` in ignored `automation/.env`, using [.env.example](.env.example). The agent follows [AgentMail setup](email/agentmail/setup.md) to discover or provision an inbox and save its identity privately. Do not ask the user to find or enter an inbox ID. A separate AgentMail skill installation is unnecessary for the included clients.
+For email mode, the agent first runs `npm run inbox:detect` and checks available connected tools/skills. It reuses a suitable existing integration through its original source. Only when none is usable does the user supply `AGENTMAIL_API_KEY` in ignored `automation/.env`, using [.env.example](.env.example). The agent follows [AgentMail setup](email/agentmail/setup.md) to list available inboxes, obtain or reuse your choice, and save its identity privately. No existing inbox is chosen automatically, even when only one is available. Do not ask the user to find or enter an inbox ID. A separate AgentMail skill installation is unnecessary for the included clients.
 
 For browser execution, use the agent's authorized browser tools or Playwright with an installed browser, as explained in [browser setup](../SETUP.md#4-prepare-browser-tooling). The agent learns unfamiliar website flows through [discovery](../Application%20Workflow/discovery-workflow.md). Website passwords remain in the relevant board's private configuration, separate from the mail API key.
 
@@ -77,7 +77,8 @@ Detection reads local configuration metadata without network requests or writes.
 | Command | Action |
 | --- | --- |
 | `npm run inbox:detect` | Detect existing local setup and return nonsecret metadata; verify connected-tool access separately |
-| `npm run inbox:setup` | Discover or provision an intake inbox, save its binding and check header access |
+| `npm run inbox:list` | List inbox addresses and metadata for the user’s choice without reading messages or writing a binding |
+| `npm run inbox:setup` | Bind the user’s selected inbox and check header access; create only for an empty account without a requested existing address |
 | `npm run inbox:check` | Discover an existing inbox and check headers without provisioning or saving a binding |
 
 Both preserve the existing `automation/.env` location. Neither sends email, deletes messages or activates a schedule. Actual alert processing and completed-message deletion follow the [email procedure](email/agentmail/README.md#email-processing-and-cleanup).

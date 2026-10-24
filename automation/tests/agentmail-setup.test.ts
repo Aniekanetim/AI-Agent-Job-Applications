@@ -128,7 +128,7 @@ const mailbox = (id: string, extra: Partial<InboxSummary> = {}): InboxSummary =>
   inbox_id: id, email: `${id}@example.invalid`, ...extra,
 });
 
-test("API-key-only setup discovers and saves the sole mailbox before checking headers", async t => {
+test("API-key-only setup saves the user's chosen mailbox before checking its headers", async t => {
   const root = workspace(t, `AGENTMAIL_API_KEY="${apiKey}"\n`);
   const config = readInboxConfig(root);
   const methods: string[] = [];
@@ -138,7 +138,8 @@ test("API-key-only setup discovers and saves the sole mailbox before checking he
       ? reply({ inboxes: [mailbox("discovered")], next_page_token: null })
       : reply({ messages: [] });
   };
-  const selected = await resolveIntakeInbox(root, config, { allowCreate: true, http });
+  const selected = await resolveIntakeInbox(root, config, {
+    allowCreate: true, selectedInboxAddress: "discovered@example.invalid", http });
   const result = await checkInboxAccess({ ...config, inboxId: selected.inbox_id }, http);
   assert.equal(result.inboxReachable, true);
   assert.deepEqual(methods, ["GET", "GET"]);
@@ -147,17 +148,94 @@ test("API-key-only setup discovers and saves the sole mailbox before checking he
   assert.equal(JSON.stringify(state).includes(apiKey), false);
 });
 
-test("inbox discovery visits every page before choosing the unique intake mailbox", async t => {
+test("inbox discovery visits every page and presents choices without preferring an intake label", async t => {
   let pages = 0;
-  const selected = await resolveIntakeInbox(workspace(t), { apiKey }, { http: async (input, init) => {
+  await assert.rejects(resolveIntakeInbox(workspace(t), { apiKey }, { http: async (input, init) => {
     assert.equal(init?.method, "GET");
     pages++;
     if (pages === 1) return reply({ inboxes: [mailbox("general")], next_page_token: "next+page" });
     assert.equal(new URL(input).searchParams.get("page_token"), "next+page");
     return reply({ inboxes: [mailbox("alerts", { display_name: "Job application alerts" })] });
-  } });
+  } }), error => {
+    assert.ok(error instanceof InboxSelectionRequired);
+    assert.equal(error.candidates.length, 2);
+    return true;
+  });
   assert.equal(pages, 2);
-  assert.equal(selected.inbox_id, "alerts");
+});
+
+test("a sole existing inbox still requires the user's choice without reading its messages", async t => {
+  const root = workspace(t); let requests = 0;
+  await assert.rejects(resolveIntakeInbox(root, { apiKey }, { allowCreate: true,
+    http: async (input, init) => {
+      requests++; assert.equal(init?.method, "GET");
+      assert.ok(new URL(input).pathname.endsWith("/inboxes"));
+      return reply({ inboxes: [mailbox("existing", { display_name: "Job application alerts" })] });
+    } }), InboxSelectionRequired);
+  assert.equal(requests, 1);
+  assert.equal(existsSync(join(root, ".local/agentmail-intake.json")), false);
+});
+
+test("a user-supplied address resolves the provider ID and its confirmed choice is reused", async t => {
+  const root = workspace(t);
+  const http = async (_input: string | URL, init?: RequestInit) => {
+    assert.equal(init?.method, "GET");
+    return reply({ inboxes: [mailbox("opaque-provider-id", { email: "chosen@example.invalid" }), mailbox("other")] });
+  };
+  const selected = await resolveIntakeInbox(root, { apiKey }, {
+    allowCreate: true, selectedInboxAddress: "chosen@example.invalid", http,
+  });
+  assert.equal(selected.inbox_id, "opaque-provider-id");
+  const saved = JSON.parse(readFileSync(join(root, ".local/agentmail-intake.json"), "utf8"));
+  assert.equal(saved.selectionMethod, "user");
+  const reused = await resolveIntakeInbox(root, { apiKey }, { allowCreate: true, http });
+  assert.equal(reused.inbox_id, selected.inbox_id);
+});
+
+test("an unavailable chosen address is never replaced and never triggers creation", async t => {
+  for (const inboxes of [[], [mailbox("other")]]) {
+    const root = workspace(t);
+    await assert.rejects(resolveIntakeInbox(root, { apiKey }, {
+      allowCreate: true, selectedInboxAddress: "missing@example.invalid", http: async (_input, init) => {
+        assert.equal(init?.method, "GET"); return reply({ inboxes });
+      },
+    }), InboxSetupStateError);
+    assert.equal(existsSync(join(root, ".local/agentmail-intake.json")), false);
+  }
+});
+
+test("a paused chosen inbox remains a specific dependency without selecting another inbox", async t => {
+  await assert.rejects(resolveIntakeInbox(workspace(t), { apiKey }, {
+    allowCreate: true, selectedInboxAddress: "paused@example.invalid", http: async (_input, init) => {
+      assert.equal(init?.method, "GET");
+      return reply({ inboxes: [mailbox("paused", { status: "paused" }), mailbox("active")] });
+    },
+  }), InboxSetupStateError);
+});
+
+test("legacy automatic bindings are preserved while awaiting a user's first choice", async t => {
+  const root = workspace(t); mkdirSync(join(root, ".local"));
+  const path = join(root, ".local/agentmail-intake.json");
+  const original = JSON.stringify({ schemaVersion: 1, inboxId: "legacy" });
+  writeFileSync(path, original);
+  const http = async () => reply({ inboxes: [mailbox("legacy")] });
+  await assert.rejects(resolveIntakeInbox(root, { apiKey }, { allowCreate: true, http }), InboxSelectionRequired);
+  assert.equal(readFileSync(path, "utf8"), original);
+  await resolveIntakeInbox(root, { apiKey }, { allowCreate: true,
+    selectedInboxAddress: "legacy@example.invalid", http });
+  assert.equal(JSON.parse(readFileSync(path, "utf8")).selectionMethod, "user");
+});
+
+test("paused inboxes are listed as unavailable instead of treating the account as empty", async t => {
+  await assert.rejects(resolveIntakeInbox(workspace(t), { apiKey }, {
+    allowCreate: true, http: async (_input, init) => {
+      assert.equal(init?.method, "GET"); return reply({ inboxes: [mailbox("paused", { status: "paused" })] });
+    },
+  }), error => {
+    assert.ok(error instanceof InboxSelectionRequired);
+    assert.equal(error.candidates[0].status, "paused");
+    return true;
+  });
 });
 
 test("setup creates one intake mailbox when none exist and reuses it on restart", async t => {

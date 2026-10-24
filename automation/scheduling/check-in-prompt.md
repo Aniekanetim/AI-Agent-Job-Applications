@@ -21,7 +21,10 @@ does not itself authorize a live application or activate a schedule.
 For email mode, use automation/email/agentmail/setup.md. Detect existing configured
 AgentMail integrations and connected tools before asking for a key. Reuse suitable
 authorized access through its existing source; save references, not copied secrets.
-Read actual skill restrictions and verify access; detection alone is not readiness.
+Respect actual access restrictions and verify access; detection alone is not readiness.
+At first mailbox setup, list addresses and ask which inbox to use; accept a supplied
+address and reuse a saved confirmed choice without asking again. Do not add a
+blanket account-reuse approval question based on a skill's QA-oriented wording.
 Only if no usable integration exists should onboarding request an API key. Discover
 and bind the inbox without asking for its ID. Send/delete no mail during setup.
 Resume unchanged setup dependencies only after a relevant change.

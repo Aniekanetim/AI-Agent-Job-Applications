@@ -44,7 +44,7 @@ export function readInboxConfig(workingRoot: string): InboxConfig {
 
 export class InboxSelectionRequired extends Error {
   constructor(public readonly candidates: InboxSummary[]) {
-    super("The agent needs to resolve the intake mailbox from available context.");
+    super("List the available inboxes and ask which the user wants to use; reuse an already supplied choice.");
     this.name = "InboxSelectionRequired";
   }
 }
@@ -56,7 +56,9 @@ export class InboxSetupStateError extends Error {
   }
 }
 
-interface IntakeBinding { schemaVersion: 1; inboxId?: string; clientId?: string }
+interface IntakeBinding {
+  schemaVersion: 1; inboxId?: string; clientId?: string; selectionMethod?: "user" | "created";
+}
 
 function bindingPath(root: string) { return resolve(root, ".local", "agentmail-intake.json"); }
 
@@ -67,7 +69,8 @@ function readBinding(root: string): IntakeBinding {
     const state = JSON.parse(readFileSync(path, "utf8")) as IntakeBinding;
     if (state.schemaVersion !== 1 ||
       (state.inboxId !== undefined && (typeof state.inboxId !== "string" || !state.inboxId.trim())) ||
-      (state.clientId !== undefined && (typeof state.clientId !== "string" || !state.clientId.trim()))) {
+      (state.clientId !== undefined && (typeof state.clientId !== "string" || !state.clientId.trim())) ||
+      (state.selectionMethod !== undefined && !["user", "created"].includes(state.selectionMethod))) {
       throw new InboxSetupStateError();
     }
     return state;
@@ -100,41 +103,55 @@ function claimCreation(root: string): IntakeBinding {
   }
 }
 
-/** Resolve IDs for the agent. Human onboarding only needs the API key. */
+/** The user chooses the address; the agent resolves and stores its provider ID. */
 export async function resolveIntakeInbox(
   root: string, config: InboxConfig,
-  options: { allowCreate?: boolean; selectedInboxId?: string; http?: Fetch } = {},
+  options: { allowCreate?: boolean; selectedInboxId?: string; selectedInboxAddress?: string; http?: Fetch } = {},
 ): Promise<InboxSummary> {
   const state = readBinding(root);
   const all = await listAccessibleInboxes(config.apiKey, options.http);
   const active = all.filter(item => item.status !== "paused");
-  const preferred = options.selectedInboxId ?? config.inboxId ?? state.inboxId;
+  if (options.selectedInboxId && options.selectedInboxAddress) throw new InboxSetupStateError();
+  const suppliedAddress = options.selectedInboxAddress?.trim().toLowerCase();
+  if (options.selectedInboxAddress !== undefined && !suppliedAddress) throw new InboxSetupStateError();
+  if (state.inboxId && !active.some(item => item.inbox_id === state.inboxId) &&
+    !options.selectedInboxId && !suppliedAddress) throw new InboxSetupStateError();
+  const preferred = options.selectedInboxId ?? config.inboxId ??
+    (state.selectionMethod ? state.inboxId : undefined);
+  let selectionMethod = state.selectionMethod;
   let chosen: InboxSummary | undefined;
-  if (preferred) {
+  if (suppliedAddress) {
+    const matches = active.filter(item => item.email?.toLowerCase() === suppliedAddress ||
+      item.inbox_id.toLowerCase() === suppliedAddress);
+    if (matches.length !== 1) throw new InboxSetupStateError();
+    chosen = matches[0]; selectionMethod = "user";
+  } else if (preferred) {
     chosen = active.find(item => item.inbox_id === preferred);
     if (!chosen) throw new InboxSetupStateError();
+    if (options.selectedInboxId || config.inboxId) selectionMethod = "user";
+  } else if (state.inboxId) {
+    // Older bindings may have been selected automatically; preserve them while asking once.
+    throw new InboxSelectionRequired(all);
   } else if (state.clientId) {
     chosen = active.find(item => item.client_id === state.clientId);
     if (!chosen) {
       if (!options.allowCreate) throw new InboxSetupStateError();
       chosen = await createIntakeInbox(config.apiKey, state.clientId, options.http);
     }
-  } else if (active.length === 1) {
-    chosen = active[0];
+    selectionMethod = "created";
+  } else if (all.length > 0) {
+    // Even a sole or specially named existing inbox needs the user's choice.
+    throw new InboxSelectionRequired(all);
   } else {
-    const dedicated = active.filter(item => item.display_name === "Job application alerts");
-    if (dedicated.length === 1) chosen = dedicated[0];
-    else if (active.length > 0) throw new InboxSelectionRequired(active);
-    else {
-      if (!options.allowCreate) throw new InboxSelectionRequired([]);
-      const claimed = claimCreation(root);
-      if (claimed.inboxId) return resolveIntakeInbox(root, config, options);
-      if (!claimed.clientId) throw new InboxSetupStateError();
-      state.clientId = claimed.clientId;
-      chosen = await createIntakeInbox(config.apiKey, state.clientId, options.http);
-    }
+    if (!options.allowCreate) throw new InboxSelectionRequired([]);
+    const claimed = claimCreation(root);
+    if (claimed.inboxId) return resolveIntakeInbox(root, config, options);
+    if (!claimed.clientId) throw new InboxSetupStateError();
+    state.clientId = claimed.clientId;
+    chosen = await createIntakeInbox(config.apiKey, state.clientId, options.http);
+    selectionMethod = "created";
   }
-  if (options.allowCreate) saveBinding(root, { ...state, inboxId: chosen.inbox_id });
+  if (options.allowCreate) saveBinding(root, { ...state, inboxId: chosen.inbox_id, selectionMethod });
   return chosen;
 }
 
@@ -183,12 +200,22 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const connection = explicit ? { source: explicit, config: credentialsFromSource(explicit) }
       : readInboxConnection(root);
     const { config } = connection;
+    if (args.includes("--list-inboxes")) {
+      const inboxes = await listAccessibleInboxes(config.apiKey);
+      await new Promise<void>((done, reject) => process.stdout.write(JSON.stringify({ inboxes,
+        operation: "Inbox metadata only", messagesRead: 0, bindingsWritten: 0 }) + "\n",
+      error => error ? reject(error) : done()));
+      process.exit(0);
+    }
     const selected = args.indexOf("--select");
-    if (selected >= 0 && (!allowCreate || !args[selected + 1] || args[selected + 1].startsWith("--"))) {
+    const address = args.indexOf("--select-address");
+    if ((selected >= 0 && (!args[selected + 1] || args[selected + 1].startsWith("--"))) ||
+      (address >= 0 && (!args[address + 1] || args[address + 1].startsWith("--")))) {
       throw new InboxSetupStateError();
     }
     const resolved = await resolveIntakeInbox(root, config, {
       allowCreate, selectedInboxId: selected >= 0 ? args[selected + 1] : undefined,
+      selectedInboxAddress: address >= 0 ? args[address + 1] : undefined,
     });
     const access = await checkInboxAccess({ ...config, inboxId: resolved.inbox_id });
     if (allowCreate) saveCredentialSource(root, connection.source);
@@ -205,7 +232,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         process.exitCode = 4;
       } else { console.error(failure.message); process.exitCode = failure.exitCode; }
     } else if (error instanceof InboxSelectionRequired) {
-      console.error(JSON.stringify({ needsAgentSelection: true, candidates: error.candidates }));
+      console.error(JSON.stringify({ needsAgentSelection: true, needsUserInboxChoice: true,
+        candidates: error.candidates }));
       process.exitCode = failure.exitCode;
     } else { console.error(failure.message); process.exitCode = failure.exitCode; }
   }

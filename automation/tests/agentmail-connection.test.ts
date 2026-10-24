@@ -125,9 +125,11 @@ test("discovery reports incompatible endpoints without redirecting credentials",
   assert.throws(() => credentialsFromSource({ type: "envFile", path }), ConnectionSourceError);
 });
 
-function runSetup(root: string, args: string[], mockResponses: boolean) {
+function runSetup(root: string, args: string[], mockResponses: boolean | "listOnly") {
   const entry = fileURLToPath(new URL("../email/agentmail/setup.js", import.meta.url));
-  const mock = mockResponses
+  const mock = mockResponses === "listOnly"
+    ? `globalThis.fetch=async(url,init)=>{if(init.method!=='GET'||!new URL(url).pathname.endsWith('/inboxes'))throw new Error('Inbox metadata only');return new Response(JSON.stringify({inboxes:[{inbox_id:'fixture-existing',email:'fixture@example.invalid'}]}));};`
+    : mockResponses
     ? `globalThis.fetch=async url=>new Response(JSON.stringify(String(url).includes('/messages')?{messages:[]}:{inboxes:[{inbox_id:'fixture-existing',email:'fixture@example.invalid'}]}));`
     : `globalThis.fetch=async()=>{throw new Error('Offline fixture forbids requests')};`;
   return spawnSync(process.execPath, ["--import", `data:text/javascript,${encodeURIComponent(mock)}`, entry, ...args], {
@@ -149,7 +151,8 @@ test("setup surfaces a configured host skill to the agent instead of requesting 
 test("the agent can verify and bind an existing source without copying its key", t => {
   const box = sandbox(t);
   const path = box.file("existing/.env", `AGENTMAIL_API_KEY="${key}"`);
-  const result = runSetup(box.root, ["--setup", "--credential-file", path], true);
+  const result = runSetup(box.root, ["--setup", "--credential-file", path,
+    "--select-address", "fixture@example.invalid"], true);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(JSON.parse(result.stdout).inboxReachable, true);
   assert.deepEqual(savedCredentialSource(box.root), { type: "envFile", path });
@@ -160,7 +163,21 @@ test("the agent can verify and bind an existing source without copying its key",
 test("read-only access with an existing source saves no credential or inbox binding", t => {
   const box = sandbox(t);
   const path = box.file("existing/.env", `AGENTMAIL_API_KEY="${key}"`);
-  const result = runSetup(box.root, ["--credential-file", path], true);
+  const result = runSetup(box.root, ["--credential-file", path,
+    "--select-address", "fixture@example.invalid"], true);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(existsSync(resolve(box.root, ".local")), false);
+});
+
+test("listing existing inboxes reads metadata only and writes no binding", t => {
+  const box = sandbox(t);
+  const path = box.file("existing/.env", `AGENTMAIL_API_KEY="${key}"`);
+  const result = runSetup(box.root, ["--list-inboxes", "--credential-file", path], "listOnly");
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.inboxes[0].email, "fixture@example.invalid");
+  assert.equal(output.messagesRead, 0);
+  assert.equal(output.bindingsWritten, 0);
+  assert.equal(existsSync(resolve(box.root, ".local")), false);
+  assert.equal(result.stdout.includes(key), false);
 });

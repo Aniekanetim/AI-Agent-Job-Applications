@@ -2,7 +2,7 @@
 
 A portable, autonomous job-application workflow. Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
 
-**Version:** 1.6.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
+**Version:** 1.7.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
@@ -10,7 +10,7 @@ A portable, autonomous job-application workflow. Job-alert emails and manual tic
 
 1. Give a file- and browser-capable agent the adoption prompt below. It will help create or open a private working copy using [SETUP.md](SETUP.md).
 2. Tell it which roles you want. [Onboarding](Application%20Workflow/onboarding-workflow.md) asks for each role's PDF, DOCX or TXT CV, saves the unchanged original in its private Documents folder, checks extraction and fills the [candidate profiles](Job%20Context/Candidate/README.md). It asks short follow-ups; you do not need to edit Markdown files.
-3. Provide a job task or choose email alerts. For [AgentMail setup](automation/email/agentmail/setup.md), the agent first detects existing configured connections and reuses a suitable one. Only when none is usable does it ask for your API key in private `automation/.env`. Inbox discovery and binding are agent work; you do not need an inbox ID or a separate skill installation. [Per-board `.env` files](Job%20Context/Job%20Boards/README.md) hold separate website login details. A manual task needs no inbox.
+3. Provide a job task or choose email alerts. For [AgentMail setup](automation/email/agentmail/setup.md), the agent first detects existing configured connections and reuses a suitable one. Only when none is usable does it ask for your API key in private `automation/.env`. The agent lists inboxes and asks which address to use, accepting an already supplied choice. You do not need an inbox ID or a separate skill installation. [Per-board `.env` files](Job%20Context/Job%20Boards/README.md) hold separate website login details. A manual task needs no inbox.
 4. Request periodic check-ins separately when the context and access are ready.
 
 ```text
@@ -35,7 +35,9 @@ supporting utilities and scheduling.
 For email-alert mode, follow automation/email/agentmail/setup.md. First detect existing
 AgentMail connections, including configured skills and connected tools; reuse a suitable
 connection within its permissions without copying its key. Ask for a new API key only
-when none is usable. Discover/provision and bind the inbox; never ask for its ID.
+when none is usable. List inbox addresses and ask which to use, or verify my already
+supplied address. Reuse a saved choice; never ask me to look up an inbox ID or
+add a blanket account-reuse approval question.
 Setup sends no mail and deletes no messages.
 Do not invent candidate facts, claim unobserved submissions or activate a schedule
 from this prompt alone. Keep candidate data, tickets, credentials and sessions private.

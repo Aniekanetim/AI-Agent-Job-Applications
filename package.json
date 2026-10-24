@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-job-applications",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "type": "module",
   "description": "Portable agent workflow, inbox helper and offline completion checks. No live site integrations bundled.",
@@ -13,7 +13,8 @@
     "test": "tsc --outDir .local/check && node --test .local/check/automation/tests/application-state.test.js .local/check/automation/tests/agentmail.test.js .local/check/automation/tests/agentmail-setup.test.js .local/check/automation/tests/agentmail-connection.test.js",
     "inbox:check": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js",
     "inbox:setup": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js --setup",
-    "inbox:detect": "npm run build --silent && node .local/build/automation/email/agentmail/connection.js"
+    "inbox:detect": "npm run build --silent && node .local/build/automation/email/agentmail/connection.js",
+    "inbox:list": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js --list-inboxes"
   },
   "license": "MIT",
   "devDependencies": {
