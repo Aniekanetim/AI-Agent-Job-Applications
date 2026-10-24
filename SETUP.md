@@ -28,7 +28,7 @@ You can leave optional preferences unspecified or answer later. Missing mandator
 
 Tell the agent which job board or vacancy to use. It asks for the relevant access action, local `.env` reference or secure-store reference and updates the private [job-board access instructions](Job%20Context/Job%20Boards/README.md). Each board includes a commented `.env.example`. The agent creates a local `.env` from it only when absent; uncomment the email/password placeholders and enter the real values in that ignored file. The authentication runner must explicitly load the selected file at runtime. Keep passwords out of tickets, Markdown and public templates. Employer destinations have separate access requirements; a board password is not automatically their password.
 
-For email-alert mode, follow [AgentMail onboarding and skill setup](automation/agentmail-setup.md). The agent checks the available skill/connector, asks for the exact inbox and alert-selection rules, and offers the included client when appropriate. Its commented [automation/.env.example](automation/.env.example) creates a private `automation/.env` for `AGENTMAIL_INBOX_ID` and `AGENTMAIL_API_KEY`; enter values locally, not in chat. `npm run inbox:check` verifies read-only header access for that file. An address such as `pass@agentmail.to` remains a placeholder until supplied. Manual-task mode needs no inbox. Setup sends no test email, deletes no mail and starts no schedule.
+For email-alert mode, follow [AgentMail onboarding and skill setup](automation/agentmail-setup.md). Enter only `AGENTMAIL_API_KEY` in private `automation/.env`, using the commented [example](automation/.env.example). The agent runs `npm run inbox:setup` to discover a suitable inbox, provision one if none exists, save its identity and verify header access. Users do not need to find or enter inbox IDs or install a separate skill for the included client. `npm run inbox:check` remains read-only. Manual-task mode needs no inbox. Setup sends no test email, deletes no mail and starts no schedule.
 
 ## 4. Prepare browser tooling
 
@@ -73,6 +73,7 @@ A public clone does not contain ignored operational information. Transfer the fo
 - Actual role-profile `*.local.md` files and CV/supporting documents.
 - Per-board `.env` files, if used, through a private transfer; alternatively enter the values again on the new machine.
 - Private `automation/.env` for the included AgentMail client, or reconnect the selected authenticated connector.
+- Private `.local/agentmail-intake.json`, preserving the selected mailbox and any creation identity through restarts.
 - Live board tickets, private shared progress and `.local/inbox-state.json`.
 - Private `.local/onboarding-state.json` when setup has pending questions or deferrals.
 - Relevant restricted evidence and learned site maps/code with their observation versions.
