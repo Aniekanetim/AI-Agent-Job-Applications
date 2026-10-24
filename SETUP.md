@@ -26,7 +26,7 @@ You can leave optional preferences unspecified or answer later. Missing mandator
 
 ## 3. Connect websites and inbox
 
-Tell the agent which job board or vacancy to use. It asks for the relevant access action or secure-store reference and updates the private [job-board access instructions](Job%20Context/README.md). Do not paste passwords into tickets or public files. Employer destinations can have their own access requirements, recorded as nonsecret references in the parent platform's local instructions.
+Tell the agent which job board or vacancy to use. It asks for the relevant access action, local `.env` reference or secure-store reference and updates the private [job-board access instructions](Job%20Context/Job%20Boards/README.md). Each board includes a commented `.env.example`. The agent creates a local `.env` from it only when absent; uncomment the email/password placeholders and enter the real values in that ignored file. The authentication runner must explicitly load the selected file at runtime. Keep passwords out of tickets, Markdown and public templates. Employer destinations have separate access requirements; a board password is not automatically their password.
 
 For email-alert mode, the agent asks for the actual AgentMail inbox, secret reference and alert-selection rules using [automation/README.md](automation/README.md). An address such as `pass@agentmail.to` is a placeholder until the user supplies an actual inbox. Manual-task mode does not require an inbox. Use an existing connector or the portable HTTP helper. Pagination and deletion rules are documented there. Do not run a send-email smoke test or delete live mail during setup.
 
@@ -71,6 +71,7 @@ For a different candidate or independent setup, begin with empty live queues and
 A public clone does not contain ignored operational information. Transfer the following through a private mechanism:
 
 - Actual role-profile `*.local.md` files and CV/supporting documents.
+- Per-board `.env` files, if used, through a private transfer; alternatively enter the values again on the new machine.
 - Live board tickets, private shared progress and `.local/inbox-state.json`.
 - Private `.local/onboarding-state.json` when setup has pending questions or deferrals.
 - Relevant restricted evidence and learned site maps/code with their observation versions.

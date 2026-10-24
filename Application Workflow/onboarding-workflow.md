@@ -37,9 +37,11 @@ Ask one to three concise questions per message. Use the groups below in order, s
 | Job preferences | Desired work locations and remote/hybrid/onsite options; employment type and seniority; salary and its currency/period/basis when a salary rule is wanted; relevant exclusions | `job-preferences.local.md` |
 | Screening answers | Country-specific work authorization and sponsorship, notice period/start availability, and other recurring questions relevant to the selected role | `application-answers.local.md` |
 | Application instructions | Application scope/channels, permitted factual tailoring, account registration, optional-question handling, closed/unsuitable vacancy handling, destinations, limits and notifications | `application-instructions.local.md` |
-| Access for the chosen channel | Manual tasks or email alerts; selected portal/session access; inbox identity and secret reference only for email mode | Relevant `Job Boards/<site>/access-and-instructions.local.md`; private shared progress for inbox setup |
+| Access for the chosen channel | Manual tasks or email alerts; selected portal/session access and local `.env` or secure-store reference; inbox identity and secret reference only for email mode | Relevant `Job Boards/<site>/access-and-instructions.local.md`; private shared progress for inbox setup |
 
 Candidate filenames in this table are relative to `Job Context/Candidate/Role Profiles/<selected role>` except the routing entry. [The profile index](../Job%20Context/Candidate/README.md#profile-contents) explains the file boundaries.
+
+For password-based sign-in, offer the board's [local `.env` setup](../Job%20Context/Job%20Boards/README.md). Create the ignored file from its commented example only if it is absent, then ask the user to enter the values locally. Store only the file/key reference in access Markdown. Do not ask for passwords in ordinary chat or copy them into candidate answers. An existing authorized session or secure credential store remains an alternative.
 
 For example, after extracting a QA CV whose preferences and screening answers are missing, ask:
 

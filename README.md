@@ -2,7 +2,7 @@
 
 A portable, autonomous job-application workflow. Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
 
-**Version:** 1.1.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
+**Version:** 1.2.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
@@ -10,7 +10,7 @@ A portable, autonomous job-application workflow. Job-alert emails and manual tic
 
 1. Give a file- and browser-capable agent the adoption prompt below. It will help create or open a private working copy using [SETUP.md](SETUP.md).
 2. Tell it which roles you want and provide the CV for each. [Onboarding](Application%20Workflow/onboarding-workflow.md) extracts the known facts, asks short follow-up questions and saves your private [candidate profiles](Job%20Context/Candidate/README.md). You do not need to edit Markdown files.
-3. Provide a job task or choose email alerts. The agent asks for relevant account access when needed; a manual task needs no inbox.
+3. Provide a job task or choose email alerts. The agent asks for relevant account access when needed. [Per-board `.env` files](Job%20Context/Job%20Boards/README.md) can hold private login details; commented examples are included. A manual task needs no inbox.
 4. Request periodic check-ins separately when the context and access are ready.
 
 ```text
@@ -76,6 +76,8 @@ Install optional TypeScript tooling with `npm ci`. `npm run check` checks types;
 Fork or use this repository as a template, then create a private working copy for real candidate information. The public edition contains blank `.md` templates. Give your CV and answers to the agent; it writes ignored `*.local.md` counterparts and records the designated private CV. Direct file editing remains optional. The agent reads a local counterpart instead of its blank template, never both as competing sources. See [setup](SETUP.md#private-working-information).
 
 Credentials, inbox progress, task tickets, application evidence, CVs and reusable browser state are excluded from Git by default. When moving machines, transfer the private working information separately and reconnect authentication. [Moving to another machine](SETUP.md#7-move-the-same-setup-to-another-machine) explains resumption.
+
+For browser passwords, keep actual values in each board's ignored `.env`; the repository publishes only commented `.env.example` files. [Authentication setup](Job%20Context/Job%20Boards/README.md) explains the keys and runtime loading. Creating the file does not log in or establish a working site integration.
 
 ## License
 

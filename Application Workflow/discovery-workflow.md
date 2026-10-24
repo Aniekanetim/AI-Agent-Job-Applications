@@ -10,7 +10,7 @@ Record the actual URL/host, account role, date/time, page state, applicable entr
 
 ## 2. Establish access and the missing route
 
-Use authorized account/session or candidate registration instructions. Keep credentials/storage state private. Human-assisted login may be needed; do not bypass authentication, CAPTCHA or platform controls. Missing access goes to Blocked with a precise context update/action, not a generic approval request.
+Use authorized account/session or candidate registration instructions. For a password flow, privately load the selected board's ignored `.env` or configured secure-store values following [job-board access](../Job%20Context/Job%20Boards/README.md). Keep credentials/storage state private and exclude login secrets from captured artifacts. Human-assisted login may be needed; do not bypass authentication, CAPTCHA or platform controls. Missing access goes to Blocked with a precise context update/action, not a generic approval request.
 
 Explore the normal application journey with the actual task's legitimate candidate information. Record navigation, multi-step forms, conditional branches, CV upload, validation, return/back behavior and submission confirmation. Avoid a practice submission: final submission belongs to the real task and happens once, followed by actual confirmation.
 

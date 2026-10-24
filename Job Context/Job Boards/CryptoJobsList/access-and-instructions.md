@@ -6,10 +6,11 @@
 | --- | --- |
 | Portal URL / regional version | Not supplied |
 | Candidate account / secure credential reference | Not supplied |
+| Optional local credential file / keys | `.env`: `CRYPTOJOBSLIST_EMAIL`, `CRYPTOJOBSLIST_PASSWORD`; values not supplied |
 | Session setup / MFA / human sign-in procedure | Not supplied |
 | Permitted application channels / registration | Not supplied |
 | Relevant employer destinations and their account references | Not supplied |
 | Platform restrictions / known access limits | Not supplied |
 | Access owner / last verified date | Not supplied |
 
-Keep passwords, OTPs, signed links and session tokens out of this file and tickets. Use a secure store or authorized session; .local.md is private working context, not a password manager. A platform restriction or challenge becomes a specific access blocker, not permission to bypass controls. Discovery learns ordinary allowed navigation under the candidate's instructions.
+For password sign-in, use the commented [.env.example](.env.example) to create an ignored `.env`, or use an authorized session/secure store. Follow [runtime loading](../README.md#load-credentials-for-browser-authentication). Keep passwords, OTPs, signed links and session tokens out of this file and tickets; access Markdown holds only nonsecret references. A platform restriction or challenge becomes a specific access blocker, not permission to bypass controls. Discovery learns ordinary allowed navigation under the candidate's instructions.

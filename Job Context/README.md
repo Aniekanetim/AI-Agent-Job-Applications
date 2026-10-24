@@ -16,4 +16,6 @@ For each human template, use an adjacent ignored `*.local.md` for actual private
 
 The selected role supplies all candidate-specific information. Platform files describe access and platform restrictions; they do not maintain another CV or candidate biography. New portals and external destinations can be added when required by a real assignment.
 
+[Job-board credential setup](Job%20Boards/README.md) supports an ignored `.env` in each board folder. The public `.env.example` files contain commented email/password placeholders. Store actual login values only in private `.env` files or a secure store; private access Markdown records their paths/key names rather than passwords. The agent explicitly loads the selected file when authenticating in the browser.
+
 For a blocker, reply with the missing answer or provide the requested access action. The agent updates the precise private file named on the ticket, verifies the dependency is resolved and resumes the existing task. An unchanged file or incomplete answer does not restart an application.
