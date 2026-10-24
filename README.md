@@ -2,15 +2,15 @@
 
 A portable, autonomous job-application workflow. Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
 
-**Version:** 1.2.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
+**Version:** 1.3.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
 ## Start here
 
 1. Give a file- and browser-capable agent the adoption prompt below. It will help create or open a private working copy using [SETUP.md](SETUP.md).
-2. Tell it which roles you want and provide the CV for each. [Onboarding](Application%20Workflow/onboarding-workflow.md) extracts the known facts, asks short follow-up questions and saves your private [candidate profiles](Job%20Context/Candidate/README.md). You do not need to edit Markdown files.
-3. Provide a job task or choose email alerts. The agent asks for relevant account access when needed. [Per-board `.env` files](Job%20Context/Job%20Boards/README.md) can hold private login details; commented examples are included. A manual task needs no inbox.
+2. Tell it which roles you want. [Onboarding](Application%20Workflow/onboarding-workflow.md) asks for each role's PDF, DOCX or TXT CV, saves the unchanged original in its private Documents folder, checks extraction and fills the [candidate profiles](Job%20Context/Candidate/README.md). It asks short follow-ups; you do not need to edit Markdown files.
+3. Provide a job task or choose email alerts. [AgentMail setup](automation/agentmail-setup.md) covers the skill/connector, inbox credentials and a read-only access check. [Per-board `.env` files](Job%20Context/Job%20Boards/README.md) hold separate website login details. A manual task needs no inbox.
 4. Request periodic check-ins separately when the context and access are ready.
 
 ```text
@@ -18,8 +18,10 @@ Adopt https://github.com/Aniekanetim/AI-Agent-Job-Applications as my
 job-application workflow. Read AGENTS.md, SETUP.md,
 unified_project_context.md, Job Context/README.md, Task Board/README.md and
 Application Workflow/application-workflow.md. Preserve existing project files.
-On first use, follow Application Workflow/onboarding-workflow.md. Read any CVs
-I supply, reuse existing profile answers, ask only relevant missing questions in
+On first use, follow Application Workflow/onboarding-workflow.md. Ask for my CV
+for each selected role (PDF, DOCX or TXT) unless already supplied. Save and hash
+its unchanged original in that role's private Documents folder, check extraction,
+reuse existing profile answers, and ask only relevant missing questions in
 small batches and save my replies into the private candidate files automatically.
 Resume unfinished onboarding without repeating unchanged questions. Respect a
 profile-setup-only request. Use my supplied application instructions for live work.
@@ -29,6 +31,8 @@ steps using Application Workflow/discovery-workflow.md. Move unresolved tasks to
 Blocked with the exact context file and action needed. Move only confirmed
 submissions to Applied. Delete a source alert only after every vacancy in it is
 accounted for under my instructions. Read automation/README.md before inbox work.
+For email-alert mode, follow automation/agentmail-setup.md to configure the chosen
+inbox and verify read-only access without sending or deleting setup messages.
 Do not invent candidate facts, claim unobserved submissions or activate a schedule
 from this prompt alone. Keep candidate data, tickets, credentials and sessions private.
 ```

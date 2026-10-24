@@ -2,7 +2,7 @@
 
 Each role profile is a complete application context: identity, experience, preferences, answers, instructions and a designated CV. There is no Shared candidate folder. Website navigation is independent of the candidate role.
 
-Tell the agent which roles you want and provide their CVs. [Conversational onboarding](../../Application%20Workflow/onboarding-workflow.md) fills these files, asks only for missing details and saves your replies automatically. You can correct an answer in conversation later; direct file editing is optional. Existing profiles are reused when setup resumes.
+Tell the agent which roles you want. [Conversational onboarding](../../Application%20Workflow/onboarding-workflow.md) asks for each role's PDF, DOCX or TXT CV, saves an unchanged private copy in its Documents folder, checks extraction and fills these files. It asks only for missing details and saves your replies automatically. You can correct an answer in conversation later; direct file editing is optional. Existing CVs and profiles are reused when setup resumes.
 
 Start with [role routing](role-routing.md). It lists enabled profile paths, vacancy-matching criteria and tie-breaking rules. Read that small index first, then the selected profile's documents. Do not load every CV and answer file for each job.
 

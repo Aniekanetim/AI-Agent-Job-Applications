@@ -12,7 +12,7 @@ Clone, fork or use the repository template. Open its actual root with your agent
 
 For every human template `name.md`, the agent saves supplied values in the adjacent ignored `name.local.md`. For example, it uses `Job Context/Candidate/role-routing.local.md` and `Role Profiles/Software QA Engineer/role-profile.local.md`. The local file replaces the template at read time; do not merge contradictory copies or populate both. This preserves the approved folder organization while keeping public templates blank.
 
-Provide the CV file or its accessible path. The agent preserves it, calculates its SHA-256 and records the exact filename, format, date/version and hash in the role's `Documents/README.local.md`. It can retain a secure external path or make an unchanged private copy in Documents. Actual CVs are not included in the package. Source CVs and supporting facts must agree; do not invent missing qualifications.
+The agent asks you to upload/attach a PDF, DOCX or TXT CV for each selected role, or give an accessible file path when attachments are unavailable. It saves an unchanged copy under `Job Context/Candidate/Role Profiles/<role>/Documents/`, verifies its SHA-256 and records the filename, format, received date/version, hash and extraction status in `Documents/README.local.md`. An external path is used only when you prefer that storage. Text PDFs are extracted; scanned PDFs need available OCR/vision and a legibility check. An unreadable/encrypted document remains a specific dependency. Actual CVs are not included in the package. Source CVs and supporting facts must agree; do not invent missing qualifications.
 
 Live `Task Board/<status>/*.md`, `unified_project_context.local.md`, `.local/`, `.auth/`, credentials and browser storage are ignored. Use `git check-ignore --no-index <path>` to confirm before saving private information. Keep `unified_project_context.md` as the public unconfigured template; record actual setup/progress in its local counterpart. A tracked file remains tracked regardless of ignore rules.
 
@@ -28,7 +28,7 @@ You can leave optional preferences unspecified or answer later. Missing mandator
 
 Tell the agent which job board or vacancy to use. It asks for the relevant access action, local `.env` reference or secure-store reference and updates the private [job-board access instructions](Job%20Context/Job%20Boards/README.md). Each board includes a commented `.env.example`. The agent creates a local `.env` from it only when absent; uncomment the email/password placeholders and enter the real values in that ignored file. The authentication runner must explicitly load the selected file at runtime. Keep passwords out of tickets, Markdown and public templates. Employer destinations have separate access requirements; a board password is not automatically their password.
 
-For email-alert mode, the agent asks for the actual AgentMail inbox, secret reference and alert-selection rules using [automation/README.md](automation/README.md). An address such as `pass@agentmail.to` is a placeholder until the user supplies an actual inbox. Manual-task mode does not require an inbox. Use an existing connector or the portable HTTP helper. Pagination and deletion rules are documented there. Do not run a send-email smoke test or delete live mail during setup.
+For email-alert mode, follow [AgentMail onboarding and skill setup](automation/agentmail-setup.md). The agent checks the available skill/connector, asks for the exact inbox and alert-selection rules, and offers the included client when appropriate. Its commented [automation/.env.example](automation/.env.example) creates a private `automation/.env` for `AGENTMAIL_INBOX_ID` and `AGENTMAIL_API_KEY`; enter values locally, not in chat. `npm run inbox:check` verifies read-only header access for that file. An address such as `pass@agentmail.to` remains a placeholder until supplied. Manual-task mode needs no inbox. Setup sends no test email, deletes no mail and starts no schedule.
 
 ## 4. Prepare browser tooling
 
@@ -72,6 +72,7 @@ A public clone does not contain ignored operational information. Transfer the fo
 
 - Actual role-profile `*.local.md` files and CV/supporting documents.
 - Per-board `.env` files, if used, through a private transfer; alternatively enter the values again on the new machine.
+- Private `automation/.env` for the included AgentMail client, or reconnect the selected authenticated connector.
 - Live board tickets, private shared progress and `.local/inbox-state.json`.
 - Private `.local/onboarding-state.json` when setup has pending questions or deferrals.
 - Relevant restricted evidence and learned site maps/code with their observation versions.

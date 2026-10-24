@@ -6,7 +6,9 @@ Candidate setup uses [conversational onboarding](../Application%20Workflow/onboa
 
 ## Inbox access
 
-Use an actual user-provided AgentMail inbox and secret-store reference. Set AGENTMAIL_API_KEY in the current process or use the available secure connector. Do not put the key in a ticket, code, command history or public context. This project has not connected to an inbox. The example pass@agentmail.to is not a configured identity.
+Follow [AgentMail onboarding and skill setup](agentmail-setup.md) when email alerts are selected. It covers the official skill, an existing connector and the included HTTP client. For the client, use commented [.env.example](.env.example) to create ignored `automation/.env` with `AGENTMAIL_INBOX_ID` and `AGENTMAIL_API_KEY`; preserve existing values. The [read-only setup checker](agentmail-setup.ts), run with `npm run inbox:check`, loads that project file explicitly and checks paginated header access without sending or deleting mail. It does not borrow a global skill's account.
+
+Use the actual user-selected inbox and authorized access. Do not put the key in a ticket, code, command history or public context. This public template has not connected to an inbox. The example pass@agentmail.to is not a configured identity. A skill being installed or an offline check passing does not establish live inbox access.
 
 Record nonsecret setup in ignored unified_project_context.local.md: inbox ID, permitted job-alert sender/subject selection, secret reference, actual tool/connector, polling cadence and timezone. Do not infer any of these from another project. A real candidate identity and configured role instructions are prerequisites for actual applications.
 
