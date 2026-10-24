@@ -9,6 +9,8 @@ Each job board has access instructions and a commented `.env.example`. Users can
 | Glassdoor | [Glassdoor/.env.example](Glassdoor/.env.example) | `GLASSDOOR_EMAIL`, `GLASSDOOR_PASSWORD` |
 | CryptoJobsList | [CryptoJobsList/.env.example](CryptoJobsList/.env.example) | `CRYPTOJOBSLIST_EMAIL`, `CRYPTOJOBSLIST_PASSWORD` |
 
+During application onboarding, choose one to three primary boards. The agent prepares [browser tooling](../../automation/browser/README.md) before authentication, then records access and initial site mapping as separate [progress checks](../../automation/onboarding/README.md). A populated credential file alone completes neither check. Additional assigned websites can be prepared later.
+
 ## Configure a board
 
 1. The agent copies that board's `.env.example` to `.env` if `.env` does not already exist. Preserve an existing file and its values.

@@ -14,7 +14,17 @@ Reuse supplied CVs and populated private profiles. Ask only relevant missing
 questions in small batches and save actual replies into canonical *.local.md files.
 If a role has no CV, request its PDF, DOCX or TXT file, save the unchanged original
 in that role's private Documents folder and verify the hash and extraction.
-Read .local/onboarding-state.json when present; do not repeat unchanged pending
+Read .local/onboarding-state.json and automation/onboarding/README.md when present.
+Resume schema-2 steps and per-board mapping; migrate schema 1 without losing any
+supplied context or questions. Show the remaining roadmap during interactive setup,
+not an unchanged notification every check-in. Application setup requires one to
+three user-selected primary boards; accept an existing choice. Prepare and verify
+the pinned local CLI/browser under automation/browser/README.md before website work.
+Initial discovery records navigation, application entry, accessible forms, code and
+limits without practice submission. Do not treat login as complete mapping or invent
+observations. Verify changed evidence/runtime before claiming readiness and provide
+the scoped handoff. Keep setup-only blockers in onboarding progress, with no fake ticket.
+Do not repeat unchanged pending
 questions or reset existing profiles. Keep progress references separate from answers.
 Profile setup or a manual task does not require inbox configuration. Onboarding
 does not itself authorize a live application or activate a schedule.

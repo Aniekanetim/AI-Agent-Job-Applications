@@ -11,6 +11,14 @@ The agent maintains website knowledge here. [Human Job Context](../Job%20Context
 | [Glassdoor](Glassdoor/architecture.md) | Unlearned |
 | [CryptoJobsList](CryptoJobsList/architecture.md) | Unlearned |
 
+## Initial mapping during onboarding
+
+Application onboarding prepares one to three user-selected primary boards after verifying tools and access. [Onboarding discovery](../Application%20Workflow/discovery-workflow.md#onboarding-discovery) records actual vacancy navigation, application routing, accessible forms, reusable methods and limits. The agent shows per-board progress; a working login alone is not a completed map. No practice application is submitted. Encountered employer destinations get specific entries, while unvisited destinations remain unknown.
+
+Actual user-specific knowledge can be saved in ignored `architecture.local.md` and `*.local.ts` companions. Read the applicable private counterpart/observations before the blank scaffold. Keep reusable public code sanitized and publish it only deliberately. Candidate data, login state and authenticated evidence remain private. Link the actual method file in each observation, rather than assuming a public stub was replaced.
+
+Initial selected boards are a preparation scope. They do not restrict later assigned tasks to those websites or claim complete knowledge of their entire architecture.
+
 ## How to use the knowledge
 
 Read the relevant architecture before code. If the required branch is unlearned, use [discovery](../Application%20Workflow/discovery-workflow.md) directly instead of repeatedly invoking a stub. If learned, check its recorded host/session/branch conditions against the current page and reuse its routine. Changed branches require narrow refresh, not a complete platform crawl.
@@ -27,7 +35,7 @@ Use stable local OBS IDs, such as OBS-LINKEDIN-001. Group only claims with the s
 ## OBS-<site>-<number>: <journey or page>
 - State: Unlearned / Observed for these conditions / Needs refresh / Historical.
 - Entry version and actual observation date/time:
-- Originating task and actual website URL/host:
+- Originating task or onboarding board/observation ID and actual website URL/host:
 - Account role/session conditions (nonsecret):
 - Application mode and entry conditions:
 - Observed pages/routes and numbered user actions:

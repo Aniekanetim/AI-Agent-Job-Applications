@@ -19,7 +19,7 @@ Keep one stable descriptive ID/filename, full history and original email associa
 
 ## Check-in procedure
 
-1. Read AGENTS, private shared progress when present, the human context index and application workflow. If candidate context is missing, follow [onboarding](../Application%20Workflow/onboarding-workflow.md); preserve existing setup and do not repeat unchanged pending questions. Check configured inbox access separately; its absence does not prevent a valid manual task.
+1. Read AGENTS, private shared progress when present, the human context index and application workflow. Check the configured onboarding scope and current readiness. For a relevant setup gap, follow [onboarding](../Application%20Workflow/onboarding-workflow.md), show the remaining roadmap and preserve existing profiles, selected-board maps and unanswered questions. Keep setup-only dependencies in progress; an unrelated deferred board does not block a task on a prepared one. Check configured inbox access separately; its absence does not prevent a valid manual task.
 2. Resume eligible work claimed by this worker first. Respect another worker's claim; never assume silence means its final-submit action did not occur.
 3. Read each Blocked task's exact question and named source change/response. Recheck only affected dependencies, not every CV. If resolved, append the actual resolution and return it to original intake. An unchanged blocker causes no rewrite or repeated question.
 4. Paginate configured alert headers. Use the private active-message map to find an existing task for this exact message/vacancy. Extract new alerts once and record all vacancy dispositions; do not compare across unrelated email/manual tasks or historical Applied records.

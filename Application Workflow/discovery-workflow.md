@@ -1,16 +1,28 @@
 # Application-site discovery workflow
 
-Discovery learns the website navigation needed to complete an application. Human Job Context supplies candidate facts and instructions; agent-maintained site knowledge records actual observations. The learning objective and checkpoint stay on the application task, without a separate request file or review gate.
+Discovery learns the website navigation needed to complete an application. Human Job Context supplies candidate facts and instructions; agent-maintained site knowledge records actual observations. During onboarding, the learning objective and checkpoint stay in private onboarding progress; during applications they stay on the existing task. Neither requires a separate discovery ticket or review gate.
+
+## Onboarding discovery
+
+Prepare each user-selected primary board after browser tooling and access are verified. Reuse already observed routes under their actual conditions. In this mode there may be no application ticket: use a stable onboarding observation ID and the board's progress entry instead. Do not create a fake application to hold discovery work.
+
+Learn the visible search/results and vacancy-detail routes, built-in/external application entry, accessible form and review steps, and navigation methods. Inspect only the selected board and destinations actually encountered. A specific employer/host gets its own destination entry; a generic ATS name is insufficient. Record unknown routes and the boundary reached. Observe submission/confirmation locations only where visible without submitting; confirmation remains unverified until a real authorized application establishes it.
+
+Do not submit a practice application, create an account, upload a CV or create/change a draft solely to complete mapping. When further exploration would mutate account/application data without applicable instructions, record that precise boundary. Accessible core routes still require actual observation. A challenge or failed route is blocked/unfinished, not a blanket exemption from mapping.
+
+Save observed page actions and recognition methods in the relevant Playwright files; keep final-submit code guarded as unlearned until observed in an authorized task. Use `architecture.local.md` and private `*.local.ts` companions for account-specific learning; sanitized reusable files may be published deliberately. Read applicable private knowledge before the blank template and do not assume an unlearned public stub contains a learned private branch.
+
+Record separate navigation, application-route, accessible-form, reusable-code and limits checks using [onboarding progress](../automation/onboarding/README.md#mapping-completion). Initial mapping completion describes the branches learned and the remaining boundaries. It does not mean every vacancy, destination or future page is known. Then resume the onboarding roadmap and readiness handoff.
 
 ## 1. Read what is already known
 
-Read the active task, selected role's application instructions, platform access reference, site architecture and applicable destination records. Reuse the known branch. Identify the specific missing route, form state or changed interaction instead of exploring unrelated features.
+Read the active task (or onboarding board entry), selected role's application instructions, platform access reference, site architecture and applicable destination records. Reuse the known branch. Identify the specific missing route, form state or changed interaction instead of exploring unrelated features.
 
 Record the actual URL/host, account role, date/time, page state, applicable entry version and task ID. A job site's hidden build is Unknown unless exposed; the local workflow commit is not its website version. Website knowledge is separate from candidate qualifications.
 
 ## 2. Establish access and the missing route
 
-Use authorized account/session or candidate registration instructions. For a password flow, privately load the selected board's ignored `.env` or configured secure-store values following [job-board access](../Job%20Context/Job%20Boards/README.md). Keep credentials/storage state private and exclude login secrets from captured artifacts. Human-assisted login may be needed; do not bypass authentication, CAPTCHA or platform controls. Missing access goes to Blocked with a precise context update/action, not a generic approval request.
+Use authorized account/session or candidate registration instructions. For a password flow, privately load the selected board's ignored `.env` or configured secure-store values following [job-board access](../Job%20Context/Job%20Boards/README.md). Keep credentials/storage state private and exclude login secrets from captured artifacts. Human-assisted login may be needed; do not bypass authentication, CAPTCHA or platform controls. For a real task, missing access goes to Blocked with a precise context update/action. During setup, record the dependency in onboarding progress. Neither is a generic approval request.
 
 Explore the normal application journey with the actual task's legitimate candidate information. Record navigation, multi-step forms, conditional branches, CV upload, validation, return/back behavior and submission confirmation. Avoid a practice submission: final submission belongs to the real task and happens once, followed by actual confirmation.
 

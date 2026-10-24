@@ -1,23 +1,36 @@
 {
   "name": "ai-agent-job-applications",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "private": true,
   "type": "module",
-  "description": "Portable agent workflow, inbox helper and offline completion checks. No live site integrations bundled.",
+  "description": "Portable autonomous job-application workflow with agent-led onboarding, Playwright CLI and email intake.",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsc --outDir .local/build",
-    "test": "tsc --outDir .local/check && node --test .local/check/automation/tests/application-state.test.js .local/check/automation/tests/agentmail.test.js .local/check/automation/tests/agentmail-setup.test.js .local/check/automation/tests/agentmail-connection.test.js",
+    "test": "tsc --outDir .local/check && node --test .local/check/automation/tests/application-state.test.js .local/check/automation/tests/agentmail.test.js .local/check/automation/tests/agentmail-setup.test.js .local/check/automation/tests/agentmail-connection.test.js .local/check/automation/tests/onboarding.test.js automation/tests/browser.test.mjs",
     "inbox:check": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js",
     "inbox:setup": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js --setup",
     "inbox:detect": "npm run build --silent && node .local/build/automation/email/agentmail/connection.js",
-    "inbox:list": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js --list-inboxes"
+    "inbox:list": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js --list-inboxes",
+    "browser": "node automation/browser/cli.mjs",
+    "browser:setup": "node automation/browser/setup.mjs --install",
+    "browser:check": "node automation/browser/setup.mjs",
+    "onboarding:status": "npm run build --silent && node .local/build/automation/onboarding/cli.js status",
+    "onboarding:start": "npm run build --silent && node .local/build/automation/onboarding/cli.js start",
+    "onboarding:migrate": "npm run build --silent && node .local/build/automation/onboarding/cli.js migrate",
+    "onboarding:record": "npm run build --silent && node .local/build/automation/onboarding/cli.js record",
+    "onboarding:check": "npm run build --silent && node .local/build/automation/onboarding/cli.js check",
+    "onboarding:finish": "npm run build --silent && node .local/build/automation/onboarding/cli.js finish",
+    "onboarding:help": "npm run build --silent && node .local/build/automation/onboarding/cli.js help",
+    "onboarding:defer": "npm run build --silent && node .local/build/automation/onboarding/cli.js defer-board",
+    "onboarding:resume": "npm run build --silent && node .local/build/automation/onboarding/cli.js resume-board"
   },
   "license": "MIT",
   "devDependencies": {
+    "@playwright/cli": "0.1.22",
     "@types/node": "22.20.5",
     "playwright": "1.64.1",
     "typescript": "7.0.2"

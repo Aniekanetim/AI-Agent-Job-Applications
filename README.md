@@ -2,28 +2,37 @@
 
 A portable, autonomous job-application workflow. Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
 
-**Version:** 1.7.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
+**Version:** 1.8.0 — 24 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
 ## Start here
 
-1. Give a file- and browser-capable agent the adoption prompt below. It will help create or open a private working copy using [SETUP.md](SETUP.md).
-2. Tell it which roles you want. [Onboarding](Application%20Workflow/onboarding-workflow.md) asks for each role's PDF, DOCX or TXT CV, saves the unchanged original in its private Documents folder, checks extraction and fills the [candidate profiles](Job%20Context/Candidate/README.md). It asks short follow-ups; you do not need to edit Markdown files.
-3. Provide a job task or choose email alerts. For [AgentMail setup](automation/email/agentmail/setup.md), the agent first detects existing configured connections and reuses a suitable one. Only when none is usable does it ask for your API key in private `automation/.env`. The agent lists inboxes and asks which address to use, accepting an already supplied choice. You do not need an inbox ID or a separate skill installation. [Per-board `.env` files](Job%20Context/Job%20Boards/README.md) hold separate website login details. A manual task needs no inbox.
-4. Request periodic check-ins separately when the context and access are ready.
+1. Give a file- and browser-capable agent the adoption prompt below. It opens or creates a private working copy and shows the onboarding roadmap before starting.
+2. Choose profile setup, manual applications, email-alert applications or both sources. For application setup, choose one to three primary job boards: one required and two optional. Another website can still be used later for an assigned task.
+3. The agent prepares the bundled Playwright CLI/browser, imports each selected role's PDF, DOCX or TXT CV, saves its unchanged original and asks short follow-up questions. It saves answers privately; you do not need to edit Markdown.
+4. It connects the selected websites and, when selected, the email inbox. [AgentMail setup](automation/email/agentmail/setup.md) detects existing access first, lists inboxes and accepts your choice. A manual task needs no inbox. Website passwords stay in the board's private configuration.
+5. It maps the selected boards' vacancy and application routes, records observed Playwright methods and identifies unvisited branches. Progress is visible per step and per board. It submits no practice application.
+6. A final [readiness check](automation/onboarding/README.md) explains what is prepared, any explicit deferrals and how to start. Request periodic check-ins separately when wanted.
 
 ```text
 Adopt https://github.com/Aniekanetim/AI-Agent-Job-Applications as my
 job-application workflow. Read AGENTS.md, SETUP.md,
 unified_project_context.md, Job Context/README.md, Task Board/README.md and
 Application Workflow/application-workflow.md. Preserve existing project files.
-On first use, follow Application Workflow/onboarding-workflow.md. Ask for my CV
+On first use, follow Application Workflow/onboarding-workflow.md. Establish the scope
+and show a progress roadmap before setup. For application mode, reuse or ask for one
+to three primary boards. Prepare the pinned CLI and browser using
+automation/browser/README.md before account connection and discovery. Ask for my CV
 for each selected role (PDF, DOCX or TXT) unless already supplied. Save and hash
 its unchanged original in that role's private Documents folder, check extraction,
 reuse existing profile answers, and ask only relevant missing questions in
 small batches and save my replies into the private candidate files automatically.
-Resume unfinished onboarding without repeating unchanged questions. Respect a
+Resume unfinished onboarding without repeating unchanged questions. Include initial
+site mapping for selected boards and encountered destinations, with Markdown and
+observed Playwright methods. Keep unvisited branches explicit and submit no practice
+application. Use automation/onboarding/README.md for progress and final readiness.
+Explain prepared boards, remaining dependencies and the first task at handoff. Respect a
 profile-setup-only request. Use my supplied application instructions for live work.
 Process job-alert emails and To Do tickets autonomously, without review gates. Reuse relevant
 Site Architecture Context and its Playwright routines; discover missing or changed
@@ -51,7 +60,7 @@ For URL-only adoption, forks and integration, see [use with another agent or pro
 | --- | --- |
 | [Task Board](Task%20Board/README.md) | Email Alerts and To Do are the two intake sources; Blocked and Applied retain outcomes and progress |
 | [Job Context](Job%20Context/README.md) | Candidate-supplied profiles, CV references, platform access and application instructions, saved by the agent |
-| [Candidate onboarding](Application%20Workflow/onboarding-workflow.md) | Conversational CV import, targeted follow-up questions and automatic private context updates |
+| [Candidate onboarding](Application%20Workflow/onboarding-workflow.md) | Visible, resumable setup: tools, role profiles, selected boards, mapping and readiness |
 | [Site Architecture Context](Site%20Architecture%20Context/README.md) | Agent-maintained navigation maps and Playwright TypeScript routines, including external application destinations |
 | [Application workflow](Application%20Workflow/application-workflow.md) | Role selection, form completion, submission verification, blocking and resumption |
 | [Discovery workflow](Application%20Workflow/discovery-workflow.md) | Learn unfamiliar or changed application steps and preserve reusable knowledge |
@@ -77,9 +86,9 @@ A source email can contain several vacancies. The agent keeps one small progress
 
 ## Available now and learned later
 
-This repository supplies conversational onboarding, the application workflow, an empty board, role/context templates, offline-tested completion rules, an AgentMail HTTP helper and TypeScript website scaffolds. An AI agent runs onboarding in its conversation and writes the files; there is no separate onboarding web app or background service. Portal-specific selectors and application routines are learned from actual access; the initial routines deliberately report that discovery is required.
+This repository supplies conversational onboarding with saved step/board progress, the pinned Playwright CLI and browser setup/check utility, readiness helpers, the application workflow, an empty board, role/context templates, completion rules, an AgentMail HTTP helper and TypeScript website scaffolds. An AI agent runs onboarding in its conversation and writes the files; there is no separate onboarding web app or background service. Portal-specific selectors and application routines are learned from actual access; the initial routines deliberately report that discovery is required.
 
-Install optional TypeScript tooling with `npm ci`. `npm run check` checks types; `npm test` runs offline policy/helper checks with fake data and mocked HTTP. These commands neither log in to websites nor submit applications.
+The agent installs local tooling with `npm ci`, then prepares and verifies the browser using [browser setup](automation/browser/README.md). `npm run check` checks types; `npm test` checks policies and utilities with synthetic data and mocked HTTP. Browser readiness is established separately by actual CLI interaction with a local page. These checks log in to no websites and submit no applications.
 
 ## Reuse and privacy
 

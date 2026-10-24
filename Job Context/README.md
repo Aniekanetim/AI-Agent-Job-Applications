@@ -14,7 +14,7 @@ You supply candidate facts and application instructions through your CVs and con
 
 For each human template, use an adjacent ignored `*.local.md` for actual private values. The local counterpart replaces the template; the agent reads only that version. This is a private-file convention, not a duplicated Shared context. See [private setup](../SETUP.md#private-working-information).
 
-The selected role supplies all candidate-specific information. Platform files describe access and platform restrictions; they do not maintain another CV or candidate biography. New portals and external destinations can be added when required by a real assignment.
+The selected role supplies all candidate-specific information. Platform files describe access and platform restrictions; they do not maintain another CV or candidate biography. Application onboarding records one to three primary boards and maps their observed navigation. New portals and external destinations can also be added when required by a real assignment. Account access and initial site-mapping completion are separate checks.
 
 [Job-board credential setup](Job%20Boards/README.md) supports an ignored `.env` in each board folder. The public `.env.example` files contain commented email/password placeholders. Store actual login values only in private `.env` files or a secure store; private access Markdown records their paths/key names rather than passwords. The agent explicitly loads the selected file when authenticating in the browser.
 

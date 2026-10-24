@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "scope": null,
   "phase": "notStarted",
   "selectedRoles": [],
@@ -7,5 +7,64 @@
   "pendingQuestions": [],
   "deferredQuestions": [],
   "contextRevisions": {},
+  "steps": {
+    "boardSelection": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "browserTools": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "candidateProfiles": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "applicationInstructions": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "connections": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "siteMapping": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "readiness": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    }
+  },
+  "boards": [],
+  "emailConnection": {
+    "status": "pending",
+    "evidence": [],
+    "checkedAt": null,
+    "nextAction": null,
+    "reason": null
+  },
   "updatedAt": null
 }

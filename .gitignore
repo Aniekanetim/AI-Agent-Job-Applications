@@ -1,6 +1,7 @@
 # Keep workflow templates public; local values and operational records private.
 **/*.local.md
 **/*.local.json
+**/*.local.ts
 .local/
 **/.auth/
 **/storage-state*.json
@@ -27,3 +28,7 @@ mental_model/
 # Role document indexes are templates; actual documents must not be published.
 /Job Context/Candidate/Role Profiles/**/Documents/*
 !/Job Context/Candidate/Role Profiles/**/Documents/README.md
+
+# Browser CLI workspace metadata can contain private URLs and session artifacts.
+.playwright/
+.playwright-cli/
