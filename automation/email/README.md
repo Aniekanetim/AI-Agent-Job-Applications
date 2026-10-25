@@ -1,17 +1,26 @@
 # Email intake and completed-alert handling
 
-Use an existing authorized email connection when it can perform the chosen work. Gmail, Outlook or another connection exposed by the agent's harness can supply alerts without an AgentMail account or key. [AgentMail](agentmail/setup.md) remains available when no suitable connection exists or the user prefers a dedicated inbox. Manual tasks and profile-only setup need no alert inbox.
+**Connect your email** is an explicit onboarding step. Show Google — Gmail / Google Workspace first, followed by available Outlook and other discovered email services, optional AgentMail and Set up email later. Reuse an authorized connection when it can perform the chosen work. [AgentMail](agentmail/setup.md) remains an optional dedicated inbox; manual tasks and profile-only setup need no alert inbox.
 
 ## Onboarding and account selection
 
 1. Read `.local/email-connection.json` when present. Reuse its confirmed account and scope. An unavailable selected connection needs repair; it is not permission to switch accounts.
-2. On first setup, inspect the actual harness tool inventory and accessible account metadata. Show the account addresses, available operations and any limitations. Ask which account to use even if only one exists; accept an address already supplied and verify it without asking again. Do not open message bodies to guess a preferred account.
-3. Offer an optional folder, label or alert filter. Save the candidate's job-alert instructions and reference them from the selection. Include read messages; an email being marked Read does not mean its application was completed. Do not change account addresses or create mailbox labels without applicable instructions.
-4. Check listing/search, message-content access and pagination. Check whether cleanup operations act on one message, their exact effects and any required host confirmation. A search index/snippet alone does not establish complete alert-body access. Keep verified, unsupported, denied and unverified states distinct.
-5. Ask how to handle fully completed alerts: delete, archive, label or retain. Offer only supported actions, explain Trash versus permanent deletion, and save the actual user choice. Read-only connections can use retain mode. Do not silently change cleanup policy or evade a denied operation through another transport.
-6. Verify the selected connection in the actual scheduled environment if recurring checks were chosen. Interactive evidence does not establish scheduled access. Setup sends no mail, modifies no messages and activates no schedule merely because a connection is found.
+2. On first setup, follow [provider discovery](host-connectors/discovery.md). Inspect the host's available integrations and tools before presenting Google first. Distinguish provider availability, authenticated accounts and actual readiness. Use the actions Connect, Use existing connection, Reconnect or Not yet verified as supported by observations. Offer discovered Outlook and other email services, optional AgentMail and Set up email later. A missing tool is not proof that the harness cannot support the provider.
+3. Guide the selected provider's supported connection screen, then list accessible account addresses through metadata tools. Ask which account to use even if only one exists; accept an address already supplied and verify it without asking again. Keep authentication in the harness. Do not ask for an email password in chat or require a separate Gmail API key. An expired connection needs the actual reconnect action; never silently switch providers.
+4. Offer an optional folder, label or alert filter. Save the candidate's job-alert instructions and reference them from the selection. Include read messages; an email being marked Read does not mean its application was completed. Do not change account addresses or create mailbox labels without applicable instructions.
+5. Check listing/search, message-content access and pagination. Check whether cleanup operations act on one message, their exact effects and any required host confirmation. A search index/snippet alone does not establish complete alert-body access. Keep verified, unsupported, denied and unverified states distinct.
+6. Ask how to handle fully completed alerts: delete, archive, label or retain. Offer only supported actions, explain Trash versus permanent deletion, and save the actual user choice. Read-only connections can use retain mode. Do not silently change cleanup policy or evade a denied operation through another transport.
+7. Verify the selected connection in the actual scheduled environment if recurring checks were chosen. Interactive evidence does not establish scheduled access. Setup sends no mail, modifies no messages and activates no schedule merely because a connection is found.
 
 The agent manages the private files and commands. Users choose the account, scope, cleanup mode and check-in interval in conversation; they do not need provider IDs or OAuth tokens. A valid existing AgentMail choice is retained during migration. The existing deletion instruction can be imported with its source reference; a new user needs an actual cleanup choice.
+
+## Save progress and resume
+
+Before an authentication handoff or interruption, save the provider choice and exact next action in `.local/email-onboarding.json` using [the empty example](onboarding.example.json). The setup stages are discovery, provider choice, authentication, account choice, preferences and access verification. This file holds no candidate answers, tokens or false ready flag. `email:onboarding status` and the main onboarding status show the current checkpoint; actual readiness still comes from the selected mailbox and capability evidence.
+
+For **Set up email later**, record the person's explicit deferral and retain the checkpoint, mailbox binding and alert history. Pause email intake. Eligible manual tasks can continue under existing application instructions. Do not call email or both-source onboarding complete while email is deferred. If the person wants to finish manual-only setup now, record that explicit scope change through `onboarding:start`; do not silently change the selected scope. On resumption, reuse the checkpoint and supplied answers. Do not prompt again during every unchanged scheduled check-in.
+
+Choosing a different provider records setup intent, not a source switch. Keep the previous mailbox and its active work until the person has selected the new account and the existing switch checks permit the change. Existing installations need no new provider question: their confirmed source remains selected and new metadata files are created only for a real setup change.
 
 ## Email processing and cleanup
 
@@ -36,7 +45,9 @@ This cache applies to alert intake only. An OTP or receipt can still be read for
 
 | Private file | Purpose |
 | --- | --- |
+| `.local/email-provider-catalog.json` | Observed provider availability, harness, root, execution context and discovery scope; no invented account IDs |
 | `.local/email-host-connections.json` | Account/tool metadata supplied by the harness agent; no credentials or email bodies |
+| `.local/email-onboarding.json` | Chosen provider, optional explicit deferral and resumption checkpoint |
 | `.local/email-connection.json` | Confirmed source, scope/rule revision and selected cleanup mode |
 | `.local/email-capabilities.json` | Actual interactive source/tool capability evidence |
 | `.local/email-capabilities-scheduled.json` | Separate evidence for the actual scheduled environment |
@@ -46,6 +57,8 @@ The public [connection example](connection.example.json), [capability example](c
 
 ```shell
 npm run email:discover
+npm run email:options
+npm run email:onboarding -- status
 npm run email:select -- --candidate ACTUAL_ID --source-reference PRIVATE_USER_REPLY --rule-reference PRIVATE_ALERT_RULES --rules-revision ACTUAL_VERSION
 npm run email:cleanup -- --mode retain --effect retain --source-reference PRIVATE_USER_REPLY
 npm run email:capabilities -- --file .local/actual-email-capabilities.json
@@ -53,7 +66,11 @@ npm run email:status
 npm run email:help
 ```
 
-`discover` reads metadata and bounded existing AgentMail configuration; it does not discover every host's tools itself. The agent supplies the actual host inventory first. `select` preserves an existing choice unless a new user choice is explicitly recorded, and refuses a source switch with unresolved existing alert work. `classify` records observed classification from a private header file. These CLI commands perform no provider network operation or cleanup. Run native tools or the injected transport with the shared policy when doing authorized application work. After a newly selected AgentMail backend is bound, record its actual source as a candidate and reuse that original user choice; choose cleanup through shared onboarding. Use migration only when an existing cleanup instruction is actually available. A backend binding alone does not authorize a new cleanup effect.
+`discover` reads metadata and bounded existing AgentMail configuration; it does not discover every host's tools itself. The agent follows the harness discovery procedure and supplies actual catalog/account observations first. `options` displays the ordered connection choices. `catalog --file PATH` validates/saves a normalized observed catalog; `--format codexCli|codexDirectory --reference REF` normalizes actual Codex metadata. Claude Code and other harnesses use the shared format, without requiring Codex.
+
+`onboarding choose --provider ID --source-reference REF` records the actual provider choice. `checkpoint --stage STAGE --next-action TEXT` saves the interruption point; `defer --reason TEXT --source-reference REF` and `resume --source-reference REF` follow the person's actual instruction. These are actions after `email:onboarding --`, not separate background workers. Readiness cannot be set manually through a checkpoint.
+
+`select` preserves an existing choice unless a new user choice is explicitly recorded, and refuses a source switch with unresolved existing alert work. It rejects an account explicitly reported as expired or denied. `classify` records observed classification from a private header file. These CLI commands perform no provider network operation or cleanup. Run native tools or the injected transport with the shared policy when doing authorized application work. After a newly selected AgentMail backend is bound, record its actual source as a candidate and reuse that original user choice; choose cleanup through shared onboarding. Use migration only when an existing cleanup instruction is actually available. A backend binding alone does not authorize a new cleanup effect.
 
 ## Existing setup and relocation
 

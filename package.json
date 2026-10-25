@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-job-applications",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "private": true,
   "type": "module",
   "description": "Portable autonomous job applications with existing email connections, browser choice and resumable onboarding.",
@@ -10,7 +10,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsc --outDir .local/build",
-    "test": "tsc --outDir .local/check && node --test .local/check/automation/tests/application-state.test.js .local/check/automation/tests/agentmail.test.js .local/check/automation/tests/agentmail-setup.test.js .local/check/automation/tests/agentmail-connection.test.js .local/check/automation/tests/onboarding.test.js automation/tests/browser.test.mjs .local/check/automation/tests/browser-policy.test.js .local/check/automation/tests/documents.test.js .local/check/automation/tests/email-intake.test.js",
+    "test": "tsc --outDir .local/check && node --test .local/check/automation/tests/application-state.test.js .local/check/automation/tests/agentmail.test.js .local/check/automation/tests/agentmail-setup.test.js .local/check/automation/tests/agentmail-connection.test.js .local/check/automation/tests/onboarding.test.js automation/tests/browser.test.mjs .local/check/automation/tests/browser-policy.test.js .local/check/automation/tests/documents.test.js .local/check/automation/tests/email-intake.test.js .local/check/automation/tests/email-discovery.test.js",
     "inbox:check": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js",
     "inbox:setup": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js --setup",
     "inbox:detect": "npm run build --silent && node .local/build/automation/email/agentmail/connection.js",
@@ -33,6 +33,9 @@
     "browser:rehearsal": "node automation/browser/rehearsal.mjs",
     "email:status": "npm run build --silent && node .local/build/automation/email/cli.js status",
     "email:discover": "npm run build --silent && node .local/build/automation/email/cli.js discover",
+    "email:options": "npm run build --silent && node .local/build/automation/email/cli.js options",
+    "email:catalog": "npm run build --silent && node .local/build/automation/email/cli.js catalog",
+    "email:onboarding": "npm run build --silent && node .local/build/automation/email/cli.js onboarding",
     "email:select": "npm run build --silent && node .local/build/automation/email/cli.js select",
     "email:cleanup": "npm run build --silent && node .local/build/automation/email/cli.js cleanup-choice",
     "email:capabilities": "npm run build --silent && node .local/build/automation/email/cli.js capabilities",

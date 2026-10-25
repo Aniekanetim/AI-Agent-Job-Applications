@@ -45,7 +45,8 @@ export interface EmailCapabilityReport {
 }
 export interface ConnectionInventory {
   schemaVersion: 1;
-  candidates: { id: string; source: EmailSource; available: boolean; evidenceReference: string }[];
+  candidates: { id: string; source: EmailSource; available: boolean; evidenceReference: string;
+    authentication?: "connected" | "needsAuthentication" | "denied" | "unverified" }[];
 }
 const supplied = (value: unknown): value is string => typeof value === "string" && !!value.trim();
 export function sourceKey(source: EmailSource): string {
@@ -86,7 +87,8 @@ export function validateInventory(value: unknown): asserts value is ConnectionIn
   for (const candidate of data.candidates) {
     validateSource(candidate.source);
     if (!supplied(candidate.id) || ids.has(candidate.id) || typeof candidate.available !== "boolean" || !supplied(candidate.evidenceReference) ||
-      Object.keys(candidate).some(key => !["id", "source", "available", "evidenceReference"].includes(key))) throw new Error("Connection inventory entries need unique IDs, nonsecret metadata and actual availability evidence.");
+      (candidate.authentication !== undefined && !["connected", "needsAuthentication", "denied", "unverified"].includes(candidate.authentication)) ||
+      Object.keys(candidate).some(key => !["id", "source", "available", "evidenceReference", "authentication"].includes(key))) throw new Error("Connection inventory entries need unique IDs, nonsecret metadata and actual availability evidence.");
     ids.add(candidate.id);
   }
 }

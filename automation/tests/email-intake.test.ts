@@ -119,6 +119,19 @@ test("changed capability evidence reopens only the email preparation", t => {
   assert.equal(checked.state.emailConnection.status, "inProgress");
   assert.equal(checked.state.preparation.browserChoice.status, "pending");
 });
+
+test("an expired or denied account observation invalidates old passing capability evidence without changing the source", t => {
+  const f = setup(t);
+  assert.equal(inspectEmailReadiness(f.root, "interactive").ready, true);
+  const before = readFileSync(join(f.root, ".local/email-connection.json"));
+  for (const authentication of ["needsAuthentication", "denied"]) {
+    writeFileSync(join(f.root, ".local/email-host-connections.json"), JSON.stringify({ schemaVersion: 1, candidates: [
+      { id: "gmail-current", source: gmail, available: true, authentication, evidenceReference: "synthetic-auth-observation" },
+    ] }));
+    assert.equal(inspectEmailReadiness(f.root, "interactive").ready, false);
+    assert.deepEqual(readFileSync(join(f.root, ".local/email-connection.json")), before);
+  }
+});
 test("unrelated mail is cached for alert intake but cannot receive application or cleanup state", t => {
   const f = setup(t);
   for (const kind of ["otp", "receipt", "recruiter", "unrelated", "unknown"] as const) {

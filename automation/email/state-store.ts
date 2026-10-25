@@ -2,8 +2,10 @@ import { createHash } from "node:crypto";
 import { readFileSync, realpathSync } from "node:fs";
 import { resolve, relative, isAbsolute } from "node:path";
 import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
-import { loadEmailConnection, emailCapabilityIssues, validateEmailReport, type EmailSource, type CleanupChoice } from "./connection.js";
+import { loadEmailConnection, emailCapabilityIssues, validateEmailReport, validateInventory, sourceKey, type EmailSource, type CleanupChoice } from "./connection.js";
 import { validateInboxState, type InboxState, type EmailRecord, messageKey } from "./intake.js";
+import { loadEmailOnboarding } from "./onboarding.js";
+import { providerId } from "./discovery.js";
 
 export function loadInboxState(root: string) {
   const found = readPrivateJson(root, ".local/inbox-state.json");
@@ -54,8 +56,20 @@ export function migrateInboxState(value: unknown, source: EmailSource, policyRef
 }
 export function inspectEmailReadiness(root: string, context: "interactive" | "scheduled") {
   try {
+    const setup = loadEmailOnboarding(root).state;
+    if (setup.deferred) return { ready: false, issues: ["Email setup is deferred. Continue eligible manual tasks; resume email setup before reading alerts."] };
     const { connection } = loadEmailConnection(root);
     if (!connection) return { ready: false, issues: ["Select or migrate the actual email connection; preserve any existing AgentMail binding."] };
+    if (setup.providerChoice && setup.providerChoice.id !== providerId(connection.source.provider)) return { ready: false, issues: ["Finish connecting the newly chosen provider; preserve the saved mailbox and its active work until an explicit source switch is safe."] };
+    // Negative current account observations supersede an older successful capability report.
+    // An absent account entry never authorizes selecting a different source.
+    const inventory = readPrivateJson(root, ".local/email-host-connections.json").data;
+    if (inventory !== null) {
+      validateInventory(inventory);
+      const account = inventory.candidates.find(c => sourceKey(c.source) === sourceKey(connection.source) && c.source.connectionReference === connection.source.connectionReference);
+      if (account && (!account.available || account.authentication === "needsAuthentication" || account.authentication === "denied")) return {
+        ready: false, issues: ["Reconnect or resolve access for the selected account in the harness; the saved selection is unchanged."] };
+    }
     const report = readPrivateJson(root, context === "interactive" ? ".local/email-capabilities.json" : ".local/email-capabilities-scheduled.json").data;
     validateEmailReport(report);
     const issues = emailCapabilityIssues(connection, report, root, context);

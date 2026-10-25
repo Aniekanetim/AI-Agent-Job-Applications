@@ -33,6 +33,8 @@ automation/
 │   ├── README.md           # Shared account selection, intake and cleanup
 │   ├── host-connectors/    # Actual harness tool bindings; no copied OAuth tokens
 │   ├── connection.ts       # Selection and capability checks
+│   ├── discovery.ts        # Provider catalog and Google-first connection options
+│   ├── onboarding.ts       # Provider choice, sign-in checkpoints and explicit deferral
 │   ├── intake.ts           # Message classification and assignment identity
 │   ├── state-store.ts      # Private message markers and migration
 │   ├── cleanup.ts          # Durable cleanup checkpoints and recovery
@@ -84,6 +86,9 @@ Browser setup can download missing components; its operation check visits loopba
 | `npm run onboarding:status` | Display the saved roadmap and per-board progress without changing saved progress |
 | `npm run onboarding:check` | Check scoped preparation, evidence references and local runtime without changing saved progress |
 | `npm run email:discover` | Inspect saved selection, host-produced account inventory and bounded existing AgentMail metadata; no provider calls |
+| `npm run email:options` | Show Google-first provider choices and actual account actions without connecting anything |
+| `npm run email:catalog -- ...` | Save normalized observations from the actual harness catalog; no account or readiness claim |
+| `npm run email:onboarding -- ...` | Save a provider choice, checkpoint or explicit deferral; show/resume email setup |
 | `npm run email:status` | Inspect shared account/cleanup/capability readiness without changing email or saved state |
 | `npm run email:select -- ...` | Record the actual user-selected source and intake rules |
 | `npm run email:cleanup -- ...` | Save the user's supported cleanup choice; perform no cleanup |
@@ -106,6 +111,9 @@ The source layout is separate from private runtime storage:
 | `.local/agentmail-intake.json` | Resolved inbox binding and any creation identity |
 | `.local/agentmail-connection.json` | Selected existing credential source reference; no key value |
 | `.local/email-connection.json` | Selected provider/account/scope and supported cleanup choice |
+| `.local/email-provider-catalog.json` | Observed integration availability for the actual harness, root and execution context |
+| `.local/email-host-connections.json` | Actual account metadata, tool references and observed authentication status |
+| `.local/email-onboarding.json` | Provider choice, explicit deferral and sign-in/resumption checkpoint |
 | `.local/email-capabilities*.json` | Actual interactive and separately verified scheduled-tool evidence |
 | `.local/inbox-state.json` | Schema-2 classifications, vacancy/task associations, retained-message markers and cleanup checkpoints |
 | `.local/onboarding-state.json` | Schema-3 steps, selected-board access/mapping, pending/deferred questions and resumption point |

@@ -8,6 +8,8 @@ import { loadBrowserPreferences, saveBrowserPreferences } from "../browser/prefe
 import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
 import { validateCapabilityReport, capabilityIssues } from "../browser/capabilities.js";
 import { validateOperatingPreferences, type OperatingPreferences } from "../scheduling/preferences.js";
+import { emailSetupStatus, formatEmailSetup } from "../email/onboarding.js";
+import { inspectEmailReadiness } from "../email/state-store.js";
 
 // Compiled location: .local/build/automation/onboarding/cli.js.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
@@ -147,6 +149,10 @@ blocked/skipped mapping boundary with evidence, reason and next action. Never pa
       saveProgress(root, state, loaded.revision);
     }
     console.log(formatProgress(state));
+    if (["emailApplications", "bothApplications"].includes(state.scope ?? "")) {
+      const email = inspectEmailReadiness(root, "interactive");
+      console.log(`\n${formatEmailSetup(emailSetupStatus(root, email.ready, email.issues))}`);
+    }
     const inspected = inspectReadiness(root, state);
     if (inspected.invalidEvidence.length) console.log(`\nRevalidation needed:\n${inspected.invalidEvidence.join("\n")}`);
     if (command === "check") process.exitCode = inspected.ready && state.phase === "complete" ? 0 : 2;

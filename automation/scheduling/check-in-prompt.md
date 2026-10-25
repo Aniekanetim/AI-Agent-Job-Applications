@@ -39,6 +39,12 @@ delete/archive/label/retain handling. Preserve native permissions and confirmati
 Verify full message access/pagination and the actual scheduled connection before
 claiming recurring readiness. Setup sends or modifies no mail.
 Resume unchanged setup dependencies only after a relevant change.
+For a new interactive email setup, follow automation/email/host-connectors/discovery.md
+and show Connect your email with Google first. Provider catalog availability is not
+authentication or readiness. Preserve .local/email-onboarding.json checkpoints.
+If email is explicitly deferred, do not read alerts or repeat the provider question;
+continue authorized eligible manual tasks and resolved Blocked work. Keep email
+readiness unfinished and preserve the selected mailbox and its pending work.
 
 Resume eligible claimed work. Check Blocked tasks for actual answers/context
 changes that resolve the named dependency; return resolved tasks to original intake.

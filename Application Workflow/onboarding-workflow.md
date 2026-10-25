@@ -17,7 +17,7 @@ Onboarding — 0 of 7 steps complete
 ○ Prepare selected browser and Playwright upload fallback
 ○ Import CVs and prepare role-specific upload documents
 ○ Save preferences and choose the task-board check-in interval
-○ Connect websites, alert inbox and application verification access
+○ Connect websites, your email and application verification access
 ○ Map selected boards and encountered application destinations
 ○ Rehearse capabilities, verify readiness and explain how to start
 ```
@@ -95,7 +95,21 @@ Candidate filenames in this table are relative to `Job Context/Candidate/Role Pr
 
 For password-based sign-in, offer the board's [local `.env` setup](../Job%20Context/Job%20Boards/README.md). Create the ignored file from its commented example only if it is absent, then ask the user to enter the values locally. Store only the file/key reference in access Markdown. Do not ask for passwords in ordinary chat or copy them into candidate answers. An existing authorized session or secure credential store remains an alternative.
 
-If email-alert tasks are selected, follow [shared email onboarding](../automation/email/README.md#onboarding-and-account-selection) before asking for new setup. Inspect actual available host email tools and saved references; list accessible accounts and accept the user's choice. A connected Gmail/Outlook account can be used without AgentMail. Reuse an explicit or saved selection; do not ask again or silently replace it when access fails. Offer an optional folder/label/filter and ask how to handle fully completed alerts: a supported delete, archive, label or retain action. Read-only access can use retain mode. Check full message-content access and pagination, not just headers/snippets, and record the operation's actual scope and Trash/permanent-delete effect. Keep native credentials in their existing host; the agent saves only references. Use [AgentMail setup](../automation/email/agentmail/setup.md) when needed or preferred, preserving existing binding/provenance. No setup test sends, deletes or modifies email. Manual-only and profile-only mode skip alert setup.
+If email-alert tasks are selected, follow [shared email onboarding](../automation/email/README.md#onboarding-and-account-selection) and [harness discovery](../automation/email/host-connectors/discovery.md) before asking for new setup. Preserve an existing confirmed account. For a fresh setup, explicitly show **Connect your email** with these choices:
+
+| Order | Choice | Agent action |
+| --- | --- | --- |
+| 1 | Google — Gmail / Google Workspace | Offer an existing connection or guide native connection; unknown availability stays Not yet verified |
+| 2 | Microsoft — Outlook / Microsoft 365 | Offer when discovered as available, or when an existing account needs attention |
+| 3 | Other discovered email services | Offer integrations actually available through this harness |
+| 4 | AgentMail | Optional dedicated inbox |
+| 5 | Set up email later | Save an explicit deferral; eligible manual tasks can continue |
+
+Show actual actions: Connect, Use existing connection, Reconnect or Not yet verified. Provider availability is separate from authenticated-account access and actual readiness. Guide the chosen provider's native connection screen, save the checkpoint before sign-in and then list accessible account addresses. Accept the person's choice or verify a previously supplied address without asking again. A connected Gmail/Outlook account can be used without AgentMail. Missing tools are not proof of global non-support.
+
+Offer an optional folder/label/filter and ask how to handle fully completed alerts: a supported delete, archive, label or retain action. Read-only access can use retain mode. Check full message-content access and pagination, not just headers/snippets, and record the operation's actual scope and Trash/permanent-delete effect. Keep native credentials in their existing host; the agent saves only references. Use [AgentMail setup](../automation/email/agentmail/setup.md) when needed or preferred, preserving existing binding/provenance. No setup test sends, deletes or modifies email. Manual-only and profile-only mode skip alert setup.
+
+Show email subprogress during interactive setup and after material changes: provider discovery, provider choice, authentication, account selection, preferences and access verification. Save the current stage and next action in `.local/email-onboarding.json`; candidate answers and mailbox identity keep their existing canonical locations. A selected mailbox is not proof that authentication or capabilities remain valid. If email is deferred, keep email/both-source readiness unfinished. Record a manual-only scope only when the person chooses that change. Later sessions resume the checkpoint without repeating unchanged questions.
 
 For example, after extracting a QA CV whose preferences and screening answers are missing, ask:
 

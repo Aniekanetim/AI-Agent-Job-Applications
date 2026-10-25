@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "harness": "unknown",
+  "workingRoot": "REPLACE_WITH_ACTUAL_WORKING_ROOT",
+  "executionContext": "interactive",
+  "checkedAt": "REPLACE_WITH_ACTUAL_OBSERVATION_TIME",
+  "discovery": "unavailable",
+  "providers": []
+}

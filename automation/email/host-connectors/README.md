@@ -1,10 +1,10 @@
 # Use email tools supplied by the agent's harness
 
-First inspect the tools actually available in this chat and execution environment. A Gmail or Outlook account connected elsewhere is not automatically available here. This directory supplies a transport contract and guidance; it does not install a Gmail plugin, implement another OAuth service or copy the harness's tokens.
+During **Connect your email**, follow [provider discovery](discovery.md) before presenting connection choices. Inspect the harness's supported directory as well as the tools available in this execution environment. A Gmail or Outlook account connected elsewhere is not automatically available here. This directory supplies a transport contract and guidance; it does not install a Gmail plugin, implement another OAuth service or copy the harness's tokens.
 
 ## Bind an available connection
 
-List accessible accounts through the provider's real metadata tools when available. Save nonsecret metadata in `.local/email-host-connections.json` using [the empty example](inventory.example.json). Include the actual provider, stable account/mailbox IDs, address, connection/tool reference and evidence of availability. Labels and search filters describe scope; they are not account identity. Do not treat a manifest entry as proof of authenticated access.
+List accessible accounts through the provider's real metadata tools when available. Save nonsecret metadata in `.local/email-host-connections.json` using [the empty example](inventory.example.json). Include the actual provider, stable account/mailbox IDs, address, connection/tool reference and evidence of availability. Record optional `authentication` as `connected`, `needsAuthentication`, `denied` or `unverified` only from actual observations; existing entries without it remain unverified. Labels and search filters describe scope; they are not account identity. Keep unconnected provider availability in [the separate catalog](catalog.example.json). Do not treat a manifest entry as proof of authenticated access.
 
 After the user's account and cleanup selection, map actual tools to [adapter.ts](adapter.ts): page listing, exact-message reading, selected cleanup and exact-message cleanup-outcome inspection. Normalize provider responses to the shared types, retain real cursor semantics and confirm response identity. Do not confuse thread IDs with message IDs. The adapter strips bodies from metadata listings and sanitizes tool errors.
 

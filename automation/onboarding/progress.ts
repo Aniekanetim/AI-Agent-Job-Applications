@@ -4,7 +4,7 @@ export type StepId = "boardSelection" | "browserTools" | "candidateProfiles" | "
 export const stepLabels: Record<StepId, string> = {
   boardSelection: "Choose scope, primary boards and default browser", browserTools: "Prepare the selected browser and upload fallback",
   candidateProfiles: "Import CVs and prepare role-specific documents", applicationInstructions: "Save preferences and choose the task-board check-in interval",
-  connections: "Connect websites, alert inbox and verification access", siteMapping: "Map selected boards and application destinations",
+  connections: "Connect websites, your email and verification access", siteMapping: "Map selected boards and application destinations",
   readiness: "Rehearse capabilities, verify readiness and hand over",
 };
 export const stepIds = Object.keys(stepLabels) as StepId[];
