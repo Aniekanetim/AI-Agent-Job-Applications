@@ -38,6 +38,12 @@ The user can provide the answer in conversation or supply the required access ac
 
 A discoverable changed form is not automatically a user blocker. The agent investigates it through the discovery workflow. If knowledge cannot be obtained because access/tools are unavailable, state that actual dependency.
 
+## CAPTCHA while the user is away
+
+Follow [CAPTCHA handoff](../automation/browser/captcha-handoff.md). Save the existing task's `captchaHandoffs` and blocker, including the vacancy, role/CV identity, logical browser/session, draft and evidence references. Move it to Blocked immediately, report the actual human action once and retain its source alert. Preserve previous attempts and original intake; no new ticket or status folder is needed. Unchanged waiting tasks cause no repeated prompts, rewrites or browser interaction. Other eligible work can continue.
+
+When the user is ready, establish ownership and let them complete the challenge in an accessible browser for this application. Readiness is not clearance. If the browser/draft expired or was headless, recover and verify the same application before presenting a fresh challenge; never promise an automatic session transfer. Verify actual human completion, challenge clearance, fields/CV and not-submitted evidence before resolving the blocker and returning to original intake. Re-review before final submission. A prior uncertain submit requires outcome investigation first; an actual matching receipt can finish the task without submitting again. Preserve the resolved handoff in Applied history. These checks use [captcha.ts](../automation/browser/captcha.ts) and the existing move guards; helpers do not move Markdown files themselves.
+
 ## Nonapplications
 
 An email vacancy excluded under an explicit user preference, or an observed closed vacancy handled under supplied instructions, gets a compact reason and source-rule reference in that message's progress record. It does not get an Applied ticket. If it already has a ticket, preserve it in original intake with its concluded disposition and mark it nonactionable; no additional folder is introduced.

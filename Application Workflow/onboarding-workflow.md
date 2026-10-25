@@ -199,3 +199,8 @@ The agent checks canonical content before trusting progress metadata. A stale or
 Schema-1 and schema-2 upgrades preserve supplied profiles, questions, evidence and checkpoints. Newly required preparation starts pending. Reuse applicable evidence after inspection; do not infer a browser or scheduling choice, overwrite credentials, clear deferrals or restart the questionnaire. Report incomplete tool verification as a specific remaining step while preserving usable preparation elsewhere.
 
 For existing email setups, [migration](../automation/email/README.md#existing-setup-and-relocation) retains the actual AgentMail selection, existing deletion instruction and task history. Header-only evidence may reopen the affected email check for full content/capability verification; it must not restart the profile questionnaire. Record a scoped handoff naming the actual selected provider/account, alert scope, cleanup effect, check-in interval and any remaining access dependency. Preserve unread and read messages alike until their own progress establishes completion.
+
+
+## Explain human CAPTCHA assistance
+
+When mapping reveals a CAPTCHA, explain [the handoff](../automation/browser/captcha-handoff.md): actual application tasks wait in Blocked when the user is away, with one recorded request and a resume checkpoint. Setup-only observations stay in onboarding/site context without a fake ticket. Record whether the selected browser can actually be presented for human interaction; headless or inaccessible sessions need a recovery action. Do not claim CAPTCHA-solving capability, indefinite session persistence or a delivered notification without evidence. This explanation reuses the user's existing reporting/browser choices and adds no routine approval gate.

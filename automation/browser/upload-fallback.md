@@ -15,6 +15,8 @@ Check the observed site map and designated CV requirements. Start the same task 
 5. Record actual session, vacancy, draft and submission-state checks, then call `resumeUploadHandoff` with their evidence. The pure helper validates recorded inputs; it does not authenticate a browser or prove that the evidence is true.
 6. Upload the selected file, inspect its preview and finish that application in Playwright. Preserve the original checkpoint and handoff history. The next task returns to the saved default.
 
+A CAPTCHA encountered in either browser follows [human handoff](captcha-handoff.md); it does not authorize another browser switch. Preserve the task and current browser, move to Blocked and wait for verified human completion.
+
 If Submission attempted was already saved, investigate that same application's outcome first. Never switch browsers to click Submit again while the result is uncertain. Confirmed applications require no further browser work.
 
 ## Data retained on the task

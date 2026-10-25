@@ -141,6 +141,7 @@ Each check-in resumes eligible work, reads new intake, checks resolved blockers 
 | Component | Responsibility |
 | --- | --- |
 | [Browser preparation](browser/README.md) | Default choice, pinned CLI, synthetic form/upload/recovery rehearsal and host-tool checks |
+| [CAPTCHA handoff](browser/captcha-handoff.md) | Human completion, unattended Blocked waiting and same-application recovery; no solver or browser bypass |
 | [Upload handoff](browser/upload-fallback.md) | Same-task continuation in Playwright while preserving the in-app default |
 | [Browser policy helpers](browser/fallback.ts) | Routing, checkpoint/handoff state and uncertain-submission guards; no live driver |
 | [Document metadata checks](onboarding/documents.ts) | Original/derived hashes, file signature and observed upload restrictions; no document generation |

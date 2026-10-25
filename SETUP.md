@@ -1,6 +1,6 @@
 # Set up a working copy
 
-The repository is a reusable package. It starts with no connected inbox, enabled candidate profile, known website flow, live ticket or schedule. An AI agent with file and browser access performs the work; email mode also needs authorized inbox access. Installing Node dependencies alone does not start an agent.
+The repository is a reusable package. It starts with no connected inbox, enabled candidate profile, complete executable application flow, live ticket or schedule. A limited public form/CAPTCHA observation is included as a site-knowledge example. An AI agent with file and browser access performs the work; email mode also needs authorized inbox access. Installing Node dependencies alone does not start an agent.
 
 To begin, tell your agent: “Set this up with my CV. Ask for the missing details and save my answers.” It follows [candidate onboarding](Application%20Workflow/onboarding-workflow.md). The steps below explain what the agent sets up; you do not need to populate the context files manually.
 
@@ -66,7 +66,7 @@ Before handoff, check actual browser operation, selected profiles/CVs, instructi
 
 Completion is scoped: profile setup prepares role context; application setup additionally prepares tools and selected boards; email mode also verifies the chosen inbox. Both-source mode supports Email Alerts and To Do. Selected-board preparation covers the observed branches, not every future employer question or destination. Missing known scope-required work prevents completion; explicit optional deferrals are visible.
 
-A fresh clone has no actual candidate, account or site knowledge. An old completion flag must be revalidated when new required checks are introduced or the setup moves machines. Preserve supplied data and resume relevant gaps instead of restarting questions.
+A fresh clone has no candidate configuration, account access or learned private application journeys. Its public example does not establish a complete employer integration. An old completion flag must be revalidated when new required checks are introduced or the setup moves machines. Preserve supplied data and resume relevant gaps instead of restarting questions.
 
 To start work, supply a real [To Do ticket](Task%20Board/README.md#ticket-template) or use the selected job-alert inbox. Later concrete dependencies use Blocked; setup-only questions stay in private onboarding progress. Configure [periodic check-ins](automation/scheduling/check-in-prompt.md) only when requested, using the actual root, interval and timezone.
 
@@ -103,7 +103,7 @@ Keep public role templates blank and live board folders empty. Mark initial webs
 
 ## Browser, document and operating choices
 
-The agent reuses existing answers and asks only for missing choices. In-app stays the default when selected. Every application requiring a file upload uses Playwright; a midway discovery preserves the same task and draft under [the handoff procedure](automation/browser/upload-fallback.md). Sessions are verified separately. Unknown submission outcomes and permission denials remain specific blockers.
+The agent reuses existing answers and asks only for missing choices. In-app stays the default when selected. Every application requiring a file upload uses Playwright; a midway discovery preserves the same task and draft under [the handoff procedure](automation/browser/upload-fallback.md). Sessions are verified separately. Unknown submission outcomes and permission denials remain specific blockers. For CAPTCHA, follow [human handoff](automation/browser/captcha-handoff.md). The task waits in Blocked when you are away, without repeated requests; other applications can continue. When available, you complete the challenge in an accessible application browser. The agent checks the actual vacancy, session, fields/CV and submission state before resuming. A session or draft may expire; the package does not guarantee uninterrupted browser persistence or automated CAPTCHA solving.
 
 The original CV remains unchanged. When its format is unsuitable for upload, the agent uses available document tools to prepare and inspect a factual rendition, recording its original/version/hash in the role's existing Documents index. A readable TXT file may populate a profile while PDF/DOCX preparation remains unfinished. Actual portal restrictions are checked when observed.
 

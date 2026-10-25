@@ -26,6 +26,12 @@ If file upload is known to be required, start that application in Playwright. If
 
 Capability absence and permission denial are different. A documented unsupported upload can use the configured fallback. An access or tool denial remains a blocker; changing tools must not evade it. A submission with an uncertain outcome must be investigated before any switch or retry.
 
+## CAPTCHA and unattended work
+
+Follow [human CAPTCHA handoff](captcha-handoff.md). Preserve the same application, move its task to Blocked and report the actual human step once. An absent user does not stall the check-in: independent work can continue and the source email stays retained. Resume after verified human completion and same-vacancy/session/form checks, recovering an expired draft or inaccessible/headless browser when necessary. A CAPTCHA is not a reason to switch Playwright to in-app automation or bypass site controls.
+
+The [checkpoint helpers](captcha.ts) preserve task/role/CV identity, request references and handoff history. [Read-only hCaptcha inspection](captcha-inspection.ts) reports the observed checkbox state and gates known-challenge submission. The agent must perform the actual checks and save/move the Markdown ticket through the existing guarded paths; these helpers do not operate a background notification service, persist a browser indefinitely or implement every website adapter.
+
 ## Use the bundled CLI
 
 The launcher resolves the pinned local package without silently downloading a different CLI:

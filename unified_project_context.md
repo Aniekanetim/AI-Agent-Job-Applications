@@ -1,6 +1,6 @@
 # Job-application shared progress
 
-**Package:** 1.12.1. **Date:** 25 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
+**Package:** 1.13.0. **Date:** 26 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
 
 | Item | Current template state |
 | --- | --- |
@@ -15,7 +15,8 @@
 | Application-email verification | Not configured; distinct from alert-inbox access |
 | Operating limits / reporting | Not supplied; follow actual user instructions |
 | Browser tooling | Pinned CLI/library included; install and verify actual browser operation under [browser setup](automation/browser/README.md) |
-| Website knowledge | All included maps/routines unlearned; initial selected-board mapping is part of onboarding |
+| Website knowledge | Job-board templates unlearned; limited Tezza public form/CAPTCHA observation included; full submission remains unlearned |
+| CAPTCHA assistance | [Human handoff](automation/browser/captcha-handoff.md), unattended Blocked waiting and same-application recovery; no automatic solving |
 | Active / Blocked / Applied tickets | None |
 | Schedule / cadence / timezone | Not configured for this project |
 | Operational next action | Begin agent-led onboarding in a private working copy using SETUP.md |

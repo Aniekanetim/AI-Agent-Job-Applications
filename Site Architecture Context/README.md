@@ -2,7 +2,7 @@
 
 The agent maintains website knowledge here. [Human Job Context](../Job%20Context/README.md) supplies candidate facts, preferences and account instructions. Reusable navigation contains no candidate CV, password or invented screening answer.
 
-**Initial state:** no portal has been explored. Every included architecture.md and Playwright routine is an unlearned scaffold. Supported directory names are organizational starting points, not claims of working integration.
+**Initial state:** the four job-board maps and their initial Playwright routines remain unlearned scaffolds. A [Tezza direct-application example](Direct%20applications/Tezza%20Business%20Solutions/architecture.md) records its publicly observed form and hCaptcha boundary; submission and draft recovery remain unlearned. Supported directory names are organizational starting points, not claims of working integration.
 
 | Portal | Initial knowledge |
 | --- | --- |
@@ -23,7 +23,7 @@ Initial selected boards are a preparation scope. They do not restrict later assi
 
 Read the relevant architecture before code. If the required branch is unlearned, use [discovery](../Application%20Workflow/discovery-workflow.md) directly instead of repeatedly invoking a stub. If learned, check its recorded host/session/branch conditions against the current page and reuse its routine. Changed branches require narrow refresh, not a complete platform crawl.
 
-Each portal has architecture.md, in-app, playwright and Application destinations. Real destinations use descriptive employer/host directories. LinkedIn includes unlearned Workday and Employer career site examples to show nesting. Do not assume all Workday tenants or employer websites share one form.
+Each portal has architecture.md, in-app, playwright and Application destinations. A directly assigned employer URL with no observed originating board can use Direct applications/<employer>/architecture.md; never invent a source board. Real destinations use descriptive employer/host directories. LinkedIn includes unlearned Workday and Employer career site examples to show nesting. Do not assume all Workday tenants or employer websites share one form.
 
 Keep page actions in pages.ts and sequencing/inputs/confirmation in application-flow.ts. Candidate inputs arrive at runtime. Learned routines must persist the task's prepared/submission-attempted checkpoints and return an actual confirmed outcome or a specific dependency. Compilation is not live verification. Do not hard-code secrets, personal values or unobserved selectors.
 

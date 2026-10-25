@@ -4,7 +4,9 @@ A portable, autonomous job-application workflow. Job-alert emails and manual tic
 
 An alert may contain several jobs. The agent [accounts for every posting](automation/email/alert-completion.md), saves each outcome and keeps the email while any job is unresolved. Verified completion permits only the selected email-handling action. The same protected store guards progress updates and cleanup attempts, so an ordinary save cannot erase pending recovery.
 
-**Version:** 1.12.1 — 25 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
+A CAPTCHA pauses the existing application in **Blocked** for [human completion](automation/browser/captcha-handoff.md). If you are away, the agent saves the checkpoint, reports the blocker once and continues other eligible work. When you return, it verifies the same application and resumes; browser sessions and drafts may need recovery. It does not solve CAPTCHAs automatically.
+
+**Version:** 1.13.0 — 26 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Job-board maps start as unlearned templates. The Tezza example records a limited public form/CAPTCHA boundary; no complete employer integration is claimed.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
@@ -46,7 +48,12 @@ profile-setup-only request. Use my supplied application instructions for live wo
 Process job-alert emails and To Do tickets autonomously, without review gates. Reuse relevant
 Site Architecture Context and the selected browser methods; discover missing or changed
 steps using Application Workflow/discovery-workflow.md. Move unresolved tasks to
-Blocked with the exact context file and action needed. Move only confirmed
+Blocked with the exact context file and action needed. Follow
+automation/browser/captcha-handoff.md for CAPTCHA: save the same application,
+report the human step once and wait without repeated prompts if I am away.
+Preserve the source email. Verify actual clearance and same-vacancy draft/session
+before resuming; never solve a CAPTCHA automatically or change tools to evade it.
+Move only confirmed
 submissions to Applied. Handle a fully completed alert using my selected supported
 delete, archive, label or retain mode only after automation/email/alert-completion.md
 reconciles every posting, saved task and confirmation. Hold exclusive per-alert

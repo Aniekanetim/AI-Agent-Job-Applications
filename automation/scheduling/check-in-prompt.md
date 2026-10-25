@@ -66,6 +66,19 @@ submission, and never evade an access denial. Discover unfamiliar/changed applic
 instructions; maintain Markdown and TypeScript knowledge from actual observation.
 Never invent candidate facts or claim an unlearned flow works.
 
+For CAPTCHA, follow automation/browser/captcha-handoff.md. Preserve the same task,
+role/CV, browser/session and draft checkpoint; move the task to Blocked immediately
+and record the actual human request once through the configured reporting route.
+If the user is away, wait without repeated prompts or unchanged writes and continue
+independent eligible work. Retain the source alert. Human readiness is not clearance.
+After the user returns, verify actual challenge completion, current fields/CV,
+session/vacancy and submission outcome; recover expired or headless/inaccessible
+sessions explicitly. Do not solve CAPTCHA automatically, change browsers to evade
+it or steal an active worker's browser. Recheck any known challenge immediately
+before submitting and use markSubmissionAttempted. Preserve uncertainty after an
+attempted submit and investigate its result before another action. Helpers do not
+send notifications or keep a browser alive indefinitely.
+
 Save checkpoints before submission. Confirm the actual outcome before moving a
 task to Applied. For an uncertain submit, establish this same vacancy's result
 rather than submitting again. Move concrete dependencies to Blocked with the

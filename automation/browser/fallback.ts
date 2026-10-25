@@ -1,5 +1,6 @@
 import type { ApplicationTask } from "../workflow/application-state.js";
 import { validateBrowserPreferences, type BrowserPreferences, type BrowserBackend } from "./preferences.js";
+import { pendingCaptcha } from "./captcha.js";
 
 export interface BrowserHandoff {
   from: BrowserBackend;
@@ -26,6 +27,8 @@ export function decideBrowser(task: ApplicationTask, preferences: BrowserPrefere
   available: Record<BrowserBackend, boolean>, requiresFileUpload: boolean | null,
   accessDenied = false): BrowserDecision {
   validateBrowserPreferences(preferences);
+  if (pendingCaptcha(task)) return { action: task.checkpoint === "submissionAttempted" ? "resolveOutcome" : "blocked",
+    reason: "Preserve the CAPTCHA checkpoint for human assistance in the same browser; do not switch tools to solve it." };
   if (task.checkpoint === "confirmed") return { action: "finished", reason: "This task already has a confirmed outcome." };
   if (task.checkpoint === "submissionAttempted") return { action: "resolveOutcome", reason: "Establish the same application's outcome before any browser switch or retry." };
   if (accessDenied) return { action: "blocked", reason: "A permission or access denial is not a browser-capability fallback." };
@@ -50,7 +53,7 @@ export function beginBrowserExecution(task: ApplicationTask, preferences: Browse
 
 export function saveUploadHandoff(task: ApplicationTask, jobUrl: string,
   checkpointReference: string, now: string): ApplicationTask {
-  if (!task.browserExecution || task.browserExecution.activeBrowser !== "inApp" ||
+  if (pendingCaptcha(task) || !task.browserExecution || task.browserExecution.activeBrowser !== "inApp" ||
     !["working", "prepared"].includes(task.checkpoint) || task.browserExecution.handoffs.some(h => h.state === "awaitingResume") ||
     !task.taskId?.trim() || !checkpointReference.trim() || !Number.isFinite(Date.parse(now))) throw new Error("A browser handoff needs the existing pre-submission task and saved checkpoint.");
   const url = new URL(jobUrl);
@@ -68,7 +71,7 @@ export function resumeUploadHandoff(task: ApplicationTask, confirmation: {
   draftInspected: boolean; submissionStateChecked: boolean; evidenceReference: string;
 }): ApplicationTask {
   const last = task.browserExecution?.handoffs.at(-1);
-  if (!last || last.state !== "awaitingResume" || !["working", "prepared"].includes(task.checkpoint) ||
+  if (pendingCaptcha(task) || !last || last.state !== "awaitingResume" || !["working", "prepared"].includes(task.checkpoint) ||
     confirmation.taskId !== task.taskId || confirmation.taskId !== last.taskId || confirmation.jobUrl !== last.jobUrl ||
     !confirmation.sameVacancyVerified || !confirmation.sessionVerified || !confirmation.draftInspected ||
     !confirmation.submissionStateChecked || !confirmation.evidenceReference.trim()) throw new Error("Verify the same vacancy, authorized session, draft and submission state before resuming.");

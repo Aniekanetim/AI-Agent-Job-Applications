@@ -1,4 +1,5 @@
 import type { BrowserExecution } from "../browser/fallback.js";
+import type { CaptchaHandoff } from "../browser/captcha.js";
 import { inventoryPostings, postingUrl, type AlertInventory } from "../email/inventory-shape.js";
 import type { FileEvidence } from "../email/evidence.js";
 /** Local integrity checks; these do not establish that external evidence is true. */
@@ -6,6 +7,7 @@ export type IntakeFolder = "Email Alerts" | "To Do";
 export type BoardFolder = IntakeFolder | "Blocked" | "Applied";
 
 export interface Blocker {
+  kind?: "captcha";
   reason: string;
   lastCompletedStep: string;
   contextPath: string;
@@ -25,6 +27,7 @@ export interface ApplicationTask {
   confirmation?: { reference: string; observedAt: string };
   blocker?: Blocker;
   browserExecution?: BrowserExecution;
+  captchaHandoffs?: CaptchaHandoff[];
 }
 
 export interface VacancyProgress {
@@ -58,6 +61,8 @@ const validTime = (value: string | undefined): boolean =>
 
 export function canMarkApplied(task: ApplicationTask): boolean {
   return supplied(task.taskId) && task.checkpoint === "confirmed" &&
+    !task.captchaHandoffs?.some(handoff => handoff.state !== "resolved") &&
+    (!task.blocker || validTime(task.blocker.resolvedAt) && supplied(task.blocker.resolutionEvidence)) &&
     !task.browserExecution?.handoffs.some(handoff => handoff.state === "awaitingResume") &&
     supplied(task.selectedRoleId) && supplied(task.cvVersion) &&
     /^[a-f0-9]{64}$/i.test(task.cvSha256 ?? "") &&
@@ -82,6 +87,7 @@ export function assertTaskMove(
   }
   if (from === "Blocked") {
     if (to !== task.originalIntake || !validTime(task.blocker?.resolvedAt) ||
+      task.captchaHandoffs?.some(handoff => handoff.state !== "resolved") ||
       !supplied(task.blocker?.resolutionEvidence)) {
       throw new Error("Resolve the actual dependency and return to original intake.");
     }
@@ -90,6 +96,18 @@ export function assertTaskMove(
   if (to !== "Applied" || !canMarkApplied(task)) {
     throw new Error("Applied requires a confirmed outcome and selected role/CV identity.");
   }
+}
+
+/** Persist this result before the one final browser action; an attempted action is not success. */
+export function markSubmissionAttempted(task: ApplicationTask): ApplicationTask {
+  if (!supplied(task.taskId) || task.checkpoint !== "prepared" || !supplied(task.selectedRoleId) || !supplied(task.cvVersion) ||
+    !/^[a-f0-9]{64}$/i.test(task.cvSha256 ?? "") ||
+    task.captchaHandoffs?.some(handoff => handoff.state !== "resolved") ||
+    task.browserExecution?.handoffs.some(handoff => handoff.state === "awaitingResume") ||
+    task.blocker && (!validTime(task.blocker.resolvedAt) || !supplied(task.blocker.resolutionEvidence))) {
+    throw new Error("Review and prepare this application with all dependencies resolved before submitting once.");
+  }
+  return { ...structuredClone(task), checkpoint: "submissionAttempted" };
 }
 
 function isAppliedRecord(path: string | null | undefined): boolean {
