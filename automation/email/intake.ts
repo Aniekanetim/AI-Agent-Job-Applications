@@ -22,7 +22,11 @@ export interface EmailRecord extends Omit<MessageProgress, "cleanupState"> {
   cleanupState: "notReady" | "cleanupPending" | "deleted" | "retained" | "archived" | "labeled";
   cleanupAction: CleanupChoice | null;
   cleanupReceipt?: CleanupReceipt;
-  cleanupAttempt?: { startedAt: string; reference: string; workDigest?: string;
+  cleanupAttempt?: { startedAt: string; reference: string; workDigest?: string; connectionDigest?: string; protocolVersion?: 2;
+    phase?: "prepared" | "invoked" | "inspect" | "complete"; round?: number;
+    invocations?: { round: number; authorizedAt: string }[];
+    observations?: { round: number; state: "applied" | "notApplied" | "unknown"; observedAt: string; evidenceReference: string }[];
+    legacyRecovery?: boolean;
     native?: { ownerId: string; token: string; phase: "prepared" | "invoked" | "inspect"; round: number; lastObservation?: import("./evidence.js").FileEvidence } };
   [key: string]: unknown;
 }
@@ -55,6 +59,10 @@ export function validateRecord(record: EmailRecord): void {
   if (record.cleanupAction) validateCleanup(record.cleanupAction);
   if (record.cleanupAttempt && (!record.cleanupAttempt.reference?.trim() || !Number.isFinite(Date.parse(record.cleanupAttempt.startedAt)))) throw new Error("Preserve and reconcile incomplete cleanup-attempt metadata.");
   const owner = record.cleanupAttempt?.native;
+  const attempt = record.cleanupAttempt;
+  if (attempt?.protocolVersion === 2 && (!/^[a-f0-9]{64}$/.test(attempt.workDigest ?? "") || !/^[a-f0-9]{64}$/.test(attempt.connectionDigest ?? "") ||
+    !["prepared", "invoked", "inspect", "complete"].includes(attempt.phase ?? "") || !Number.isInteger(attempt.round) || attempt.round! < 0 ||
+    !Array.isArray(attempt.invocations) || !Array.isArray(attempt.observations))) throw new Error("Preserve the protected cleanup checkpoint and investigate its incomplete lifecycle.");
   if (owner && (!owner.ownerId?.trim() || !owner.token?.trim() || !["prepared", "invoked", "inspect"].includes(owner.phase) ||
     !Number.isInteger(owner.round) || owner.round < 0 || !/^[a-f0-9]{64}$/.test(record.cleanupAttempt!.workDigest ?? ""))) throw new Error("Preserve the native owner and reconcile its incomplete checkpoint.");
   const keys = new Set<string>();

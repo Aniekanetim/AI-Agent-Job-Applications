@@ -1,6 +1,6 @@
-import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
+import { readPrivateJson } from "../workflow/private-json.js";
 import { loadEmailConnection, saveEmailConnection, type EmailConnection } from "./connection.js";
-import { migrateInboxState } from "./state-store.js";
+import { migrateStoredInbox } from "./state-store.js";
 
 /** Preserve legacy files and selection; importing metadata performs no provider request. */
 export function migrateLegacyEmail(root: string, policyReference: string, now: string) {
@@ -17,10 +17,6 @@ export function migrateLegacyEmail(root: string, policyReference: string, now: s
       cleanup: { mode: "delete", effect: "permanentDelete", labelId: null, sourceReference: policyReference } };
     saveEmailConnection(root, connection, current.revision);
   }
-  const ledger = readPrivateJson(root, ".local/inbox-state.json");
-  if (ledger.data !== null) {
-    const migrated = migrateInboxState(ledger.data, connection.source, policyReference, now);
-    savePrivateJson(root, ".local/inbox-state.json", migrated, ledger.revision);
-  }
+  migrateStoredInbox(root, connection.source, policyReference, now);
   return { migrated: true, nextAction: "The existing mailbox and cleanup instruction were retained. Verify current read/cleanup capabilities and intake scope; do not repeat mailbox selection or infer live access." };
 }

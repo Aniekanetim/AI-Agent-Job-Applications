@@ -33,7 +33,7 @@ Choosing a different provider records setup intent, not a source switch. Keep th
 7. Retain mode saves the completed-message marker without modifying email. Delete/archive/label require a matching message-level operation. Store the actual result and chosen effect. Preserve lightweight completed markers while the message can still be encountered; do not expire them by an arbitrary time limit and risk applying again. Keep only IDs, classifications, task pointers, rule/evidence references and cleanup outcomes—not email bodies or a second CV/history archive.
 8. On a cleanup timeout, retry cleanup only. First establish whether that same action already happened. If its outcome is unknown, leave the cleanup pending. Confirmed applications remain Applied; do not submit them again or substitute another cleanup mode. A 404 is not automatically deletion proof: corroborate account access and exact-message absence.
 
-Use the coordinated cleanup implementation for callback transports and the [native ownership protocol](alert-completion.md#4-perform-the-selected-cleanup-under-ownership) for external harness tools. Per-alert ownership spans verification, mutation and final persistence; shared JSON writes are serialized and revision checked. Independent deployments need shared coordination or a single active worker deployment for that mailbox. Preserve source associations and history when tickets move. The four board folders remain Email Alerts, To Do, Blocked and Applied.
+Use the coordinated cleanup implementation for callback transports and the [native ownership protocol](alert-completion.md#4-perform-the-selected-cleanup-under-ownership) for external harness tools. Per-alert ownership spans verification, mutation and final persistence and is enforced for work updates, canonical artifact writes and bulk saves too. Cleanup controls have dedicated transitions; an ordinary save cannot reset pending work. Preserve rejected proposals and use explicit, recorded cancellation only before invocation or after actual not-applied confirmation. Selected connection/cleanup settings remain protected while pending; shared JSON writes are serialized and revision checked. Independent deployments need shared coordination or a single active worker deployment for that mailbox. Preserve source associations and history when tickets move. The four board folders remain Email Alerts, To Do, Blocked and Applied.
 
 ## Messages that are not job alerts
 
@@ -54,6 +54,7 @@ This cache applies to alert intake only. An OTP or receipt can still be read for
 | `.local/inbox-state.json` | Schema-2 classifications, source-inventory references, distinct vacancy/task/evidence bindings and cleanup checkpoints |
 | `.local/alerts/` | Private full source captures, link-resolution observations and per-vacancy outcome/confirmation evidence |
 | `.local/ownership/` | Per-message operation claims and short-lived private-write claims |
+| `.local/proposals/` | Staged work/artifact corrections; retain them when a guarded update is refused |
 
 The public [connection example](connection.example.json), [capability example](capabilities.example.json), [inventory example](host-connectors/inventory.example.json) and [empty progress](inbox-state.example.json) are templates, not live configuration. Existing candidate information, credentials and browser sessions stay where they are.
 

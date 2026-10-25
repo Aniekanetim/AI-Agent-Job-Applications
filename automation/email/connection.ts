@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
+import { readPrivateJson, protectedJsonWriter } from "../workflow/private-json.js";
+import { withWriteOwnership } from "../workflow/ownership.js";
 
 export const operations = ["list", "read", "delete", "archive", "label"] as const;
 export type EmailOperation = typeof operations[number];
@@ -129,7 +130,15 @@ export function loadEmailConnection(root: string) {
   if (found.data !== null) validateConnection(found.data);
   return { connection: found.data as EmailConnection | null, revision: found.revision };
 }
+const writeConnection = protectedJsonWriter<undefined>(".local/email-connection.json", (root, previous, next) => {
+  validateConnection(next); if (previous !== null) validateConnection(previous);
+  if (previous && JSON.stringify(previous) !== JSON.stringify(next)) {
+    const ledger = readPrivateJson(root, ".local/inbox-state.json").data as { messages?: { cleanupState?: string }[] } | null;
+    if (ledger && (!Array.isArray(ledger.messages) || ledger.messages.some(r => r.cleanupState === "cleanupPending"))) throw new Error("Preserve the selected connection and cleanup policy while an attempt is pending; reconcile or explicitly cancel it first.");
+  }
+});
 export function saveEmailConnection(root: string, connection: EmailConnection, revision: string | null) {
   validateConnection(connection);
-  return savePrivateJson(root, ".local/email-connection.json", connection, revision);
+  // Same lock order as alert commits; no provider call occurs under this short-lived lock.
+  return withWriteOwnership(root, ".local/inbox-state.json", () => writeConnection(root, connection, revision, undefined));
 }

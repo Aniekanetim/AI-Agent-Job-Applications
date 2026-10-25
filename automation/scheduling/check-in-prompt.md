@@ -77,7 +77,14 @@ Follow automation/email/alert-completion.md. Capture the full source privately,
 reconcile all links/postings and save distinct task/outcome/confirmation evidence
 with hashes. Never trust an enumeration Boolean or callback alone. Use
 cleanupCompletedAlert for callbacks, or email:work native-prepare/authorize/observe
-for native tools. Hold the per-message claim through result persistence. Respect
+for native tools. Hold the per-message claim through result persistence. All work/bulk/migration
+writes use the protected alert store. Stage canonical artifact changes privately
+and commit them with email:work artifact. Do not overwrite owned evidence or
+reset cleanup controls through ordinary saves. Preserve refused proposals.
+Unknown outcomes remain pending; use dedicated cancellation only before an
+invocation or after actual current-round not-applied confirmation. Retain the
+cancelled attempt history and existing confirmed application identities.
+Selected connection/cleanup settings cannot change during pending work. Respect
 active owners; never steal a native claim because a CLI exited or time passed.
 Resume saved owned checkpoints and inspect an uncertain exact-message outcome
 before cleanup-only retry. Independent machines require shared coordination or

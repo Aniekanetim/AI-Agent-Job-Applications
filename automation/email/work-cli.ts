@@ -4,15 +4,16 @@ import { loadEmailConnection, validateEmailReport } from "./connection.js";
 import { loadInboxState, saveEmailRecord } from "./state-store.js";
 import { messageKey, type EmailRecord } from "./intake.js";
 import { createInventory, verifyInventory, type AlertInventory } from "./inventory.js";
-import { evidenceFile } from "./evidence.js";
+import { evidenceFile, readEvidence } from "./evidence.js";
+import { saveAlertArtifact } from "./artifact-store.js";
 import { verifyAlertCompletion } from "./verification.js";
-import { prepareNativeCleanup, resumeNativeCleanup, authorizeNativeCleanup, recordNativeCleanup, type CleanupOptions } from "./cleanup.js";
+import { prepareNativeCleanup, resumeNativeCleanup, authorizeNativeCleanup, recordNativeCleanup, cancelNativeCleanup, type CleanupOptions } from "./cleanup.js";
 
 const [command = "help", ...args] = process.argv.slice(2);
 function option(name: string, required = true) { const i = args.indexOf(`--${name}`), value = i >= 0 ? args[i + 1] : undefined; if (required && !value) throw new Error(`Supply --${name}.`); return value!; }
 const root = resolve(option("root", false) || process.cwd());
 async function main() {
-  if (command === "help") return { commands: ["inventory --source .local/source.json", "reconcile --message-key KEY --inventory .local/inventory.json", "record --file .local/record.json", "verify --message-key KEY", "native-prepare --message-key KEY --owner-id STABLE-WORKER", "native-resume --message-key KEY --owner-id ID --token TOKEN", "native-authorize --message-key KEY --owner-id ID --token TOKEN", "native-observe --message-key KEY --owner-id ID --token TOKEN --evidence .local/result.json"], note: "All commands accept --root and native commands accept --context interactive|scheduled. No command calls an email provider." };
+  if (command === "help") return { commands: ["inventory --source .local/source.json", "status --message-key KEY", "artifact --message-key KEY --file .local/proposal --destination .local/alerts/KEY/name --expected-sha HASH|absent", "reconcile --message-key KEY --inventory .local/inventory.json", "record --file .local/record.json", "verify --message-key KEY", "native-prepare --message-key KEY --owner-id STABLE-WORKER", "native-resume --message-key KEY --owner-id ID --token TOKEN", "native-authorize --message-key KEY --owner-id ID --token TOKEN", "native-observe --message-key KEY --owner-id ID --token TOKEN --evidence .local/result.json", "native-cancel --message-key KEY --owner-id ID --token TOKEN"], note: "All commands accept --root and native commands accept --context interactive|scheduled. No command calls an email provider. A rejected work proposal remains in its original file for reconciliation." };
   if (command === "inventory") return createInventory(root, evidenceFile(root, option("source")));
   const loaded = loadInboxState(root);
   if (command === "record") {
@@ -21,6 +22,13 @@ async function main() {
   }
   const key = option("message-key"), record = loaded.state.messages.find(r => messageKey(r.identity) === key);
   if (!record) throw new Error("Save/classify this exact source message before recording its work.");
+  if (command === "status") return { cleanup: record.cleanupState, operationId: record.cleanupAttempt?.reference ?? null, phase: record.cleanupAttempt?.phase ?? null,
+    round: record.cleanupAttempt?.round ?? null, nativeOwner: record.cleanupState === "cleanupPending" && record.cleanupAttempt?.native ? { ownerId: record.cleanupAttempt.native.ownerId, token: record.cleanupAttempt.native.token } : null,
+    vacancies: { total: record.vacancies.length, applied: record.vacancies.filter(v => v.disposition === "applied").length,
+      blocked: record.vacancies.filter(v => v.disposition === "blocked").length, pending: record.vacancies.filter(v => v.disposition === "pending").length,
+      excluded: record.vacancies.filter(v => v.disposition === "notApplicable").length },
+    next: record.cleanupState === "cleanupPending" ? "Resume the owning cleanup attempt; preserve rejected work proposals." : "Resume eligible work under the application workflow." };
+  if (command === "artifact") return saveAlertArtifact(root, record.identity, option("destination"), readEvidence(root, evidenceFile(root, option("file"))), option("expected-sha") === "absent" ? null : option("expected-sha"));
   if (command === "reconcile") {
     const inventory = readPrivateJson(root, option("inventory")).data as AlertInventory;
     const jobs = verifyInventory(root, inventory, key);
@@ -42,6 +50,7 @@ async function main() {
   if (command === "native-resume") return resumeNativeCleanup(owned);
   if (command === "native-authorize") return authorizeNativeCleanup(owned);
   if (command === "native-observe") return recordNativeCleanup({ ...owned, evidence: evidenceFile(root, option("evidence")) });
+  if (command === "native-cancel") return cancelNativeCleanup(owned);
   throw new Error("Unknown email work command; run help.");
 }
 try { console.log(JSON.stringify(await main(), null, 2)); }

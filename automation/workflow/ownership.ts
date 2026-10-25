@@ -1,4 +1,4 @@
-import { openSync, closeSync, writeFileSync, readFileSync, existsSync, mkdirSync, realpathSync, unlinkSync } from "node:fs";
+import { openSync, closeSync, fsyncSync, writeFileSync, readFileSync, existsSync, mkdirSync, realpathSync, unlinkSync } from "node:fs";
 import { resolve, relative, isAbsolute } from "node:path";
 import { hostname } from "node:os";
 import { createHash, randomUUID } from "node:crypto";
@@ -9,6 +9,8 @@ export class OwnershipBusy extends Error {
 }
 interface Owner { schemaVersion: 1; token: string; kind: "process" | "native"; ownerId: string; host: string; pid: number; startedAt: string }
 export interface Ownership { token: string; ownerId: string; assertOwned(): void; release(): void }
+const scopes = new WeakMap<Ownership, { root: string; key: string }>();
+const normalizedRoot = (root: string) => { const value = realpathSync(root); return process.platform === "win32" ? value.toLowerCase() : value; };
 const pause = (ms: number) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 const host = () => createHash("sha256").update(hostname()).digest("hex");
 function ignored(root: string, name: string) {
@@ -39,7 +41,7 @@ function read(path: string): Owner | null {
 }
 function writeExclusive(path: string, owner: Owner) {
   const descriptor = openSync(path, "wx", 0o600);
-  try { writeFileSync(descriptor, JSON.stringify(owner)); } finally { closeSync(descriptor); }
+  try { writeFileSync(descriptor, JSON.stringify(owner)); fsyncSync(descriptor); } finally { closeSync(descriptor); }
 }
 function ended(owner: Owner) {
   if (owner.kind !== "process" || owner.host !== host()) return false;
@@ -55,11 +57,17 @@ function recoverDeadProcess(path: string) {
   try { const old = read(path); if (old && ended(old)) { unlinkSync(path); return true; } return false; }
   finally { if (read(guard)?.token === recovery.token) unlinkSync(guard); }
 }
-function handle(path: string, owner: Owner): Ownership {
-  return { token: owner.token, ownerId: owner.ownerId,
+function handle(root: string, key: string, path: string, owner: Owner): Ownership {
+  const result: Ownership = { token: owner.token, ownerId: owner.ownerId,
     assertOwned() { if (read(path)?.token !== owner.token || existsSync(`${path}.recovery`)) throw new OwnershipBusy(); },
     release() { if (read(path)?.token !== owner.token) throw new OwnershipBusy(); unlinkSync(path); },
   };
+  scopes.set(result, { root: normalizedRoot(root), key }); return result;
+}
+export function assertOperationOwnership(root: string, key: string, owner: Ownership) {
+  const scope = scopes.get(owner);
+  if (!scope || scope.root !== normalizedRoot(root) || scope.key !== key) throw new OwnershipBusy();
+  owner.assertOwned();
 }
 export function acquireOwnership(root: string, key: string, options: { kind?: "process" | "native"; ownerId?: string; waitMs?: number } = {}): Ownership {
   const path = location(root, key), until = Date.now() + (options.waitMs ?? 0);
@@ -69,7 +77,7 @@ export function acquireOwnership(root: string, key: string, options: { kind?: "p
       try {
         writeExclusive(path, owner);
         if (existsSync(`${path}.recovery`)) { if (read(path)?.token === owner.token) unlinkSync(path); }
-        else return handle(path, owner);
+        else return handle(root, key, path, owner);
       } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
       if (existsSync(path) && recoverDeadProcess(path)) continue;
     }
@@ -81,7 +89,7 @@ export function acquireOwnership(root: string, key: string, options: { kind?: "p
 export function resumeNativeOwnership(root: string, key: string, token: string, ownerId: string): Ownership {
   const path = location(root, key), owner = read(path);
   if (!owner || owner.kind !== "native" || owner.token !== token || owner.ownerId !== ownerId) throw new OwnershipBusy();
-  const result = handle(path, owner); result.assertOwned(); return result;
+  const result = handle(root, key, path, owner); result.assertOwned(); return result;
 }
 export function withWriteOwnership<T>(root: string, key: string, action: () => T): T {
   const owner = acquireOwnership(root, `write:${key}`, { waitMs: 5000 });
