@@ -103,6 +103,18 @@ test("a working login alone cannot finish site preparation", () => {
   assert.match(view, /✓ Access/); assert.match(view, /○ Application entry and destination/);
 });
 
+test("top-level progress stays unfinished when new preparation is pending without erasing existing proof", () => {
+  const state = prepared();
+  for (const id of preparationIds) state.preparation[id] = emptyCheck();
+  const previous = structuredClone(state.steps);
+  const view = formatProgress(state);
+  assert.doesNotMatch(view, /✓ Choose scope|✓ Import CVs|✓ Save preferences|✓ Connect websites/);
+  assert.match(view, /→ Import CVs and prepare role-specific documents/);
+  assert.deepEqual(state.steps, previous);
+  for (const id of preparationIds) state.preparation[id] = done();
+  assert.match(formatProgress(state), /✓ Import CVs and prepare role-specific documents/);
+});
+
 test("unvisited submit branches need no practice submission; inaccessible forms require an evidenced boundary", () => {
   const state = prepared();
   state.boards[0].mapping.accessibleForms = { ...done(), status: "skipped", reason: "External portal requires an assigned vacancy; boundary recorded in the map." };

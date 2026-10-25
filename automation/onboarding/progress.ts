@@ -214,16 +214,35 @@ export function refreshProgress(state: OnboardingProgress): OnboardingProgress {
 
 export function formatProgress(state: OnboardingProgress): string {
   const next = refreshProgress(state);
-  const required = stepIds.filter(id => next.steps[id].status !== "skipped");
-  const count = required.filter(id => next.steps[id].status === "complete").length;
+  // Keep previously verified evidence intact while showing unfinished new preparation honestly.
+  const display = structuredClone(next.steps);
+  if (next.scope && next.scope !== "profileSetup") {
+    const children: Partial<Record<StepId, PreparationId[]>> = {
+      boardSelection: ["browserChoice"], browserTools: ["browserChoice"],
+      candidateProfiles: ["uploadDocuments"], applicationInstructions: ["operatingPreferences", "scheduleChoice"],
+      connections: ["verificationAccess"], readiness: ["rehearsal", "scheduledAccess"],
+    };
+    for (const id of stepIds) {
+      const unfinished = (children[id] ?? []).filter(child => {
+        const check = next.preparation[child];
+        return !evidenced(check) && !(child === "scheduledAccess" && check.status === "skipped" && check.checkedAt && check.evidence.length && check.reason?.trim());
+      });
+      if (display[id].status === "complete" && unfinished.length) {
+        display[id].status = unfinished.some(child => next.preparation[child].status === "blocked") ? "blocked" : "inProgress";
+        display[id].nextAction = next.preparation[unfinished[0]].nextAction ?? preparationLabels[unfinished[0]];
+      }
+    }
+  }
+  const required = stepIds.filter(id => display[id].status !== "skipped");
+  const count = required.filter(id => display[id].status === "complete").length;
   const symbol: Record<ProgressStatus, string> = { pending: "○", inProgress: "→", complete: "✓", blocked: "!", skipped: "–" };
   const result = readiness(next);
   const scopeNames = { profileSetup: "Candidate profile only", manualApplications: "Manual applications",
     emailApplications: "Email-alert applications", bothApplications: "Email alerts and manual applications" };
   const lines = [`Onboarding — ${count} of ${required.length} steps complete`, `Scope: ${next.scope ? scopeNames[next.scope] : "not selected"}`, ""];
   for (const id of required) {
-    lines.push(`${symbol[next.steps[id].status]} ${stepLabels[id]}`);
-    if (next.steps[id].nextAction && next.steps[id].status !== "complete") lines.push(`  Next: ${next.steps[id].nextAction}`);
+    lines.push(`${symbol[display[id].status]} ${stepLabels[id]}`);
+    if (display[id].nextAction && display[id].status !== "complete") lines.push(`  Next: ${display[id].nextAction}`);
   }
   if (next.scope && next.scope !== "profileSetup") {
     lines.push("", "Preparation checks:");
