@@ -1,8 +1,18 @@
 # Application-email verification
 
-The address receiving job alerts can differ from the candidate address used to register or apply. Access to an AgentMail alert inbox does not establish access to the application email, its OTPs or its magic links.
+Mailbox selection is already part of [AgentMail onboarding](../agentmail/setup.md). Reuse the user's saved selection; do not ask them to select it again or set up the same mailbox twice.
 
-During onboarding, read the selected role's contact-email source and `verification-access.local.md` when present. Detect suitable existing authorized tools and sessions before asking the user to configure another connector. Establish one usable method: scoped agent access to that mailbox, an existing authorized session, or a clear human handoff for a code/link. Keep only the connection/account reference and permitted scope in context. Do not request a password or recovery code in ordinary chat.
+Check where the job-site account actually sends verification messages:
+
+| Verification destination | Agent action |
+| --- | --- |
+| The selected AgentMail inbox | Reuse its existing authorized connection and mailbox binding; reference them in the role's private verification instructions |
+| A different email address | Reuse suitable existing access to that address, or establish a human code/link handoff only when needed |
+| An authenticator app, SMS or another MFA method | Use that method's authorized handoff; mailbox access alone does not complete it |
+
+Do not change the candidate's contact address or job-site account email to match the alert inbox without an applicable user instruction. Reusing a mailbox connection does not mean an OTP was already received or read: retain the actual access scope and label unexercised actions accurately.
+
+During onboarding, read the selected role's contact-email source, relevant job-site account instructions and `verification-access.local.md` when present. First compare the verification destination with the saved AgentMail inbox. For a different address only, detect suitable existing authorized tools and sessions before asking about missing access. Establish one usable method: scoped agent access to that mailbox, an existing authorized session, or a clear human handoff for a code/link. Keep only the connection/account reference and permitted scope in context. Do not request a password or recovery code in ordinary chat.
 
 For a human handoff, save the current task or onboarding checkpoint and explain the exact sign-in/code action. The user can enter the code directly or provide it through an appropriate secure interface. Resume the same session after checking actual success. Keep OTP values, signed links and session secrets out of committed files and reusable site maps. Do not bypass MFA or CAPTCHA.
 

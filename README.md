@@ -13,7 +13,7 @@ A portable, autonomous job-application workflow. Job-alert emails and manual tic
 3. Choose automatic, in-app or Playwright browser use. The agent respects that default and prepares Playwright for applications requiring file upload. It imports each selected role's PDF, DOCX or TXT CV, saves its unchanged original and asks short follow-up questions. It saves answers privately; you do not need to edit Markdown.
 4. It connects the selected websites and, when selected, the email inbox. [AgentMail setup](automation/email/agentmail/setup.md) detects existing access first, lists inboxes and accepts your choice. A manual task needs no inbox. Website passwords stay in the board's private configuration.
 5. It maps the selected boards' vacancy and application routes, records shared journey knowledge and observed methods for the selected browser and upload fallback and identifies unvisited branches. Progress is visible per step and per board. It submits no practice application.
-6. A final [readiness check](automation/onboarding/README.md) covers actual browser capabilities, upload-ready CVs, application-email verification access and operating preferences. Choose on-demand use or optional periodic check-ins; the agent reports what is ready and how to start.
+6. A final [readiness check](automation/onboarding/README.md) covers actual browser capabilities, upload-ready CVs, application-email verification access and operating preferences. Choose how often to check for work—such as hourly, daily or a custom supported interval—or use on-demand checks; the agent reports what is ready and how to start.
 
 ```text
 Adopt https://github.com/Aniekanetim/AI-Agent-Job-Applications as my
@@ -33,8 +33,10 @@ small batches and save my replies into the private candidate files automatically
 Resume unfinished onboarding without repeating unchanged questions. Include initial
 site mapping for selected boards and encountered destinations, with Markdown and
 tool-specific observed methods. Establish application-email verification access
-separately from the alert inbox, check upload-ready CV formats while preserving
-originals, and ask about operating limits, reporting and on-demand or recurring use.
+by reusing the selected AgentMail inbox when it receives those codes; ask about
+other access only when needed. Check upload-ready CV formats while preserving
+originals. Ask for my task-board check-in interval or on-demand choice, then offer
+optional application limits and reporting choices.
 Keep unvisited branches explicit and submit no practice application.
 Use automation/onboarding/README.md for progress and final readiness.
 Explain prepared boards, remaining dependencies and the first task at handoff. Respect a

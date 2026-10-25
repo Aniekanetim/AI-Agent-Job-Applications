@@ -15,7 +15,7 @@ export function validateOperatingPreferences(value: unknown): asserts value is O
     ![data.cadence, data.timezone, data.scheduleReference].every(v => v === null || typeof v === "string") ||
     ![data.perRunLimit, data.perDayLimit].every(v => v === null || (Number.isInteger(v) && v! > 0)) ||
     !["summary", "blockersOnly", "digest", "unspecified"].includes(data.reporting) || !data.sourceReference?.trim()) throw new Error("Operating preferences need the user's scoped choices; no schedule was activated.");
-  if (data.mode === "recurring" && (!data.cadence?.trim() || !data.timezone?.trim())) throw new Error("Recurring operation needs an explicit cadence and timezone.");
+  if (data.mode === "recurring" && (!data.cadence?.trim() || !data.timezone?.trim())) throw new Error("Recurring operation needs the user's task-board check-in interval and timezone.");
   if (data.perDayLimit !== null && !data.timezone?.trim()) throw new Error("A daily application limit needs the user's timezone for its day boundary.");
   if (data.timezone !== null) {
     try { new Intl.DateTimeFormat("en", { timeZone: data.timezone }); }

@@ -16,7 +16,7 @@ Onboarding — 0 of 7 steps complete
 ○ Choose scope, 1–3 primary boards and default browser
 ○ Prepare selected browser and Playwright upload fallback
 ○ Import CVs and prepare role-specific upload documents
-○ Save preferences, application limits and operating instructions
+○ Save preferences and choose the task-board check-in interval
 ○ Connect websites, alert inbox and application verification access
 ○ Map selected boards and encountered application destinations
 ○ Rehearse capabilities, verify readiness and explain how to start
@@ -87,8 +87,8 @@ Ask one to three concise questions per message. Use the groups below in order, s
 | Screening answers | Country-specific work authorization and sponsorship, notice period/start availability, and other recurring questions relevant to the selected role | `application-answers.local.md` |
 | Application instructions | Application scope/channels, permitted factual tailoring, account registration, optional-question handling, closed/unsuitable vacancy handling, destinations, limits and notifications | `application-instructions.local.md` |
 | Browser preference | Automatic, in-app or Playwright; reuse an existing actual choice, never infer it from installed packages | Private browser preferences and response reference |
-| Verification access | How the selected role's application email receives verification; existing authorized access or human OTP/MFA handoff | `verification-access.local.md` |
-| Operating choices | On-demand or recurring; if recurring, cadence and named timezone; per-run/day limits and summary/blocker/digest preference, allowing unspecified optional limits | Relevant private instructions; `.local/operation-preferences.json` |
+| Verification access | Reuse the selected AgentMail inbox if it receives the job-site verification. Ask about access or a code handoff only for a different address or unsupported challenge | `verification-access.local.md` |
+| Check-in interval and other preferences | Ask how often to check for work: for example every 30 minutes, every hour, daily, a custom supported interval, or only when asked. Reuse a supplied timezone or ask if missing. Separately offer optional application limits and reporting choices | Relevant private instructions; `.local/operation-preferences.json` |
 | Access for the chosen channel | Manual tasks or email alerts; selected portal/session access and local `.env` or secure-store reference; detect and reuse an existing suitable AgentMail integration first; request an API key only if none is usable; inbox discovery remains agent work | Relevant `Job Boards/<site>/access-and-instructions.local.md`; private shared progress for discovered inbox setup |
 
 Candidate filenames in this table are relative to `Job Context/Candidate/Role Profiles/<selected role>` except the routing entry. [The profile index](../Job%20Context/Candidate/README.md#profile-contents) explains the file boundaries.
@@ -124,9 +124,19 @@ The agent performs these writes; asking the user to open a context file is not t
 
 For file-copy operations, preserve existing documents and never overwrite a different file with the same name. A secure external CV path is acceptable; a copied private document must retain identical bytes. Record format limitations when a later portal requires a different upload format.
 
+### Ask for the task-board check-in interval
+
+Include this question during application onboarding, before the final handoff:
+
+> How often should the agent check for job-application tasks: every 30 minutes, every hour, daily, a custom interval, or only when you ask?
+
+These are examples, not a promised capability of every scheduler. Accept an already supplied interval and timezone without asking again. If the requested interval is unsupported, explain the specific available alternative and obtain the user's choice. Do not silently substitute a different interval.
+
+One scheduled check-in checks both enabled intake sources: the selected job-alert inbox and manual To Do tasks. It also revisits Blocked tasks only when their dependency may be resolved. Manual-only setup can use scheduled checks without an email inbox. Save the interval in the existing `cadence` field and display it as the task-board check-in interval. Configure and verify the native schedule under [schedule setup](../automation/scheduling/README.md) after the user's recurring choice. Optional daily application limits and reporting choices are separate from how often the agent checks for work.
+
 ## 5. Connect the selected websites and inbox
 
-After tooling and candidate instructions are usable, verify access to the selected boards under [the credential procedure](../Job%20Context/Job%20Boards/README.md). Reuse the authorized session or private credential reference; do not ask for a password in chat. Record actual access conditions and private evidence. Access failure is distinct from a mapping failure. For email or both-source scope, use the AgentMail detection, mailbox-choice and access procedure above. Manual-only mode skips inbox setup. Establish [application-email verification](../automation/email/verification/README.md) separately from the alert inbox, with a concrete OTP/MFA checkpoint and resumption action. Verify access for the default browser and upload fallback under their own session conditions. Setup sends/deletes no mail. A recurring choice follows [schedule setup](../automation/scheduling/README.md); otherwise no schedule is activated.
+After tooling and candidate instructions are usable, verify access to the selected boards under [the credential procedure](../Job%20Context/Job%20Boards/README.md). Reuse the authorized session or private credential reference; do not ask for a password in chat. Record actual access conditions and private evidence. Access failure is distinct from a mapping failure. For email or both-source scope, use the AgentMail detection, mailbox-choice and access procedure above. Manual-only mode skips inbox setup. For [application verification](../automation/email/verification/README.md), compare the actual destination with the selected alert inbox. If it is the same mailbox, reuse the existing connection and selection; no second setup or mailbox-choice question is needed. Ask about another method only for a different address or unsupported challenge. Record how to resume the same checkpoint if a one-time code or MFA needs human help. Verify access for the default browser and upload fallback under their own session conditions. Setup sends/deletes no mail. A recurring choice follows [schedule setup](../automation/scheduling/README.md); otherwise no schedule is activated.
 
 ## 6. Map the selected boards
 

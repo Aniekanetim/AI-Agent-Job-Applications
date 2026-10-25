@@ -3,7 +3,7 @@ export type ProgressStatus = "pending" | "inProgress" | "complete" | "blocked" |
 export type StepId = "boardSelection" | "browserTools" | "candidateProfiles" | "applicationInstructions" | "connections" | "siteMapping" | "readiness";
 export const stepLabels: Record<StepId, string> = {
   boardSelection: "Choose scope, primary boards and default browser", browserTools: "Prepare the selected browser and upload fallback",
-  candidateProfiles: "Import CVs and prepare role-specific documents", applicationInstructions: "Save preferences and operating instructions",
+  candidateProfiles: "Import CVs and prepare role-specific documents", applicationInstructions: "Save preferences and choose the task-board check-in interval",
   connections: "Connect websites, alert inbox and verification access", siteMapping: "Map selected boards and application destinations",
   readiness: "Rehearse capabilities, verify readiness and hand over",
 };
@@ -13,7 +13,7 @@ export const preparationLabels = {
   uploadDocuments: "Verify designated upload documents and preserved originals",
   verificationAccess: "Establish application-email verification and authentication handoff",
   operatingPreferences: "Save application limits and reporting choices",
-  scheduleChoice: "Choose on-demand or recurring operation",
+  scheduleChoice: "Choose on-demand use or the task-board check-in interval",
   scheduledAccess: "Verify selected tools in the recurring execution environment",
   rehearsal: "Rehearse form completion, upload and checkpoint recovery",
 } as const;

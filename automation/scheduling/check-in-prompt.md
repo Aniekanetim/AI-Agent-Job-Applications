@@ -1,6 +1,6 @@
 # Agent check-in prompt
 
-Replace WORKING_ROOT with the actual private copy location when configuring a scheduler. Cadence is configured separately. This prompt alone activates nothing.
+Replace WORKING_ROOT with the actual private copy location when configuring a scheduler. The user-selected task-board check-in interval and timezone are configured in the native scheduler. Each run covers both enabled intake sources and eligible Blocked work. This prompt alone activates nothing.
 
 ~~~text
 Work in WORKING_ROOT.
@@ -49,7 +49,10 @@ tasks or scan historical Applied files. Do not reread a previously parsed body
 when its active progress record supplies the unfinished tasks.
 
 Select an enabled role using role routing, then read only that self-contained
-profile, designated upload CV and verification-access instructions. Reuse relevant
+profile, designated upload CV and verification-access instructions. Reuse the saved
+AgentMail connection and inbox selection when they are also the verification
+destination; do not repeat mailbox setup. A different address or non-email MFA
+may need its own existing access or a specific human handoff. Reuse relevant
 Site Architecture Context and methods for the active browser. Keep an in-app default;
 start required-upload applications in Playwright. For uploads discovered midway,
 follow automation/browser/upload-fallback.md on the same task and verify its

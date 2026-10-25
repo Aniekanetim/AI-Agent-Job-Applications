@@ -1,8 +1,12 @@
 # On-demand or recurring operation
 
-Offer this choice during onboarding. On-demand is a complete supported mode: record it, mark scheduled access outside scope with that source reference, and create no automation. Do not infer recurring use from an installed scheduler.
+During application onboarding, explicitly ask how often to check the task board: every 30 minutes, every hour, daily, a custom supported interval, or only when asked. Reuse an existing user choice. One recurring check-in checks both enabled intake sources—the selected alert inbox and manual To Do tasks—and resumes eligible Blocked work. This is not an email-only polling schedule.
 
-For recurring use, ask only for missing cadence, named timezone, application limits and reporting preferences. Save the user's response in the relevant private instructions and keep the global operating choice in `.local/operation-preferences.json`. `npm run onboarding:operation` saves settings only; it does not create a schedule. A null limit means no numeric limit was supplied, not a guessed daily target. A daily limit also needs a named timezone in on-demand mode so its day boundary is clear. Apply any stricter role instruction too; resolve a conflict instead of silently replacing it.
+Save the selected interval in `cadence` and the named timezone in `timezone`; use the phrase “task-board check-in interval” in the conversation and handoff. If the native scheduler cannot support the requested interval, explain the limitation and let the user choose an available alternative. Do not silently replace the interval or activate separate competing workers.
+
+On-demand is a complete supported mode: record it, mark scheduled access outside scope with that source reference, and create no automation. Do not infer recurring use from an installed scheduler.
+
+For recurring use, ask only for the missing check-in interval and named timezone, then offer optional application limits and reporting preferences. Save the user's response in the relevant private instructions and keep the global operating choice in `.local/operation-preferences.json`. `npm run onboarding:operation` saves settings only; it does not create a schedule. A null limit means no numeric limit was supplied, not a guessed daily target. A daily limit also needs a named timezone in on-demand mode so its day boundary is clear. Apply any stricter role instruction too; resolve a conflict instead of silently replacing it.
 
 ## Agent setup procedure
 
