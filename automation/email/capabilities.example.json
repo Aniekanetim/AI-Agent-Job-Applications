@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "sourceKey": "REPLACE_WITH_SOURCE_KEY_FROM_CONNECTION_HELPER",
+  "connectionReference": "REPLACE_WITH_ACTUAL_CONNECTION_REFERENCE",
+  "workingRoot": "REPLACE_WITH_ACTUAL_PRIVATE_ROOT",
+  "executionContext": "interactive",
+  "checkedAt": "REPLACE_WITH_ACTUAL_ISO_TIMESTAMP",
+  "operations": {
+    "list": {
+      "status": "unverified",
+      "granularity": "none",
+      "effect": null,
+      "requiresConfirmation": true,
+      "evidence": [],
+      "reason": null
+    },
+    "read": {
+      "status": "unverified",
+      "granularity": "none",
+      "effect": null,
+      "requiresConfirmation": true,
+      "evidence": [],
+      "reason": null
+    },
+    "delete": {
+      "status": "unverified",
+      "granularity": "none",
+      "effect": null,
+      "requiresConfirmation": true,
+      "evidence": [],
+      "reason": null
+    },
+    "archive": {
+      "status": "unverified",
+      "granularity": "none",
+      "effect": null,
+      "requiresConfirmation": true,
+      "evidence": [],
+      "reason": null
+    },
+    "label": {
+      "status": "unverified",
+      "granularity": "none",
+      "effect": null,
+      "requiresConfirmation": true,
+      "evidence": [],
+      "reason": null
+    }
+  }
+}

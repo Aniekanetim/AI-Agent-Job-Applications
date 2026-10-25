@@ -1,6 +1,6 @@
 # Automation components
 
-A file- and browser-capable AI agent runs the [application workflow](../Application%20Workflow/application-workflow.md). This folder supplies utilities, state examples and a scheduled check-in prompt that support its work. AgentMail handles email intake; website navigation, candidate onboarding and task progress have separate responsibilities. This repository starts no background worker or schedule.
+A file- and browser-capable AI agent runs the [application workflow](../Application%20Workflow/application-workflow.md). This folder supplies utilities, state examples and a scheduled check-in prompt that support its work. Shared email intake uses the selected host connection or AgentMail; website navigation, candidate onboarding and task progress have separate responsibilities. This repository starts no background worker or schedule.
 
 ## What runs where
 
@@ -9,11 +9,11 @@ A file- and browser-capable AI agent runs the [application workflow](../Applicat
 | Task execution | [Workflow](../Application%20Workflow/application-workflow.md), [board](../Task%20Board/README.md) and context instructions | An AI agent with a writable working copy and authorized tools |
 | Browser automation | Default-browser policy, host-tool procedure, pinned Playwright CLI/library and [setup/check](browser/README.md) | Actual host-browser tools when selected; Node/npm and permitted Playwright installation/execution; account access and actual site methods are established during onboarding/discovery |
 | Supporting code | TypeScript sources, npm scripts and pinned tooling in [package.json](../package.json) | Node.js 22 or later and npm when running these utilities |
-| Email-alert intake | [AgentMail clients and setup](email/agentmail/setup.md), inbox discovery, progress format and completed-message cleanup | Existing suitable AgentMail integration, or an account/API key when none can be reused; only email mode needs mail access |
+| Email-alert intake | [Shared setup and policies](email/README.md), host-connector contract, AgentMail adapter, classification/progress and selected cleanup | An actual authorized email connection exposed by the harness, or AgentMail when needed/preferred; only email mode needs alert-mail access |
 | Candidate onboarding | [Conversational procedure](../Application%20Workflow/onboarding-workflow.md), roadmap, per-board mapping progress and [readiness helpers](onboarding/README.md) | CVs, candidate instructions, selected boards, actual observations and document tools; scanned PDFs need available OCR or vision |
 | Periodic check-ins | [Scheduler prompt](scheduling/check-in-prompt.md) and resumption instructions | The selected agent environment's scheduler, with the requested cadence, timezone and working root |
 
-AgentMail is the included email provider, not the entire automation system. A manual application can run without AgentMail. Installing Node packages does not supply an AI agent, authenticate websites or start recurring work.
+AgentMail remains one backend. An existing suitable Gmail, Outlook or other harness connection can supply alerts without it. Manual tasks require no alert-mail provider. Installing Node packages does not supply an AI agent, authenticate websites or start recurring work.
 
 ## Folder guide
 
@@ -30,7 +30,13 @@ automation/
 │   ├── cli.mjs
 │   └── setup.mjs
 ├── email/
-│   ├── agentmail/           # Alert-inbox detection, selection, intake and cleanup
+│   ├── README.md           # Shared account selection, intake and cleanup
+│   ├── host-connectors/    # Actual harness tool bindings; no copied OAuth tokens
+│   ├── connection.ts       # Selection and capability checks
+│   ├── intake.ts           # Message classification and assignment identity
+│   ├── state-store.ts      # Private message markers and migration
+│   ├── cleanup.ts          # Durable cleanup checkpoints and recovery
+│   ├── agentmail/           # Existing AgentMail backend
 │   └── verification/        # Application-email access and OTP/MFA resumption
 ├── workflow/                # Application state and revision-checked private JSON
 ├── onboarding/              # Progress, document metadata, readiness and agent CLI
@@ -39,7 +45,7 @@ automation/
 ```
 
 - **browser** resolves the pinned local CLI, prepares missing browser revisions and verifies an isolated local interaction. It has no candidate/account dependency.
-- **email/agentmail** contains provider-specific access, discovery and setup. Its [integration guide](email/agentmail/README.md) explains alert enumeration, progress and completed-message cleanup.
+- **email** contains shared selection, classification, progress, cleanup and migration under [the email guide](email/README.md). **host-connectors** binds tools actually exposed by the agent environment; **agentmail** retains its provider-specific client/setup.
 - **workflow** contains shared application-state types and integrity checks for task movement, confirmation and message completion. These checks do not establish whether external evidence is true; the agent must inspect it.
 - **onboarding** contains schema-3 progress, migration, readiness and agent CLI utilities. The [onboarding workflow](../Application%20Workflow/onboarding-workflow.md) directs the conversation, one-to-three primary-board selection and initial mapping. Candidate answers stay in private role files.
 - **scheduling** contains the prompt an existing scheduler uses to start a check-in. It contains no independent scheduler service.
@@ -51,9 +57,9 @@ Site-specific page objects and application routines stay with their observed nav
 
 Follow [SETUP.md](../SETUP.md) for first use. The agent onboards the candidate, reads the task and prepares only the capabilities that task needs. Profile setup does not require an inbox or portal login. A manual application needs browser access and the selected profile; email mode also needs mail access.
 
-For email mode, the agent first runs `npm run inbox:detect` and checks available connected tools/skills. It reuses a suitable existing integration through its original source. Only when none is usable does the user supply `AGENTMAIL_API_KEY` in ignored `automation/.env`, using [.env.example](.env.example). The agent follows [AgentMail setup](email/agentmail/setup.md) to list available inboxes, obtain or reuse your choice, and save its identity privately. No existing inbox is chosen automatically, even when only one is available. Do not ask the user to find or enter an inbox ID. A separate AgentMail skill installation is unnecessary for the included clients.
+For email mode, follow [shared email onboarding](email/README.md) first. The agent inspects actual available host connections and a saved selection before offering new setup. A suitable Gmail, Outlook or other connection needs no AgentMail key. Present accessible addresses, accept the user's choice and establish alert scope and supported completed-alert handling. Offer [AgentMail setup](email/agentmail/setup.md) when needed or preferred; its existing `inbox:*` commands remain AgentMail-specific and compatible. `email:*` commands manage shared metadata/state without making provider calls.
 
-For application setup, follow [browser setup](browser/README.md) before website authentication or mapping. The agent prepares and verifies the pinned CLI and actual browser operation, reusing compatible tooling. The agent learns unfamiliar website flows through [discovery](../Application%20Workflow/discovery-workflow.md). Website passwords remain in the relevant board's private configuration, separate from the mail API key.
+For application setup, follow [browser setup](browser/README.md) before website authentication or mapping. The agent prepares and verifies the pinned CLI and actual browser operation, reusing compatible tooling. The agent learns unfamiliar website flows through [discovery](../Application%20Workflow/discovery-workflow.md). Website passwords remain in the relevant board's private configuration, separate from email-connection authentication.
 
 ## Run the supporting utilities
 
@@ -77,12 +83,18 @@ Browser setup can download missing components; its operation check visits loopba
 | `npm run browser -- ...` | Run the pinned local CLI |
 | `npm run onboarding:status` | Display the saved roadmap and per-board progress without changing saved progress |
 | `npm run onboarding:check` | Check scoped preparation, evidence references and local runtime without changing saved progress |
-| `npm run inbox:detect` | Detect existing local setup and return nonsecret metadata; verify connected-tool access separately |
+| `npm run email:discover` | Inspect saved selection, host-produced account inventory and bounded existing AgentMail metadata; no provider calls |
+| `npm run email:status` | Inspect shared account/cleanup/capability readiness without changing email or saved state |
+| `npm run email:select -- ...` | Record the actual user-selected source and intake rules |
+| `npm run email:cleanup -- ...` | Save the user's supported cleanup choice; perform no cleanup |
+| `npm run email:capabilities -- ...` | Save evidence from actual tools for this account and execution context |
+| `npm run email:migrate -- ...` | Preserve and import a genuine existing AgentMail selection/policy and legacy progress |
+| `npm run inbox:detect` | AgentMail only: detect existing local setup and return nonsecret metadata |
 | `npm run inbox:list` | List inbox addresses and metadata for the user’s choice without reading messages or writing a binding |
 | `npm run inbox:setup` | Bind the user’s selected inbox and check header access; create only for an empty account without a requested existing address |
 | `npm run inbox:check` | Discover an existing inbox and check headers without provisioning or saving a binding |
 
-These utilities preserve the existing `automation/.env` location. Setup/check sends no email, deletes no messages and activates no schedule. Actual alert processing and completed-message deletion follow the [email procedure](email/agentmail/README.md#email-processing-and-cleanup).
+These utilities preserve the existing `automation/.env` location. Setup/check sends no email, deletes no messages and activates no schedule. Actual alert processing and completed-message deletion follow the [email procedure](email/README.md#email-processing-and-cleanup).
 
 ## Working data and configuration
 
@@ -90,10 +102,12 @@ The source layout is separate from private runtime storage:
 
 | Private location | Purpose |
 | --- | --- |
-| `automation/.env` | This working copy's AgentMail API key |
+| `automation/.env` | Optional AgentMail API key when that backend needs a project-specific key |
 | `.local/agentmail-intake.json` | Resolved inbox binding and any creation identity |
 | `.local/agentmail-connection.json` | Selected existing credential source reference; no key value |
-| `.local/inbox-state.json` | Active alert-to-vacancy/task associations and cleanup checkpoints |
+| `.local/email-connection.json` | Selected provider/account/scope and supported cleanup choice |
+| `.local/email-capabilities*.json` | Actual interactive and separately verified scheduled-tool evidence |
+| `.local/inbox-state.json` | Schema-2 classifications, vacancy/task associations, retained-message markers and cleanup checkpoints |
 | `.local/onboarding-state.json` | Schema-3 steps, selected-board access/mapping, pending/deferred questions and resumption point |
 | `.local/browser-readiness.json` | Actual local CLI check and runtime fingerprint |
 | `.local/browser/cli.config.json` | Private CLI browser/output configuration |

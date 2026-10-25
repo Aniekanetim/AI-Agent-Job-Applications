@@ -7,6 +7,7 @@ import { createProgress, migrateProgress, validateProgress, refreshProgress, rea
 import { loadBrowserPreferences } from "../browser/preferences-store.js";
 import { validateCapabilityReport, capabilityIssues } from "../browser/capabilities.js";
 import { validateOperatingPreferences } from "../scheduling/preferences.js";
+import { inspectEmailReadiness } from "../email/state-store.js";
 
 export function digest(value: string | Buffer) { return createHash("sha256").update(value).digest("hex"); }
 function contained(root: string, path: string): string {
@@ -104,6 +105,14 @@ export function inspectReadiness(root: string, source: OnboardingProgress) {
       state.steps.browserTools.nextAction = "Run the local browser setup/check and record its actual successful report.";
     }
   }
+  if (state.scope && ["emailApplications", "bothApplications"].includes(state.scope) && state.emailConnection.status === "complete") {
+    const email = inspectEmailReadiness(root, "interactive");
+    if (!email.ready) {
+      invalidEvidence.push(...email.issues.map(issue => `emailConnection: ${issue}`));
+      state.emailConnection.status = "inProgress";
+      state.emailConnection.nextAction = "Reuse the saved mailbox selection; verify actual read access and the user's cleanup choice through the shared email setup.";
+    }
+  }
   if (state.scope && state.scope !== "profileSetup" && state.preparation.browserChoice.status === "complete") {
     let preferences;
     try {
@@ -158,9 +167,13 @@ export function inspectReadiness(root: string, source: OnboardingProgress) {
               if (evidenceReference(root, ref.path).sha256 !== ref.sha256) throw new Error();
             }
           }
+          if (["emailApplications", "bothApplications"].includes(state.scope)) {
+            const email = inspectEmailReadiness(root, "scheduled");
+            if (!email.ready) { invalidEvidence.push(...email.issues.map(issue => `scheduledEmail: ${issue}`)); throw new Error(); }
+          }
         }
       } catch {
-        invalidEvidence.push("scheduledAccess: verify the requested schedule and its selected browser/fallback in the actual scheduled environment.");
+        invalidEvidence.push("scheduledAccess: verify the requested schedule, selected browser/fallback and required email tools in the actual scheduled environment.");
         state.preparation.scheduledAccess.status = "inProgress";
       }
     }

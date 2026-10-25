@@ -10,7 +10,7 @@ export interface MessageHeader {
   labels?: string[];
 }
 
-interface MessagePage { messages: MessageHeader[]; next_page_token?: string }
+interface MessagePage { messages: MessageHeader[]; next_page_token?: string | null }
 export interface AlertMessage extends MessageHeader { text?: string; html?: string }
 export type Fetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
@@ -63,26 +63,26 @@ export class AgentMailInbox {
     let next: string | undefined;
     const visited = new Set<string>();
     do {
-      const url = new URL(this.#root);
-      url.searchParams.set("limit", "100");
-      if (next) url.searchParams.set("page_token", next);
-      const page = await this.#json<MessagePage>(await this.#request(url.toString()));
-      if (!Array.isArray(page.messages)) throw new AgentMailError();
-      for (const message of page.messages) {
-        if (message.inbox_id !== this.#inboxId || !message.message_id) {
-          throw new AgentMailError();
-        }
-        // Yield only routing metadata, not email bodies or secret-bearing headers.
-        yield { inbox_id: message.inbox_id, message_id: message.message_id,
-          thread_id: message.thread_id, timestamp: message.timestamp,
-          from: message.from, subject: message.subject, labels: message.labels };
-      }
+      const page = await this.listMessagePage(next);
+      for (const message of page.messages) yield message;
       next = page.next_page_token;
       if (next) {
         if (visited.has(next)) throw new Error("AgentMail pagination repeated a page token.");
         visited.add(next);
       }
     } while (next);
+  }
+
+  async listMessagePage(cursor?: string): Promise<{ messages: MessageHeader[]; next_page_token?: string }> {
+    const url = new URL(this.#root); url.searchParams.set("limit", "100");
+    if (cursor) url.searchParams.set("page_token", cursor);
+    const page = await this.#json<MessagePage>(await this.#request(url.toString()));
+    if (!Array.isArray(page.messages) || !(page.next_page_token == null || typeof page.next_page_token === "string")) throw new AgentMailError();
+    return { messages: page.messages.map(message => {
+      if (message.inbox_id !== this.#inboxId || !message.message_id) throw new AgentMailError();
+      return { inbox_id: message.inbox_id, message_id: message.message_id, thread_id: message.thread_id,
+        timestamp: message.timestamp, from: message.from, subject: message.subject, labels: message.labels };
+    }), next_page_token: page.next_page_token ?? undefined };
   }
 
   async getMessage(messageId: string): Promise<AlertMessage> {

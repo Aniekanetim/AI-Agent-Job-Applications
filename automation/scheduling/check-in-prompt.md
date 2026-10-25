@@ -30,15 +30,14 @@ Do not repeat unchanged pending
 questions or reset existing profiles. Keep progress references separate from answers.
 Profile setup or a manual task does not require inbox configuration. Onboarding
 does not itself authorize a live application or activate a schedule.
-For email mode, use automation/email/agentmail/setup.md. Detect existing configured
-AgentMail integrations and connected tools before asking for a key. Reuse suitable
-authorized access through its existing source; save references, not copied secrets.
-Respect actual access restrictions and verify access; detection alone is not readiness.
-At first mailbox setup, list addresses and ask which inbox to use; accept a supplied
-address and reuse a saved confirmed choice without asking again. Do not add a
-blanket account-reuse approval question based on a skill's QA-oriented wording.
-Only if no usable integration exists should onboarding request an API key. Discover
-and bind the inbox without asking for its ID. Send/delete no mail during setup.
+For email mode, follow automation/email/README.md. Detect actual available host email
+tools and saved selections first. Use the user's selected Gmail, Outlook, AgentMail
+or other account; a suitable existing connection needs no new AgentMail setup.
+Present addresses and accept a supplied or saved confirmed choice without asking
+again. Save references, not copied credentials. Establish scope and supported
+delete/archive/label/retain handling. Preserve native permissions and confirmations.
+Verify full message access/pagination and the actual scheduled connection before
+claiming recurring readiness. Setup sends or modifies no mail.
 Resume unchanged setup dependencies only after a relevant change.
 
 Resume eligible claimed work. Check Blocked tasks for actual answers/context
@@ -50,7 +49,7 @@ when its active progress record supplies the unfinished tasks.
 
 Select an enabled role using role routing, then read only that self-contained
 profile, designated upload CV and verification-access instructions. Reuse the saved
-AgentMail connection and inbox selection when they are also the verification
+email connection and mailbox selection when they are also the verification
 destination; do not repeat mailbox setup. A different address or non-email MFA
 may need its own existing access or a specific human handoff. Reuse relevant
 Site Architecture Context and methods for the active browser. Keep an in-app default;
@@ -69,7 +68,8 @@ require the user to edit files: save their conversational reply, verify the
 dependency and resume. Do not repeat unchanged questions or ask for per-application approval.
 
 After durable Applied records and all permitted vacancy dispositions exist,
-delete only the fully handled source message. Incomplete extraction, active or
+perform only the selected supported message-level cleanup, or retain with a local
+handled marker. Preserve non-alert correspondence and cached classifications. Incomplete extraction, active or
 blocked vacancies keep the alert. Retry failed cleanup without reapplying.
 Keep credentials, personal data, browser state, tickets and inbox progress private.
 Respect other workers' claims and preserve task history through moves.

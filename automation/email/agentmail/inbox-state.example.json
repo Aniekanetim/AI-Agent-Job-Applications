@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "exampleOnly": true,
-  "note": "Schema illustration only. Create actual state in ignored .local/inbox-state.json; never treat this example as a live alert or task.",
+  "note": "Legacy schema-1 illustration only. Existing records migrate through the shared email helper; new setups use automation/email/inbox-state.example.json. Never replace live progress with this example.",
   "lastCompletedMessage": null,
   "messages": [
     {

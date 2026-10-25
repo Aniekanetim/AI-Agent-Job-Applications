@@ -55,7 +55,7 @@ Copy this inline format into a real To Do ticket, or create it from an alert's i
 | --- | --- |
 | Created / updated | <ISO date/time with timezone> |
 | Original intake | Email Alerts / To Do |
-| Source | <user task, or inbox/message/vacancy IDs; no raw body> |
+| Source | <user task, or provider/account/mailbox/message/vacancy IDs; no raw body> |
 | Job title / employer / listing URL | <actual details> |
 | Application destination | <actual discovered URL/host; initially Unknown> |
 | Priority / owner / claimed at | <actual values or Unassigned> |
@@ -95,3 +95,9 @@ Extend the existing ticket's private execution checkpoint with the saved default
 Follow [the handoff procedure](../automation/browser/upload-fallback.md): establish the authorized Playwright session and same draft before resuming. Keep that application in Playwright; a new task returns to the saved default. Never switch or retry while a prior submission is uncertain. Preserve handoff history through Blocked and Applied. The board still has exactly four status folders.
 
 Use the selected role's verification-access reference when a challenge needs help, and preserve the same checkpoint while waiting. Apply saved operating limits and reporting preferences during each check-in. Neither a missing in-app capability nor a document-format issue creates a new intake source or routine approval gate.
+
+## Email source and cleanup references
+
+Email-derived tasks retain the provider, stable account/mailbox identity, native message ID, vacancy key and shared message-record reference. Labels, thread IDs and connector sessions are not substitutes for that identity. The user-selected source may be Gmail, Outlook, AgentMail or another available harness connection. Never switch it silently.
+
+A confirmed application stays Applied even when source-email cleanup is pending. Delete/archive/label/retain handling is recorded on the source message after all vacancies are resolved. Retain mode keeps a compact handled marker without changing the inbox. Non-alert messages get no application ticket or Applied outcome; verification/receipt use remains possible under the current task's authorized scope. See [shared email processing](../automation/email/README.md#email-processing-and-cleanup).

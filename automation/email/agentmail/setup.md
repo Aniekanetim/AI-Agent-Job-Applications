@@ -1,6 +1,8 @@
 # Set up AgentMail email-alert intake
 
-Email onboarding checks existing access before requesting setup details. Reuse a suitable configured integration; ask for an API key only when no usable connection exists. The agent handles inbox IDs and discovery. Manual tasks and candidate-profile setup need no email account.
+This page configures AgentMail only. Begin with [shared email onboarding](../README.md#onboarding-and-account-selection); a suitable existing Gmail, Outlook or other harness connection needs no AgentMail setup.
+
+AgentMail onboarding checks existing access before requesting setup details. Reuse a suitable configured integration; ask for an API key only when no usable connection exists. The agent handles inbox IDs and discovery. Manual tasks and candidate-profile setup need no email account.
 
 ## 1. Detect existing access first
 
@@ -73,3 +75,7 @@ Using the supplied job-board access and candidate preferences, the agent helps a
 On the first matching alert, follow [email processing and cleanup](README.md#email-processing-and-cleanup): enumerate every vacancy, create its Email Alerts tasks and retain source associations in `.local/inbox-state.json`. Keep unresolved alerts. Delete only an individual fully handled source message after the existing persistence checks. Exclude OTPs, receipts and recruiter replies from alert cleanup.
 
 Before any application task exists, retain incomplete setup as its exact onboarding question or access dependency, without inventing a job ticket. Resume after a relevant change. An unchanged check-in repeats neither unanswered questions nor failed access checks.
+
+## Shared setup entry point
+
+This page configures the AgentMail backend only. Start with [provider-independent onboarding](../README.md#onboarding-and-account-selection). A user who chooses a suitable existing Gmail, Outlook or other harness connection does not need these API-key/inbox commands. Existing AgentMail selections and original credential sources are retained by [shared migration](../README.md#existing-setup-and-relocation). Its header check remains useful evidence of that limited operation; record full body/cleanup/scheduled capabilities separately before marking broader email intake ready.

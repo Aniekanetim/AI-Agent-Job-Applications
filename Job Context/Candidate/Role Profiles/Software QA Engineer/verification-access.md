@@ -12,4 +12,4 @@
 | Interactive / recurring limitations | Not verified |
 | Last access check / evidence | Not performed |
 
-Follow [verification access](../../../../automation/email/verification/README.md). If this verification address is the selected AgentMail inbox, reference its existing connection and binding; no second mailbox setup is required. If it differs, establish the missing access or a human handoff only when needed. Keep passwords, OTPs, signed links and recovery codes out of Markdown. A known human-assisted method can be recorded without pretending automated access was verified.
+Follow [verification access](../../../../automation/email/verification/README.md). If this verification address is the selected email mailbox, reference its existing connection and binding; no second mailbox setup is required. If it differs, establish the missing access or a human handoff only when needed. Keep passwords, OTPs, signed links and recovery codes out of Markdown. A known human-assisted method can be recorded without pretending automated access was verified.

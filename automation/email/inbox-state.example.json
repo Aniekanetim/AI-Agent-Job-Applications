@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 2,
+  "exampleOnly": true,
+  "note": "Empty shared progress template; save actual private classifications, task associations and cleanup markers in .local/inbox-state.json.",
+  "lastCompletedMessage": null,
+  "messages": []
+}

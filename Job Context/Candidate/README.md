@@ -30,4 +30,4 @@ Each task records the chosen role ID, paths and versions, CV hash and selection 
 
 ## Verification and upload readiness
 
-Each role also has `verification-access.md`, with actual private access references and OTP/MFA resumption in `verification-access.local.md`. It points to the contact-email source without copying candidate identity. Alert-inbox access does not establish application-email access. Keep original and designated upload CV versions in the existing Documents index, with hashes and inspection references; no separate Shared candidate baseline is introduced.
+Each role also has `verification-access.md`, with actual private access references and OTP/MFA resumption in `verification-access.local.md`. It points to the contact-email source without copying candidate identity. Reuse the selected email connection when it also receives verification messages; another address or challenge may need its own access or human handoff. Keep original and designated upload CV versions in the existing Documents index, with hashes and inspection references; no separate Shared candidate baseline is introduced.

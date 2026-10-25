@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "provider": "REPLACE_WITH_ACTUAL_PROVIDER",
+    "accountId": "REPLACE_WITH_STABLE_ACCOUNT_ID",
+    "mailboxId": "REPLACE_WITH_STABLE_MAILBOX_ID",
+    "address": null,
+    "transport": "hostConnector",
+    "connectionReference": "REPLACE_WITH_ACTUAL_HOST_REFERENCE"
+  },
+  "selection": {
+    "method": "user",
+    "sourceReference": "REPLACE_WITH_ACTUAL_USER_CHOICE_REFERENCE"
+  },
+  "scope": {
+    "folderOrLabel": null,
+    "query": null,
+    "ruleReference": "REPLACE_WITH_PRIVATE_RULE_REFERENCE",
+    "revision": "REPLACE_WITH_ACTUAL_RULE_VERSION"
+  },
+  "cleanup": null
+}
