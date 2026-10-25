@@ -23,7 +23,7 @@ Initial selected boards are a preparation scope. They do not restrict later assi
 
 Read the relevant architecture before code. If the required branch is unlearned, use [discovery](../Application%20Workflow/discovery-workflow.md) directly instead of repeatedly invoking a stub. If learned, check its recorded host/session/branch conditions against the current page and reuse its routine. Changed branches require narrow refresh, not a complete platform crawl.
 
-Each portal has architecture.md, playwright and Application destinations. Real destinations use descriptive employer/host directories. LinkedIn includes unlearned Workday and Employer career site examples to show nesting. Do not assume all Workday tenants or employer websites share one form.
+Each portal has architecture.md, in-app, playwright and Application destinations. Real destinations use descriptive employer/host directories. LinkedIn includes unlearned Workday and Employer career site examples to show nesting. Do not assume all Workday tenants or employer websites share one form.
 
 Keep page actions in pages.ts and sequencing/inputs/confirmation in application-flow.ts. Candidate inputs arrive at runtime. Learned routines must persist the task's prepared/submission-attempted checkpoints and return an actual confirmed outcome or a specific dependency. Compilation is not live verification. Do not hard-code secrets, personal values or unobserved selectors.
 
@@ -48,3 +48,9 @@ Use stable local OBS IDs, such as OBS-LINKEDIN-001. Group only claims with the s
 ~~~
 
 Observed controls support navigation; they do not establish hidden architecture or intended business policy. A host name or visible button alone does not establish a complete usable flow. Preserve prior entries through Git or versioned snapshots. Sanitized generic maps/code can be published deliberately; task-specific evidence and authentication state cannot.
+
+## Shared journeys and browser-specific actions
+
+The common `architecture.md` describes pages, fields, decisions, upload requirements and confirmation signals. Each site's `in-app/actions.md` supplies the host-tool action template; actual account-specific methods go in ignored `actions.local.md`. Playwright methods stay under `playwright/`. Link both from the same observation when needed instead of copying the entire site map. All public in-app templates start unlearned, just like the Playwright stubs.
+
+Learn the selected default during onboarding and prepare the Playwright upload branch as applicable. Check provider, host, account/session, observation date and known limits before reuse. A tool change must preserve the same task/vacancy/draft and follow [upload handoff](../automation/browser/upload-fallback.md). In-app capability checks and Playwright checks are separate; compiled TypeScript does not establish host-tool compatibility.

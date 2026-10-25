@@ -2,7 +2,7 @@
 
 The [Task Board](../Task%20Board/README.md) says what to do. [Job Context](../Job%20Context/README.md) supplies candidate facts and instructions. This folder explains how to perform the work autonomously.
 
-1. Use [onboarding-workflow.md](onboarding-workflow.md) on first adoption or when a role needs a missing candidate answer. Show the roadmap, prepare the CLI/browser for application mode, import CVs, save relevant answers, connect accounts and map one to three selected boards. Reuse existing setup and finish with a verified handoff.
+1. Use [onboarding-workflow.md](onboarding-workflow.md) on first adoption or when a role needs a missing candidate answer. Show the roadmap, choose the default browser and prepare its tools plus Playwright upload fallback for application mode, import CVs, save relevant answers, establish verification-email access and operating preferences, connect accounts and map one to three selected boards. Reuse existing setup and finish with a verified handoff.
 2. Use [application-workflow.md](application-workflow.md) for an email-derived or manual application task.
 3. Use [discovery-workflow.md](discovery-workflow.md) during initial board preparation and when website knowledge is missing or no longer fits the live page. Keep onboarding checkpoints in progress and application checkpoints on their existing tasks.
 4. Resume the same task checkpoint after learning or a resolved blocker.

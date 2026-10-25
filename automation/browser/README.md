@@ -1,20 +1,34 @@
-# Browser setup
+# Browser selection and preparation
 
-The agent prepares this tooling before connecting or mapping job websites. Users describe their goal and provide access when needed; they do not need to discover missing browser packages or run installation commands themselves. Profile-only onboarding skips this component.
+Choose the default before installing tools, signing in or mapping websites. The agent asks once, saves the actual reply in private context and records the choice in `.local/browser-preferences.json`. Profile-only setup skips browsers.
 
-## Agent procedure
+| Choice | Default behavior |
+| --- | --- |
+| Choose for me (`automatic`) | Compare the host's actual capabilities, explain the selection and save the resolved default |
+| In-app browser (`inApp`) | Use the host application's browser; prepare Playwright for applications requiring file upload |
+| Playwright (`playwright`) | Use the bundled CLI and learned TypeScript methods |
 
-1. Check for Node.js 22 or later and npm. Reuse an existing supported installation. If missing, prepare them through the host's supported installation method when permitted. If the environment prevents installation, explain the exact user action needed and mark only the affected setup step blocked. A repository cannot install tools before its agent has the host access needed to do so.
-2. From the working root, run `npm ci` when dependencies are absent or the lockfile changed. This installs the pinned Playwright CLI and library locally. No global CLI or separate browser skill is required. Preserve the existing private configuration and sessions.
-3. Run `npm run browser:setup`. It checks the selected cache and installs only missing Chromium runtimes for the CLI and library. The two packages may require different browser revisions. Browser downloads need network access; Linux may also need system libraries installed through its supported administrator/package-manager process.
-4. Read the resulting private `.local/browser-readiness.json`. Success requires the actual CLI to open a local page, take a snapshot, click its button and inspect the result. A download or `--help` response alone is insufficient. Failures identify installation, launch, snapshot or interaction as the next investigation area.
-5. Record the successful report with `npm run onboarding:record -- --step browserTools --reference .local/browser-readiness.json`. Recheck after changing machine, working root, Node major version or pinned tooling. This check establishes browser operation, not website login or successful applications.
+An installed CLI does not establish a preference. An unavailable chosen browser remains a setup dependency; it does not authorize silently changing the default. Record the user's choice with `npm run onboarding:browser -- --browser inApp --source REFERENCE`, substituting the actual choice and private response reference. For automatic selection, verify the available tools first, then use `npm run onboarding:resolve-browser -- --reference .local/browser-selection.md` with the actual capability comparison.
 
-`npm run browser:check` repeats the local operation check without installing browsers. Both commands use an isolated named session and close only that session. They read no CVs, account passwords or saved authentication and visit no job websites. Artifacts stay under ignored `output/playwright/`.
+## Prepare the selected browser and upload fallback
+
+1. For in-app use, follow [the host-browser procedure](in-app/README.md). Check the actual provider, navigation, form filling and outcome inspection. Do not claim a browser works from its presence in a tool list. Keep its session separate from Playwright.
+2. For Playwright use, including the in-app upload fallback, check Node.js 22+ and npm. Reuse a supported installation; prepare missing components through the host's permitted installation method. If installation is prevented, record the exact dependency and required action.
+3. Run `npm ci` from this working root when dependencies are missing or the lockfile changed. Run `npm run browser:setup` to install only missing compatible Chromium runtimes and perform the safe rehearsal. `npm run browser:check` repeats verification without downloads.
+4. Inspect `.local/browser-readiness.json`. Success requires real CLI navigation, form entry, saving a synthetic draft, recovery of that same draft in an isolated second session, file upload and outcome inspection. This establishes Playwright operation; it does not establish in-app operation, website authentication or an application submission.
+5. Record actual reports under `browserTools` using [onboarding progress](../onboarding/README.md). An in-app default requires both its own verified report and a working Playwright upload fallback. Prepare access for both where the selected journey needs it; one browser's login does not authenticate the other.
+
+No CV, password or authenticated session is used by the synthetic rehearsal. It visits only a temporary loopback page, writes artifacts under ignored `output/playwright/`, and closes only its own named sessions. Do not use a practice job application as a tool test.
+
+## Route each application
+
+If file upload is known to be required, start that application in Playwright. If the requirement appears during in-app work, follow [the upload handoff](upload-fallback.md). The default stays in-app, the existing task keeps its identity, and the rest of that application stays in Playwright. The next task uses the saved default.
+
+Capability absence and permission denial are different. A documented unsupported upload can use the configured fallback. An access or tool denial remains a blocker; changing tools must not evade it. A submission with an uncertain outcome must be investigated before any switch or retry.
 
 ## Use the bundled CLI
 
-The launcher resolves the installed pinned package directly, so it cannot silently download a different CLI:
+The launcher resolves the pinned local package without silently downloading a different CLI:
 
 ```shell
 npm run browser -- --help
@@ -23,10 +37,8 @@ npm run browser -- -s=job-discovery snapshot
 npm run browser -- -s=job-discovery close
 ```
 
-Inspect a fresh snapshot before using its element references. Refresh after navigation or a significant page change. Store reusable observed locators in the relevant site's TypeScript routines; temporary snapshot IDs are not permanent selectors. Follow the [discovery procedure](../../Application%20Workflow/discovery-workflow.md) for initial board mapping and changed application steps.
+Inspect a fresh snapshot before using its element references. Refresh after navigation or a significant page change. Temporary snapshot IDs are not permanent selectors. Save observed locators and checks in the site's Playwright methods; use [discovery](../../Application%20Workflow/discovery-workflow.md) for unfamiliar branches.
 
-The default configuration is created privately at `.local/browser/cli.config.json` and keeps output under `output/playwright/`. Sessions are isolated unless the agent deliberately selects the authorized board profile or loads its private storage state. Keep authentication in `.auth/` or a secure store. Never put passwords in CLI arguments, snapshots or source code; load them privately at runtime through the [credential procedure](../../Job%20Context/Job%20Boards/README.md). Do not use account-wide close/kill commands against unrelated sessions.
+Private `.local/browser/cli.config.json` controls output. Keep authentication in `.auth/` or a secure store. Load credentials privately through [board access](../../Job%20Context/Job%20Boards/README.md); never put passwords in CLI arguments, snapshots or code. Do not close unrelated sessions or copy a person's main browser profile.
 
-The agent reuses matching browser revisions from the working copy or standard Playwright cache. Missing revisions are downloaded to `.local/browsers`. An explicit `PLAYWRIGHT_BROWSERS_PATH` is respected. The CLI and library can reuse separate compatible caches; their selected paths are recorded privately. Browser files and authenticated sessions are separate. The setup utility preserves installed files and does not copy a person's main browser profile.
-
-The upstream [Playwright CLI guide](https://github.com/microsoft/playwright-cli#readme) documents commands and session options. Package versions are pinned in this repository's lockfile; inspect local `--help` for the installed version.
+The CLI and library can require different Chromium revisions. Setup reuses matching revisions in the working copy or standard cache, downloads missing revisions to `.local/browsers`, and respects `PLAYWRIGHT_BROWSERS_PATH`. Linux may also need permitted system-library installation. Reverify after relocation or runtime changes. See the upstream [Playwright CLI guide](https://github.com/microsoft/playwright-cli#readme) and the installed `--help` for commands.

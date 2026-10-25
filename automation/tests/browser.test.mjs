@@ -46,7 +46,8 @@ test('failed smoke check closes only its own unique session and never loads cand
   const run = async (file, args) => { calls.push([file, args]); return { code: 1, stdout: '', stderr: '' }; };
   const result = await verifyBrowser(runtime, run);
   assert.equal(result.ok, false); assert.equal(result.stage, 'open');
-  assert.equal(calls.length, 2); assert.equal(calls[1][1][1], 'close');
+  assert.equal(calls.length, 3); assert.equal(calls[1][1][1], 'close');
+  assert.equal(calls[2][1][1], 'close');
   assert.equal(calls[0][1][0], calls[1][1][0]);
   assert.equal(JSON.stringify(calls).includes('close-all'), false);
   assert.equal(JSON.stringify(calls).includes('state-load'), false);

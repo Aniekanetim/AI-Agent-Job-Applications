@@ -3,7 +3,10 @@ import { resolve, relative, isAbsolute } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { createProgress, migrateProgress, validateProgress, refreshProgress, readiness, mappingAreas,
-  type OnboardingProgress, type EvidenceReference, type ProgressCheck } from "./progress.js";
+  preparationIds, type OnboardingProgress, type EvidenceReference, type ProgressCheck } from "./progress.js";
+import { loadBrowserPreferences } from "../browser/preferences-store.js";
+import { validateCapabilityReport, capabilityIssues } from "../browser/capabilities.js";
+import { validateOperatingPreferences } from "../scheduling/preferences.js";
 
 export function digest(value: string | Buffer) { return createHash("sha256").update(value).digest("hex"); }
 function contained(root: string, path: string): string {
@@ -27,7 +30,7 @@ export function loadProgress(root: string, now = new Date().toISOString()) {
   let data;
   try { data = JSON.parse(bytes.toString("utf8")); }
   catch { throw new Error("Onboarding progress is unreadable. Preserve the file and investigate; candidate records remain authoritative."); }
-  return { state: migrateProgress(data, now), revision: digest(bytes), migrated: data.schemaVersion === 1 };
+  return { state: migrateProgress(data, now), revision: digest(bytes), migrated: data.schemaVersion !== 3 };
 }
 
 /** Atomic, revision-checked saves; no state or credentials may be published through this helper. */
@@ -64,6 +67,7 @@ export function inspectReadiness(root: string, source: OnboardingProgress) {
   ];
   if (state.scope && state.scope !== "profileSetup") {
     checks.push(["browserTools", state.steps.browserTools]);
+    for (const id of preparationIds) checks.push([id, state.preparation[id]]);
     if (["emailApplications", "bothApplications"].includes(state.scope)) checks.push(["emailConnection", state.emailConnection]);
     for (const board of state.boards.filter(value => !value.deferred)) {
       checks.push([`${board.name}:access`, board.access]);
@@ -91,12 +95,74 @@ export function inspectReadiness(root: string, source: OnboardingProgress) {
         report.fingerprint.arch !== process.arch || report.fingerprint.nodeMajor !== Number(process.versions.node.split(".")[0]) ||
         report.fingerprint.cliVersion !== pkg.devDependencies["@playwright/cli"] || report.fingerprint.libraryVersion !== pkg.devDependencies.playwright ||
         !existsSync(resolve(root, "node_modules/@playwright/cli/playwright-cli.js")) ||
+        report.capabilities?.fileUpload !== true ||
         !Array.isArray(report.checks) || report.checks.length !== 2 ||
         report.checks.some((check: { installed?: boolean; executablePath?: string }) => !check.installed || !check.executablePath || !existsSync(check.executablePath))) throw new Error();
     } catch {
       invalidEvidence.push("browserTools: verify the CLI in this working copy and runtime before marking it ready.");
       state.steps.browserTools.status = "inProgress";
       state.steps.browserTools.nextAction = "Run the local browser setup/check and record its actual successful report.";
+    }
+  }
+  if (state.scope && state.scope !== "profileSetup" && state.preparation.browserChoice.status === "complete") {
+    let preferences;
+    try {
+      preferences = loadBrowserPreferences(root).preferences;
+      if (!preferences.choice) throw new Error();
+    } catch {
+      invalidEvidence.push("browserChoice: preserve and resolve the missing or unreadable user preference.");
+      state.preparation.browserChoice.status = "inProgress";
+    }
+    if (preferences?.choice) {
+      try {
+        if (!preferences.resolvedDefault) throw new Error();
+        if (preferences.resolvedDefault === "inApp") {
+          const report = JSON.parse(readFileSync(contained(root, ".local/browser-in-app.json"), "utf8"));
+          validateCapabilityReport(report);
+          if (report.backend !== "inApp" || capabilityIssues(report, root, "interactive", false).length) throw new Error();
+          for (const check of Object.values(report.capabilities)) for (const ref of check.evidence) {
+            if (evidenceReference(root, ref.path).sha256 !== ref.sha256) throw new Error();
+          }
+        }
+      } catch {
+        invalidEvidence.push("browserTools: verify the selected host browser or resolve automatic selection from actual capabilities; the saved preference remains unchanged.");
+        state.steps.browserTools.status = "inProgress";
+        state.steps.browserTools.nextAction = "Verify the chosen browser through its actual host tools; preserve known choices and the upload fallback.";
+      }
+    }
+  }
+  if (state.scope && state.scope !== "profileSetup" && state.preparation.scheduleChoice.status === "complete") {
+    let operating;
+    try {
+      operating = JSON.parse(readFileSync(contained(root, ".local/operation-preferences.json"), "utf8"));
+      validateOperatingPreferences(operating);
+    } catch {
+      invalidEvidence.push("scheduleChoice: preserve and resolve the missing or invalid operating choice.");
+      state.preparation.scheduleChoice.status = "inProgress";
+    }
+    if (operating) {
+      try {
+        if (operating.mode === "onDemand") {
+          if (state.preparation.scheduledAccess.status !== "skipped") throw new Error();
+        } else {
+          if (!operating.scheduleReference?.trim() || state.preparation.scheduledAccess.status !== "complete") throw new Error();
+          const { preferences } = loadBrowserPreferences(root);
+          if (!preferences.resolvedDefault) throw new Error();
+          const required = preferences.resolvedDefault === "inApp" ? ["inApp", "playwright"] : ["playwright"];
+          for (const backend of required) {
+            const reportPath = backend === "inApp" ? ".local/browser-in-app-scheduled.json" : ".local/browser-playwright-scheduled.json";
+            const report = JSON.parse(readFileSync(contained(root, reportPath), "utf8"));
+            validateCapabilityReport(report);
+            if (report.backend !== backend || capabilityIssues(report, root, "scheduled", backend === "playwright").length) throw new Error();
+            for (const check of Object.values(report.capabilities)) for (const ref of check.evidence) {
+              if (evidenceReference(root, ref.path).sha256 !== ref.sha256) throw new Error();
+            }
+          }
+        }
+      } catch {
+        invalidEvidence.push("scheduledAccess: verify the requested schedule and its selected browser/fallback in the actual scheduled environment.");
+        state.preparation.scheduledAccess.status = "inProgress";
+      }
     }
   }
   if (state.steps.readiness.status === "complete") {

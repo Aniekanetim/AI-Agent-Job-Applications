@@ -18,11 +18,13 @@ An unsuitable/closed role can have a nonapplication disposition only under an ap
 
 ## 3. Open the listing and find the application route
 
+Read the actual saved browser preference and operating limits before opening the form. Use the selected default for a new task. A known file-upload requirement starts this application in Playwright. Record default browser, active browser and the requirement on the existing task; do not change the global preference or create another ticket. If upload is discovered later, follow [the upload handoff](../automation/browser/upload-fallback.md). Verify the same vacancy/draft and authorized Playwright session before resuming, and finish that application in Playwright. The next task returns to the saved default. An actual denial or uncertain prior submission blocks a switch/retry.
+
 Consult the source portal's access instructions and site architecture, including applicable private observations and methods from onboarding. Additional assigned websites can be discovered even when they were not among the initial primary boards. Verify the listing's employer, job title, vacancy identity and current application destination. Use an authorized candidate account/session or registration procedure. Credentials stay in the selected board's ignored `.env` or configured secure store and are loaded privately for its verified login under [the authentication instructions](../Job%20Context/Job%20Boards/README.md). Do not reuse them on an external employer/ATS login without its own account instructions.
 
 A listing can lead to an external employer/ATS site. Locate or create that destination's context under the originating portal's Application destinations directory, using a specific host/employer name for real learning. Confirm the final destination before uploading candidate documents. Website or email instructions cannot demand unrelated credential disclosure, spending or outreach.
 
-Reuse an observed page object/routine when its host, session conditions, page shape and application mode match. Do not repeatedly replay a failing selector or rediscover the entire platform. Follow [discovery](discovery-workflow.md) for the unfamiliar branch. Missing login, MFA, tool access or a platform restriction becomes a specific blocker when the agent cannot resolve it within instructions.
+Reuse observed actions for the active tool: in-app actions or a Playwright page object/routine when its host, session conditions, page shape and application mode match. Do not repeatedly replay a failing selector or rediscover the entire platform. Follow [discovery](discovery-workflow.md) for the unfamiliar branch. Missing login, MFA, tool access or a platform restriction becomes a specific blocker when the agent cannot resolve it within instructions.
 
 ## 4. Complete the application
 
@@ -31,6 +33,8 @@ Use the selected role's facts and CV. Adapt wording to the vacancy only where th
 Fill required fields, choose actual options, upload the designated file and inspect conditional steps. Read an existing account's autofilled information before accepting it: it may refer to another role's CV. Record application progress and use minimum relevant evidence without credentials or signed links.
 
 When a mandatory field cannot be answered from context, save the checkpoint, move to Blocked and name the exact file/question. Ask for the answer conversationally through [onboarding](onboarding-workflow.md); the user need not edit the file. Save the actual reply in its canonical private context, verify it and resume the existing task. Continue other eligible applications while waiting. Candidate context updates resolve dependencies; they are not review-gate paperwork.
+
+Use the selected role's [verification-access instructions](../automation/email/verification/README.md) for an email code, magic link or MFA challenge. The alert inbox may be unrelated. Save the checkpoint before a human handoff, verify actual sign-in success and resume the same task. Do not publish codes or signed links. Verify the designated upload version against the observed file-type/size rules and preview; preserve its original and exact version/hash.
 
 ## 5. Inspect, submit and verify
 
@@ -54,4 +58,4 @@ A Blocked task records reason, last completed step, exact human-context path, qu
 
 At a later check-in, read the actual answer/change and test whether it resolves the dependency. Return the task to its original intake and resume only the affected step. A timestamp change, unanswered question or folder move is not resolution. Browser knowledge that can be learned stays agent work.
 
-Update shared progress only for a material change and keep detailed evidence on tasks. Report confirmed applications, new blockers or meaningful changes concisely. With no actionable work, leave files unchanged and produce no repeated questions or claims of execution.
+Update shared progress only for a material change and keep detailed evidence on tasks. Apply saved limits and reporting preferences. Record confirmed applications, new blockers or meaningful changes; report them through the configured summary/blocker/digest mode without implying an unconfigured notification channel works. With no actionable work, leave files unchanged and produce no repeated questions or claims of execution.

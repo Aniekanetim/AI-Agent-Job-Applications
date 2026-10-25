@@ -1,12 +1,12 @@
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, existsSync, rmSync, copyFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, existsSync, rmSync, copyFileSync, cpSync } from "node:fs";
 import { resolve, join, relative, isAbsolute, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createProgress, configureProgress, newBoard, migrateProgress, readiness, refreshProgress, formatProgress,
-  mappingAreas, emptyCheck, type OnboardingProgress, type ProgressCheck } from "../onboarding/progress.js";
+  mappingAreas, preparationIds, emptyCheck, type OnboardingProgress, type ProgressCheck } from "../onboarding/progress.js";
 import { saveProgress, loadProgress, completedCheck, evidenceReference, inspectReadiness } from "../onboarding/state-store.js";
 
 const now = "2026-10-24T12:00:00.000Z";
@@ -19,6 +19,8 @@ function prepared(scope: "manualApplications" | "bothApplications" | "profileSet
   state.steps.candidateProfiles = done(); state.steps.applicationInstructions = done();
   if (scope !== "profileSetup") {
     state.steps.browserTools = done();
+    for (const id of preparationIds) state.preparation[id] = done();
+    state.preparation.scheduledAccess = { ...done(), status: "skipped", reason: "On-demand operation." };
     state.boards[0].access = done();
     for (const area of mappingAreas) state.boards[0].mapping[area] = done();
     if (scope === "bothApplications") state.emailConnection = done();
@@ -67,7 +69,7 @@ test("schema-1 migration preserves answers' references, questions and unknown me
     currentRoleId: "qa", pendingQuestions: [{ id: "specific-question" }], deferredQuestions: [{ condition: "when needed" }],
     contextRevisions: { "private.local.md": "original-hash" }, updatedAt: now, customCheckpoint: { next: "preserve" } };
   const migrated = migrateProgress(original, now);
-  assert.equal(migrated.schemaVersion, 2); assert.equal(migrated.phase, "inProgress");
+  assert.equal(migrated.schemaVersion, 3); assert.equal(migrated.phase, "inProgress");
   for (const key of ["selectedRoles", "pendingQuestions", "deferredQuestions", "contextRevisions", "customCheckpoint"] as const) {
     assert.deepEqual(migrated[key], original[key]);
   }
@@ -189,7 +191,7 @@ test("CLI refuses premature completion, reopens stale progress and refreshes an 
   const compiled = resolve(dirname(fileURLToPath(import.meta.url)), "../onboarding");
   const destination = resolve(root, ".local/build/automation/onboarding");
   mkdirSync(destination, { recursive: true });
-  for (const name of ["cli.js", "progress.js", "state-store.js"]) copyFileSync(join(compiled, name), join(destination, name));
+  cpSync(resolve(compiled, ".."), resolve(root, ".local/build/automation"), { recursive: true });
   const command = (...args: string[]) => spawnSync(process.execPath, [join(destination, "cli.js"), ...args], { cwd: root, encoding: "utf8", windowsHide: true });
   assert.equal(command("start", "--scope", "profileSetup").status, 0);
   let loaded = loadProgress(root);

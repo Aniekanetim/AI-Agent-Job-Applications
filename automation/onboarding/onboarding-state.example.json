@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "scope": null,
   "phase": "notStarted",
   "selectedRoles": [],
@@ -65,6 +65,57 @@
     "checkedAt": null,
     "nextAction": null,
     "reason": null
+  },
+  "preparation": {
+    "browserChoice": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "uploadDocuments": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "verificationAccess": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "operatingPreferences": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "scheduleChoice": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "scheduledAccess": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    },
+    "rehearsal": {
+      "status": "pending",
+      "evidence": [],
+      "checkedAt": null,
+      "nextAction": null,
+      "reason": null
+    }
   },
   "updatedAt": null
 }

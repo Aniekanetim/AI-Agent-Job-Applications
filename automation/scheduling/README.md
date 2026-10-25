@@ -1,0 +1,23 @@
+# On-demand or recurring operation
+
+Offer this choice during onboarding. On-demand is a complete supported mode: record it, mark scheduled access outside scope with that source reference, and create no automation. Do not infer recurring use from an installed scheduler.
+
+For recurring use, ask only for missing cadence, named timezone, application limits and reporting preferences. Save the user's response in the relevant private instructions and keep the global operating choice in `.local/operation-preferences.json`. `npm run onboarding:operation` saves settings only; it does not create a schedule. A null limit means no numeric limit was supplied, not a guessed daily target. A daily limit also needs a named timezone in on-demand mode so its day boundary is clear. Apply any stricter role instruction too; resolve a conflict instead of silently replacing it.
+
+## Agent setup procedure
+
+1. Read the host's scheduling instructions and inspect any existing matching automation to avoid activating it twice. Keep unrelated automations unchanged. Use this private working root, not a fresh checkout lacking ignored candidate files and sessions.
+2. Run [the check-in prompt](check-in-prompt.md) manually with its real root, current context and no live application task. Check that it reads the two intake sources, resumes eligible Blocked work and respects saved browser/operating preferences. A manual prompt test is preparation, not proof of scheduled browser access.
+3. Under the user's recurring request, use the host's native scheduler to verify actual scheduled tool availability with a synthetic, nonsubmitting rehearsal. Verify the chosen default and Playwright upload fallback in that execution environment, and check required private-file and inbox access without sending or deleting mail. If the host cannot exercise that environment, keep scheduled access unverified and explain the dependency.
+4. Save actual scheduled capability reports with provider/root/context and evidence under the filenames in [the browser guide](../browser/in-app/README.md#recurring-operation). Record the scheduler's real identifier and the check outcome privately. An interactive browser report must never be renamed as scheduled proof.
+5. Create or update the requested job-agent check-in using the actual cadence, timezone and prompt once its dependencies are usable. Save that actual identifier in `scheduleReference`, using the revision-checked private JSON helper and preserving all other settings. Refresh the operating-choice evidence, then record `scheduledAccess` with the actual reports and scheduler evidence. Reconcile an existing schedule through its native tool before changing or disabling it.
+
+For Codex, follow its current [official scheduling guidance](https://learn.chatgpt.com/docs/automations). Local scheduled work depends on the host, app, project and available tools; an open interactive browser alone does not establish unattended access. If a scheduler test needs a temporary automation, remove that specific test automation through the same native tool after its result, preserving unrelated jobs.
+
+An unresolved recurring dependency does not erase usable profiles or on-demand preparation. Report that boundary accurately and let the user choose to defer recurring use; silence is not a change of mode.
+
+## At each check-in
+
+Use the saved limits and reporting choices, resume eligible work and inspect both intake sources. In-app remains the default when chosen; upload applications use Playwright. Respect actual permission denials. Do not resubmit an uncertain application, repeat an unchanged question, reread completed history or create an empty-run progress entry. Keep final submissions and fully handled-alert deletion within the existing candidate instructions.
+
+Before a submission, check the current run's remaining allowance and a compact private daily counter in `.local/application-limits.json`. Use the configured timezone, or establish the day boundary when a daily limit is requested. Persist an attempted submission against the existing task ID before acting, then reconcile its outcome on recovery before freeing or counting that allowance. This is same-task recovery, not cross-source duplicate screening. Coordinate one submitting worker; do not scan all Applied history to recalculate a counter each check-in. An uncertain attempt keeps its allowance reserved. Report the limit boundary and next eligible time without moving an otherwise ready task to Applied. The AI agent maintains this checkpoint through the private JSON helper; the preferences module does not run a background quota service.

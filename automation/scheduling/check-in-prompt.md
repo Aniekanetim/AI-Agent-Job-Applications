@@ -15,11 +15,13 @@ questions in small batches and save actual replies into canonical *.local.md fil
 If a role has no CV, request its PDF, DOCX or TXT file, save the unchanged original
 in that role's private Documents folder and verify the hash and extraction.
 Read .local/onboarding-state.json and automation/onboarding/README.md when present.
-Resume schema-2 steps and per-board mapping; migrate schema 1 without losing any
+Resume schema-3 steps, preparation and per-board mapping; migrate schema 1/2 without losing any
 supplied context or questions. Show the remaining roadmap during interactive setup,
 not an unchanged notification every check-in. Application setup requires one to
 three user-selected primary boards; accept an existing choice. Prepare and verify
-the pinned local CLI/browser under automation/browser/README.md before website work.
+the selected default browser and Playwright upload fallback under
+automation/browser/README.md before website work. Never infer a browser preference
+from installed tools. Read actual operating limits and reporting choices.
 Initial discovery records navigation, application entry, accessible forms, code and
 limits without practice submission. Do not treat login as complete mapping or invent
 observations. Verify changed evidence/runtime before claiming readiness and provide
@@ -47,8 +49,12 @@ tasks or scan historical Applied files. Do not reread a previously parsed body
 when its active progress record supplies the unfinished tasks.
 
 Select an enabled role using role routing, then read only that self-contained
-profile and designated CV. Reuse relevant Site Architecture Context and Playwright
-routines. Discover unfamiliar/changed application steps within the configured
+profile, designated upload CV and verification-access instructions. Reuse relevant
+Site Architecture Context and methods for the active browser. Keep an in-app default;
+start required-upload applications in Playwright. For uploads discovered midway,
+follow automation/browser/upload-fallback.md on the same task and verify its
+authorized session and draft before resuming. Never switch or retry an uncertain
+submission, and never evade an access denial. Discover unfamiliar/changed application steps within the configured
 instructions; maintain Markdown and TypeScript knowledge from actual observation.
 Never invent candidate facts or claim an unlearned flow works.
 
@@ -66,6 +72,6 @@ Keep credentials, personal data, browser state, tickets and inbox progress priva
 Respect other workers' claims and preserve task history through moves.
 
 Update shared progress only for material changes. With no actionable or changed
-work, leave files unchanged. Report meaningful confirmed applications, new blockers
-or required actions; do not invent execution or create empty-run updates.
+work, leave files unchanged. Apply saved operating limits and reporting mode. Report meaningful confirmed
+applications, new blockers or required actions; do not invent execution or create empty-run updates.
 ~~~

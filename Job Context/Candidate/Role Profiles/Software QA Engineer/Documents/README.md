@@ -10,3 +10,9 @@
 Choose one designated CV for this role. The actual filename need not be cv.pdf. Resolve paths from this directory, verify the file exists and inspect its identity/version before upload. Record the version/hash on the task. Actual document files and this index's local counterpart are excluded from Git; the public README is only a template.
 
 The private index also records the received date, source, extraction status and any unreadable fields. Scanned PDFs require available OCR/vision; an encrypted or unclear file is retained while the agent asks for a usable version or clarification. Saving a document alone does not establish successful extraction or application readiness. A secure external path can be used when the user explicitly prefers it.
+
+## Original and upload versions
+
+Keep the supplied original unchanged. The private index distinguishes Original CV from Designated upload CV, even when both refer to the same file. If conversion or permitted factual tailoring is needed, record the derived filename, version/date, SHA-256, byte size, source-original hash and conversion/tailoring method. Inspect the resulting contents and layout through the available document tools before designating it. Preserve the original; do not overwrite it or rename its bytes to another format.
+
+Record actual accepted file types/size limits when observed on the selected portal; unknown requirements stay unknown until the application reaches them. A readable TXT source can populate context while an upload-ready PDF/DOCX remains pending. A basic signature/hash check is useful but does not replace content/layout inspection or the portal's actual upload validation.

@@ -1,3 +1,4 @@
+import type { BrowserExecution } from "../browser/fallback.js";
 /** Local integrity checks; these do not establish that external evidence is true. */
 export type IntakeFolder = "Email Alerts" | "To Do";
 export type BoardFolder = IntakeFolder | "Blocked" | "Applied";
@@ -21,6 +22,7 @@ export interface ApplicationTask {
   checkpoint: "working" | "prepared" | "submissionAttempted" | "confirmed";
   confirmation?: { reference: string; observedAt: string };
   blocker?: Blocker;
+  browserExecution?: BrowserExecution;
 }
 
 export interface VacancyProgress {
@@ -50,6 +52,7 @@ const validTime = (value: string | undefined): boolean =>
 
 export function canMarkApplied(task: ApplicationTask): boolean {
   return supplied(task.taskId) && task.checkpoint === "confirmed" &&
+    !task.browserExecution?.handoffs.some(handoff => handoff.state === "awaitingResume") &&
     supplied(task.selectedRoleId) && supplied(task.cvVersion) &&
     /^[a-f0-9]{64}$/i.test(task.cvSha256 ?? "") &&
     supplied(task.confirmation?.reference) && validTime(task.confirmation?.observedAt);

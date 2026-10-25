@@ -4,7 +4,7 @@ The agent follows [the onboarding workflow](../../Application%20Workflow/onboard
 
 ## Working state
 
-Use ignored `.local/onboarding-state.json`. The [empty example](onboarding-state.example.json) is public and contains no configured candidate, account or completed check. Schema 2 records scope, selected board paths, steps, per-board access/mapping checks, question references and evidence hashes. Candidate answers remain solely in the role's private files; credentials never belong in progress.
+Use ignored `.local/onboarding-state.json`. The [empty example](onboarding-state.example.json) is public and contains no configured candidate, account or completed check. Schema 3 records scope, selected board paths, steps, per-board access/mapping checks, question references and evidence hashes. Candidate answers remain solely in the role's private files; credentials never belong in progress.
 
 | Status | Meaning |
 | --- | --- |
@@ -63,6 +63,27 @@ This records a handoff, not a job submission or schedule activation. The overall
 
 ## Existing setup and relocation
 
-`npm run onboarding:migrate` converts schema 1 while preserving selected roles, pending/deferred questions, context revisions and extra checkpoint metadata. An earlier `complete` phase becomes `inProgress`: browser and mapping checks did not exist then. Read the saved context and previous observations, verify their applicable content and record the relevant checks instead of repeating the questionnaire. Select primary boards from already supplied instructions; ask only if that choice is missing or ambiguous. Reconcile the scope with existing intake instructions, including both intake sources when already selected.
+`npm run onboarding:migrate` converts schema 1 or 2 while preserving selected roles, pending/deferred questions, context revisions and extra checkpoint metadata. An earlier `complete` phase becomes `inProgress`: the new browser-choice, upload, verification and operating checks were not established by that completion. Read the saved context and previous observations, verify their applicable content and record the relevant checks instead of repeating the questionnaire. Select primary boards from already supplied instructions; ask only if that choice is missing or ambiguous. Reconcile the scope with existing intake instructions, including both intake sources when already selected.
 
 Do not create a fake application ticket for an onboarding dependency. Save it here until a real assignment exists. A private state transferred to another machine is a checkpoint, not proof that tools or access work there. Recheck the local runtime, paths and account conditions. Keep actual progress/evidence private; public docs describe operation, not individual users' verification history.
+
+## Browser and preparation commands
+
+Application setup retains seven top-level steps. Schema 3 adds visible preparation checks: `browserChoice`, `uploadDocuments`, `verificationAccess`, `operatingPreferences`, `scheduleChoice`, `scheduledAccess` and `rehearsal`. Profile-only setup does not require them. Keep detailed facts in canonical private context, not this state file.
+
+```shell
+npm run onboarding:browser -- --browser inApp --source .local/user-browser-choice.md
+npm run onboarding:record -- --step browserTools --reference .local/browser-readiness.json --reference .local/browser-in-app.json
+npm run onboarding:record -- --preparation uploadDocuments --reference "Job Context/Candidate/Role Profiles/Software QA Engineer/Documents/README.local.md"
+npm run onboarding:record -- --preparation verificationAccess --reference "Job Context/Candidate/Role Profiles/Software QA Engineer/verification-access.local.md"
+npm run onboarding:operation -- --mode onDemand --source .local/user-operating-choice.md --reporting summary
+npm run onboarding:record -- --preparation rehearsal --reference .local/browser-readiness.json
+```
+
+These are agent examples, not preselected user choices or evidence. Save the actual user's responses before referencing them. Browser choices are `automatic`, `inApp` or `playwright`; automatic selection resolves only after actual capability comparison with `onboarding:resolve-browser -- --reference PATH`. An in-app choice requires both the host capability report and the Playwright upload rehearsal. A failed host initialization keeps the choice but reopens tools, avoiding a repeated preference question.
+
+`onboarding:operation` records on-demand/recurring mode, optional numeric limits, reporting and the recurring cadence/timezone. It does not activate an automation. On-demand records an evidenced skip of `scheduledAccess`. Recurring needs the actual schedule reference and scheduled-environment reports under [schedule setup](../scheduling/README.md); inspect an existing schedule before changing it. If a schedule reference already exists, the command refuses to replace it silently. The agent reconciles the native schedule first, then uses the revision-checked [private JSON helper](../workflow/private-json.ts) to update only the actual changed fields.
+
+Private browser preferences live in `.local/browser-preferences.json`; operating settings in `.local/operation-preferences.json`. The public examples are shapes, not completed configurations. In-app reports use [the capability schema](../browser/capabilities.ts); each verified claim needs actual file/hash evidence. Readiness checks root, runtime, selected provider, nested evidence hashes and interactive versus scheduled scope. It also requires a Playwright report with an actual upload check. Helpers cannot establish that an agent's screenshot or written observation is truthful; inspect contents before recording completion.
+
+Schema-1/2 migration preserves all existing roles, questions, context revisions, evidence and extra checkpoint metadata. New checks begin pending and prior completion is reopened. Reuse relevant earlier observations after inspection; never infer browser preference, verification-email access or a scheduling choice from installed packages or an existing alert connection.

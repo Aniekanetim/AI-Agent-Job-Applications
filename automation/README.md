@@ -7,7 +7,7 @@ A file- and browser-capable AI agent runs the [application workflow](../Applicat
 | Capability | Supplied by this repository | Supplied or configured in the agent environment |
 | --- | --- | --- |
 | Task execution | [Workflow](../Application%20Workflow/application-workflow.md), [board](../Task%20Board/README.md) and context instructions | An AI agent with a writable working copy and authorized tools |
-| Browser automation | Pinned Playwright CLI/library, [browser setup/check and launcher](browser/README.md), and site-specific TypeScript scaffolds | Node/npm and permitted browser installation/execution; account access and actual site methods are established during onboarding/discovery |
+| Browser automation | Default-browser policy, host-tool procedure, pinned Playwright CLI/library and [setup/check](browser/README.md) | Actual host-browser tools when selected; Node/npm and permitted Playwright installation/execution; account access and actual site methods are established during onboarding/discovery |
 | Supporting code | TypeScript sources, npm scripts and pinned tooling in [package.json](../package.json) | Node.js 22 or later and npm when running these utilities |
 | Email-alert intake | [AgentMail clients and setup](email/agentmail/setup.md), inbox discovery, progress format and completed-message cleanup | Existing suitable AgentMail integration, or an account/API key when none can be reused; only email mode needs mail access |
 | Candidate onboarding | [Conversational procedure](../Application%20Workflow/onboarding-workflow.md), roadmap, per-board mapping progress and [readiness helpers](onboarding/README.md) | CVs, candidate instructions, selected boards, actual observations and document tools; scanned PDFs need available OCR or vision |
@@ -19,45 +19,29 @@ AgentMail is the included email provider, not the entire automation system. A ma
 
 ```text
 automation/
-├── README.md
-├── .env.example
-├── browser/
-│   ├── README.md
+├── browser/                 # Default choice, host capabilities, CLI and upload handoff
+│   ├── in-app/              # Host-tool procedure and capability-report template
+│   ├── preferences.ts
+│   ├── preferences-store.ts
+│   ├── capabilities.ts
+│   ├── fallback.ts
+│   ├── rehearsal.mjs
 │   ├── runtime.mjs
 │   ├── cli.mjs
 │   └── setup.mjs
 ├── email/
-│   └── agentmail/
-│       ├── README.md
-│       ├── connection.ts
-│       ├── client.ts
-│       ├── inboxes.ts
-│       ├── setup.ts
-│       ├── setup.md
-│       └── inbox-state.example.json
-├── workflow/
-│   └── application-state.ts
-├── onboarding/
-│   ├── README.md
-│   ├── progress.ts
-│   ├── state-store.ts
-│   ├── cli.ts
-│   └── onboarding-state.example.json
-├── scheduling/
-│   └── check-in-prompt.md
-└── tests/
-    ├── agentmail-connection.test.ts
-    ├── agentmail.test.ts
-    ├── agentmail-setup.test.ts
-    ├── application-state.test.ts
-    ├── onboarding.test.ts
-    └── browser.test.mjs
+│   ├── agentmail/           # Alert-inbox detection, selection, intake and cleanup
+│   └── verification/        # Application-email access and OTP/MFA resumption
+├── workflow/                # Application state and revision-checked private JSON
+├── onboarding/              # Progress, document metadata, readiness and agent CLI
+├── scheduling/              # Optional schedule setup, preferences and check-in prompt
+└── tests/                   # Synthetic policy, storage and connector checks
 ```
 
 - **browser** resolves the pinned local CLI, prepares missing browser revisions and verifies an isolated local interaction. It has no candidate/account dependency.
 - **email/agentmail** contains provider-specific access, discovery and setup. Its [integration guide](email/agentmail/README.md) explains alert enumeration, progress and completed-message cleanup.
 - **workflow** contains shared application-state types and integrity checks for task movement, confirmation and message completion. These checks do not establish whether external evidence is true; the agent must inspect it.
-- **onboarding** contains schema-2 progress, migration, readiness and agent CLI utilities. The [onboarding workflow](../Application%20Workflow/onboarding-workflow.md) directs the conversation, one-to-three primary-board selection and initial mapping. Candidate answers stay in private role files.
+- **onboarding** contains schema-3 progress, migration, readiness and agent CLI utilities. The [onboarding workflow](../Application%20Workflow/onboarding-workflow.md) directs the conversation, one-to-three primary-board selection and initial mapping. Candidate answers stay in private role files.
 - **scheduling** contains the prompt an existing scheduler uses to start a check-in. It contains no independent scheduler service.
 - **tests** contains offline checks using synthetic data and mocked HTTP. They neither log in to websites nor submit applications.
 
@@ -110,7 +94,7 @@ The source layout is separate from private runtime storage:
 | `.local/agentmail-intake.json` | Resolved inbox binding and any creation identity |
 | `.local/agentmail-connection.json` | Selected existing credential source reference; no key value |
 | `.local/inbox-state.json` | Active alert-to-vacancy/task associations and cleanup checkpoints |
-| `.local/onboarding-state.json` | Schema-2 steps, selected-board access/mapping, pending/deferred questions and resumption point |
+| `.local/onboarding-state.json` | Schema-3 steps, selected-board access/mapping, pending/deferred questions and resumption point |
 | `.local/browser-readiness.json` | Actual local CLI check and runtime fingerprint |
 | `.local/browser/cli.config.json` | Private CLI browser/output configuration |
 | `.local/onboarding-handoff.md` | Scoped readiness, boundaries and first-task instructions |
@@ -121,6 +105,19 @@ Preserve these locations and existing values when updating the package. Reuse an
 
 ## Optional periodic check-ins
 
-After setup, configure the selected agent environment's existing scheduler with [check-in-prompt.md](scheduling/check-in-prompt.md), the actual project root, requested interval and timezone. No schedule is configured by this package. A scheduler starts the agent's check-in; it does not install browser or inbox capabilities.
+When recurring operation is explicitly selected during onboarding or later, configure the selected agent environment's existing scheduler with [check-in-prompt.md](scheduling/check-in-prompt.md), the actual project root, requested interval and timezone. No schedule is configured by this package. A scheduler starts the agent's check-in; it does not install browser or inbox capabilities.
 
 Each check-in resumes eligible work, reads new intake, checks resolved blockers and retries eligible email cleanup. It resumes onboarding only for a relevant gap or actual answer, without repeating unchanged questions or introducing review gates. Read saved step/board progress, check changed references and runtime, and preserve partial preparation. An unrelated deferred board does not block eligible work on a prepared one. With no actionable work or changed dependency, leave files unchanged. Notify only meaningful applications, new blockers, failures or changes where the scheduler supports quiet results. Record the actual schedule identity and cadence privately.
+
+## Browser choice and readiness components
+
+| Component | Responsibility |
+| --- | --- |
+| [Browser preparation](browser/README.md) | Default choice, pinned CLI, synthetic form/upload/recovery rehearsal and host-tool checks |
+| [Upload handoff](browser/upload-fallback.md) | Same-task continuation in Playwright while preserving the in-app default |
+| [Browser policy helpers](browser/fallback.ts) | Routing, checkpoint/handoff state and uncertain-submission guards; no live driver |
+| [Document metadata checks](onboarding/documents.ts) | Original/derived hashes, file signature and observed upload restrictions; no document generation |
+| [Verification-email access](email/verification/README.md) | Separate application-address access and human OTP/MFA resumption |
+| [Optional schedule setup](scheduling/README.md) | On-demand/recurring choice and actual scheduled-environment checks |
+
+Private `.local/browser-preferences.json` stores the chosen and resolved default. `.local/operation-preferences.json` stores operating mode, cadence/timezone, limits, reporting and the actual schedule reference. Host capability reports live in `.local/browser-in-app.json`; scheduled reports use separate `*-scheduled.json` files. Keep these alongside existing progress without copying candidate facts or secrets. Schema-3 preparation exposes known setup gaps before the first application. Selecting recurring use does not make interactive evidence into scheduled proof.

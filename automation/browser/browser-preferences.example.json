@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "choice": null,
+  "resolvedDefault": null,
+  "uploadFallback": "playwright",
+  "sourceReference": null,
+  "decidedAt": null,
+  "resolutionReference": null
+}

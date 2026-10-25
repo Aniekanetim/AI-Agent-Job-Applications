@@ -10,7 +10,7 @@ Learn the visible search/results and vacancy-detail routes, built-in/external ap
 
 Do not submit a practice application, create an account, upload a CV or create/change a draft solely to complete mapping. When further exploration would mutate account/application data without applicable instructions, record that precise boundary. Accessible core routes still require actual observation. A challenge or failed route is blocked/unfinished, not a blanket exemption from mapping.
 
-Save observed page actions and recognition methods in the relevant Playwright files; keep final-submit code guarded as unlearned until observed in an authorized task. Use `architecture.local.md` and private `*.local.ts` companions for account-specific learning; sanitized reusable files may be published deliberately. Read applicable private knowledge before the blank template and do not assume an unlearned public stub contains a learned private branch.
+Keep the common journey in Markdown. Save observed actions in the active tool's files: `in-app/actions.local.md` for host tools and Playwright files for executable TypeScript; keep final-submit code guarded as unlearned until observed in an authorized task. Use `architecture.local.md` and private `*.local.ts` companions for account-specific learning; sanitized reusable files may be published deliberately. Read applicable private knowledge before the blank template and do not assume an unlearned public stub contains a learned private branch.
 
 Record separate navigation, application-route, accessible-form, reusable-code and limits checks using [onboarding progress](../automation/onboarding/README.md#mapping-completion). Initial mapping completion describes the branches learned and the remaining boundaries. It does not mean every vacancy, destination or future page is known. Then resume the onboarding roadmap and readiness handoff.
 
@@ -34,7 +34,11 @@ Update the relevant architecture.md under Site Architecture Context. Use [the en
 
 An external application site gets its own specific destination subfolder, with parent link and origin. The sample Workday and Employer career site folders are unlearned examples; a company-specific host/tenant path must be recorded before use.
 
-## 4. Maintain Playwright TypeScript routines
+## 4. Maintain methods for the active browser
+
+For an in-app default, record its actual provider, page conditions, supported actions and state checks in `in-app/actions.local.md`, using the adjacent public template. Do not present Playwright code or snapshot IDs as host-browser commands. Reuse the common architecture map rather than duplicating the full journey per tool. Record observed Playwright upload/recovery actions when that branch can legitimately be learned; otherwise retain its precise boundary for the real task. Authentication is checked separately in each browser.
+
+### Playwright TypeScript routines
 
 Use actual observed role/label/test-ID locators or inspected selectors. The initial pages.ts and application-flow.ts intentionally throw DiscoveryRequired; they are scaffolds, not working portal adapters. Replace the relevant methods only after observation. Do not invent selectors or import temporary snapshot element IDs as persistent locators.
 

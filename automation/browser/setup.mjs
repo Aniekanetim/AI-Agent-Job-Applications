@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { browserRuntime, runNode, runtimeFingerprint, workingRoot } from './runtime.mjs';
+import { createRehearsal } from './rehearsal.mjs';
 
 // A subprocess resolves executable paths after the selected cache environment is set.
 const executableProbe = 'const {createRequire}=require("node:module");const r=createRequire(process.argv[1]);console.log(r("playwright-core").chromium.executablePath())';
@@ -43,37 +43,41 @@ export async function verifyBrowser(runtime, run = runNode) {
   const config = resolve(folder, 'config.json');
   writeFileSync(config, JSON.stringify({ browser: { browserName: 'chromium', isolated: true,
     launchOptions: { channel: 'chromium', headless: true } }, outputDir: folder, outputMode: 'file' }), { mode: 0o600 });
-  const server = createServer((_req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-    res.end('<!doctype html><title>Browser setup check</title><button id="check" onclick="document.querySelector(\'output\').textContent=\'Browser interaction verified\'">Check browser</button><output aria-live="polite">Waiting</output>');
-  });
+  const fixture = await createRehearsal(folder);
+  const uploadSession = `${session}-upload`;
   let stage = 'open';
   try {
-    await new Promise((done, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', done); });
-    const address = server.address();
-    const url = `http://127.0.0.1:${address.port}/`;
-    const invoke = args => run(runtime.cli, [`-s=${session}`, ...args], {
+    const invoke = (args, selected = session) => run(runtime.cli, [`-s=${selected}`, ...args], {
       root: runtime.root, environment: runtime.environment, timeout: 45_000,
     });
-    const opened = await invoke(['open', url, `--config=${config}`]);
+    const opened = await invoke(['open', fixture.url, `--config=${config}`]);
     if (opened.code !== 0 || /### Error/.test(opened.stdout)) return { ok: false, stage };
     stage = 'snapshot';
     const snapshot = await invoke(['snapshot']);
     if (snapshot.code !== 0 || /### Error/.test(snapshot.stdout)) return { ok: false, stage };
     // CLI refs are inspected during interactive discovery. This controlled fixture uses a known local DOM.
-    stage = 'interaction';
-    const checked = await invoke(['run-code', 'async page => { await page.getByRole("button", { name: "Check browser", exact: true }).click(); return await page.locator("output").textContent(); }']);
-    return { ok: checked.code === 0 && !/### Error/.test(checked.stdout) && checked.stdout.includes('Browser interaction verified'), stage };
+    stage = 'checkpoint';
+    const saved = await invoke(['run-code', 'async page => { await page.getByLabel("Candidate name").fill("Synthetic Candidate"); await page.getByRole("button", {name:"Save rehearsal checkpoint",exact:true}).click(); await page.locator("#checkpoint").filter({hasText:"Checkpoint saved"}).waitFor(); return "checkpoint verified"; }']);
+    if (saved.code !== 0 || /### Error/.test(saved.stdout) || !saved.stdout.includes('checkpoint verified')) return { ok: false, stage };
+    await invoke(['close']);
+    stage = 'resume';
+    const resumed = await invoke(['open', fixture.url, `--config=${config}`], uploadSession);
+    if (resumed.code !== 0 || /### Error/.test(resumed.stdout)) return { ok: false, stage };
+    stage = 'upload';
+    const code = `async page => { if (await page.getByLabel("Candidate name").inputValue() !== "Synthetic Candidate") throw new Error("checkpoint not restored"); await page.getByLabel("Test document").setInputFiles(${JSON.stringify(fixture.uploadPath)}); await page.locator("#upload").filter({hasText:"Synthetic file upload verified"}).waitFor(); await page.getByRole("button", {name:"Check browser",exact:true}).click(); await page.locator("#outcome").filter({hasText:"Browser interaction and upload verified"}).waitFor(); return await page.locator("#outcome").textContent(); }`;
+    const checked = await invoke(['run-code', code], uploadSession);
+    return { ok: checked.code === 0 && !/### Error/.test(checked.stdout) && checked.stdout.includes(`Browser interaction and upload verified: ${fixture.applicationId}`), stage };
   } catch { return { ok: false, stage }; }
   finally {
     await run(runtime.cli, [`-s=${session}`, 'close'], { root: runtime.root, environment: runtime.environment, timeout: 20_000 });
-    await new Promise(done => server.close(done));
+    await run(runtime.cli, [`-s=${uploadSession}`, 'close'], { root: runtime.root, environment: runtime.environment, timeout: 20_000 });
+    await fixture.close();
   }
 }
 
 function saveReport(root, result, runtime) {
   const report = { schemaVersion: 1, ...result, fingerprint: runtime ? runtimeFingerprint(runtime) : null,
-    checkedAt: new Date().toISOString(), scope: 'Isolated local CLI navigation and interaction; no website authentication or application submission.' };
+    checkedAt: new Date().toISOString(), scope: 'Playwright-only local navigation, form completion, draft recovery across isolated sessions and synthetic file upload. No in-app browser, website authentication or job submission is established.' };
   const folder = resolve(root, '.local');
   mkdirSync(folder, { recursive: true });
   const temporary = resolve(folder, `browser-readiness-${randomUUID()}.tmp`);
@@ -99,7 +103,7 @@ export async function prepareBrowser({ install = false, root = workingRoot } = {
     nextAction: 'Agent: run npm run browser:setup to install the missing pinned browser runtimes.' };
   else {
     const verified = await verifyBrowser(runtime);
-    report = verified.ok ? { ready: true, reason: 'verified' } : { ready: false,
+    report = verified.ok ? { ready: true, reason: 'verified', capabilities: { navigation: true, formFilling: true, fileUpload: true, outcomeInspection: true, checkpointRecovery: true } } : { ready: false,
       reason: `browserCheck:${verified.stage}`, nextAction: 'Agent: inspect the private setup artifacts and resolve the browser launch or interaction failure.' };
   }
   return saveReport(root, { ...report, checks }, runtime);

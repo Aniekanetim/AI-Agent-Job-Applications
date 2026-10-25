@@ -27,3 +27,7 @@ Neither is enabled or a record of an actual person's experience. The agent creat
 For a third role, tell the agent its name and designated CV. It creates the same structure, supplies the private facts and adds the routing entry. Do not enable an empty example. Identity or employment inconsistencies must be resolved from supplied facts, not reconciled by inventing history or silently borrowing another profile.
 
 Each task records the chosen role ID, paths and versions, CV hash and selection reason. If its destination is already populated from a different profile, inspect and correct the fields before proceeding. Use one selected role context throughout a given application unless the user's task explicitly supplies a different instruction.
+
+## Verification and upload readiness
+
+Each role also has `verification-access.md`, with actual private access references and OTP/MFA resumption in `verification-access.local.md`. It points to the contact-email source without copying candidate identity. Alert-inbox access does not establish application-email access. Keep original and designated upload CV versions in the existing Documents index, with hashes and inspection references; no separate Shared candidate baseline is introduced.

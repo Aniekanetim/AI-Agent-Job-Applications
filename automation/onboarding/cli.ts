@@ -1,8 +1,13 @@
 import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
 import { configureProgress, newBoard, formatProgress, refreshProgress, mappingAreas, emptyCheck,
-  type OnboardingScope, type StepId, type MappingArea, type ProgressStatus } from "./progress.js";
+  preparationIds, type PreparationId, type OnboardingScope, type StepId, type MappingArea, type ProgressStatus } from "./progress.js";
 import { loadProgress, saveProgress, completedCheck, evidenceReference, inspectReadiness } from "./state-store.js";
+import { selectBrowser, resolveAutomaticBrowser, type BrowserChoice } from "../browser/preferences.js";
+import { loadBrowserPreferences, saveBrowserPreferences } from "../browser/preferences-store.js";
+import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
+import { validateCapabilityReport, capabilityIssues } from "../browser/capabilities.js";
+import { validateOperatingPreferences, type OperatingPreferences } from "../scheduling/preferences.js";
 
 // Compiled location: .local/build/automation/onboarding/cli.js.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
@@ -17,7 +22,14 @@ try {
   status                       Show progress without writing
   start --scope S              Save the chosen scope and 1–3 boards for application mode
     --board 'NAME|HTTPS_URL|Site Architecture Context/NAME' (repeat up to three)
-  migrate                      Preserve schema-1 context/questions and add the new pending checks
+  migrate                      Preserve schema-1/2 context and add the new missing checks
+  browser-choice --browser automatic|inApp|playwright --source REFERENCE
+  browser-resolve --reference PATH   Resolve an automatic choice from actual browser reports
+  operation-choice --mode onDemand|recurring --source REFERENCE
+    --cadence TEXT --timezone IANA_NAME (required for recurring)
+    --per-run-limit N --per-day-limit N --reporting summary|blockersOnly|digest|unspecified
+    --timezone IANA_NAME is also required for a daily limit in onDemand mode
+  record --preparation ${preparationIds.join("|")} --reference PATH
   record --step ID --reference PATH (repeat references)
     --status pending|inProgress|complete|blocked|skipped (default complete)
     --next-action TEXT --reason TEXT (for checkpoints, blockers and observation boundaries)
@@ -42,6 +54,48 @@ blocked/skipped mapping boundary with evidence, reason and next action. Never pa
         return newBoard(name, url, path);
       });
       state = configureProgress(state, scope, boards, now);
+    } else if (command === "browser-choice") {
+      const existing = loadBrowserPreferences(root);
+      const browser = value("--browser") as BrowserChoice;
+      if (!["automatic", "inApp", "playwright"].includes(browser) || !value("--source")?.trim()) throw new Error("Record the user's actual browser choice and source.");
+      saveBrowserPreferences(root, selectBrowser(browser, value("--source")!, now), existing.revision);
+      state.preparation.browserChoice = completedCheck(root, [".local/browser-preferences.json"], now);
+      state.steps.readiness = emptyCheck();
+    } else if (command === "browser-resolve") {
+      const existing = loadBrowserPreferences(root);
+      let inApp = false, playwright = false;
+      try {
+        const found = readPrivateJson(root, ".local/browser-in-app.json").data;
+        validateCapabilityReport(found); inApp = capabilityIssues(found, root, "interactive", false).length === 0;
+      } catch { /* Missing/unsupported host tools remain unavailable. */ }
+      const report = readPrivateJson(root, ".local/browser-readiness.json").data as { ready?: boolean; capabilities?: { fileUpload?: boolean }; fingerprint?: { root?: string } } | null;
+      playwright = report?.ready === true && report.capabilities?.fileUpload === true && report.fingerprint?.root === root;
+      const reference = value("--reference");
+      if (!reference) throw new Error("Reference the actual capability comparison for automatic selection.");
+      evidenceReference(root, reference);
+      const resolved = resolveAutomaticBrowser(existing.preferences, { inApp, playwright }, reference);
+      saveBrowserPreferences(root, resolved, existing.revision);
+      state.preparation.browserChoice = completedCheck(root, [".local/browser-preferences.json", reference], now);
+      state.steps.readiness = emptyCheck();
+    } else if (command === "operation-choice") {
+      const previous = readPrivateJson(root, ".local/operation-preferences.json");
+      const number = (name: string) => value(name) === undefined ? null : Number(value(name));
+      const operating: OperatingPreferences = { schemaVersion: 1, mode: value("--mode") as OperatingPreferences["mode"],
+        cadence: value("--cadence") ?? null, timezone: value("--timezone") ?? null,
+        perRunLimit: number("--per-run-limit"), perDayLimit: number("--per-day-limit"),
+        reporting: (value("--reporting") ?? "unspecified") as OperatingPreferences["reporting"],
+        sourceReference: value("--source") ?? "", scheduleReference: null };
+      validateOperatingPreferences(operating);
+      if (previous.data) {
+        validateOperatingPreferences(previous.data);
+        if (previous.data.scheduleReference) throw new Error("Reconcile the existing schedule before changing operating settings; its reference was preserved.");
+      }
+      savePrivateJson(root, ".local/operation-preferences.json", operating, previous.revision);
+      state.preparation.scheduleChoice = completedCheck(root, [".local/operation-preferences.json"], now);
+      state.preparation.operatingPreferences = completedCheck(root, [".local/operation-preferences.json"], now);
+      state.preparation.scheduledAccess = operating.mode === "onDemand" ?
+        { ...completedCheck(root, [".local/operation-preferences.json"], now), status: "skipped", reason: "User selected on-demand operation." } : emptyCheck();
+      state.steps.readiness = emptyCheck();
     } else if (command === "record") {
       state.steps.readiness = emptyCheck();
       const status = (value("--status") ?? "complete") as ProgressStatus;
@@ -60,6 +114,11 @@ blocked/skipped mapping boundary with evidence, reason and next action. Never pa
         if (area === "access") board.access = check;
         else board.mapping[area as MappingArea] = check;
       } else if (args.includes("--email")) state.emailConnection = check;
+      else if (value("--preparation")) {
+        const id = value("--preparation") as PreparationId;
+        if (!preparationIds.includes(id)) throw new Error("Choose a known preparation check.");
+        state.preparation[id] = check;
+      }
       else {
         const id = value("--step") as StepId;
         if (!["browserTools", "candidateProfiles", "applicationInstructions"].includes(id)) throw new Error("Record browserTools, candidateProfiles or applicationInstructions; other steps are derived.");

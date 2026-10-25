@@ -87,3 +87,11 @@ once saved.>
 <Not applicable for manual tasks, or source message, enumeration/disposition
 reference, cleanup state/date. Do not delete while sibling vacancies are unresolved.>
 ~~~
+
+## Browser checkpoint fields
+
+Extend the existing ticket's private execution checkpoint with the saved default browser, active browser and whether upload is required. For a midway upload handoff, retain the same task ID, source/vacancy identity, selected role/CV versions, draft identity when visible, last completed step, checkpoint evidence, handoff time/state and actual resume checks. Keep signed URLs, credentials and OTPs out of the ticket.
+
+Follow [the handoff procedure](../automation/browser/upload-fallback.md): establish the authorized Playwright session and same draft before resuming. Keep that application in Playwright; a new task returns to the saved default. Never switch or retry while a prior submission is uncertain. Preserve handoff history through Blocked and Applied. The board still has exactly four status folders.
+
+Use the selected role's verification-access reference when a challenge needs help, and preserve the same checkpoint while waiting. Apply saved operating limits and reporting preferences during each check-in. Neither a missing in-app capability nor a document-format issue creates a new intake source or routine approval gate.

@@ -13,13 +13,13 @@ Before installation, CV collection or login, explain the relevant steps and disp
 ```text
 Onboarding — 0 of 7 steps complete
 
-○ Select 1–3 primary job boards
-○ Prepare automation tools and browser
-○ Import CVs and configure role profiles
-○ Save preferences and application instructions
-○ Connect selected websites and email inbox
+○ Choose scope, 1–3 primary boards and default browser
+○ Prepare selected browser and Playwright upload fallback
+○ Import CVs and prepare role-specific upload documents
+○ Save preferences, application limits and operating instructions
+○ Connect websites, alert inbox and application verification access
 ○ Map selected boards and encountered application destinations
-○ Verify readiness and explain how to start
+○ Rehearse capabilities, verify readiness and explain how to start
 ```
 
 For profile-only scope, show only profile, instructions and handoff steps; the other checks are outside scope. Update progress after meaningful work, when a blocker appears and on interactive resumption. Show per-board access and mapping checks. Do not issue unchanged hourly progress notifications or repeat a pending question. A blocked selected board can be explicitly deferred by the user; show partial preparation. At least one primary board must be prepared before application readiness.
@@ -34,9 +34,11 @@ Check the actual content, not just file existence. Blank, Not supplied, conflict
 
 For an existing profile, start at its first relevant gap. For a scheduled check-in, read pending questions before asking anything: an unchanged unanswered question produces no repeated notification or file rewrite. When onboarding already covers a task's question, link the existing question on that task instead of asking it twice.
 
-## 2. Prepare browser tooling for application mode
+## 2. Choose and prepare browser tools for application mode
 
-Follow [browser setup](../automation/browser/README.md) before website authentication or exploration. The agent detects Node/npm and existing compatible tooling, installs the pinned local CLI/library and missing browser runtimes where permitted, then verifies real CLI navigation and interaction with a harmless local page. A missing capability or host restriction is a specific blocker with the user's exact required action. Preserve existing credentials and sessions. Profile-only setup skips this step.
+Follow [browser setup](../automation/browser/README.md) before website authentication or exploration. The agent detects Node/npm and existing compatible tooling, installs the pinned local CLI/library and missing browser runtimes where permitted, then verifies navigation, form entry, upload, outcome inspection and recovery of a synthetic draft across two isolated sessions. For an in-app choice, it separately verifies the host browser through its actual tools and prepares Playwright for upload applications. An installed CLI does not establish the user's browser preference. A missing capability or host restriction is a specific blocker with the user's exact required action. Preserve existing credentials and sessions. Profile-only setup skips this step.
+
+Before installation, offer automatic selection, in-app or Playwright. Save the actual choice with `onboarding:browser`; automatic selection needs an evidenced capability comparison and `onboarding:resolve-browser`. Respect an in-app default. Required file uploads use Playwright under [the same-task handoff](../automation/browser/upload-fallback.md). A missing or denied host tool remains a dependency; keep the saved choice and do not ask the user to choose again merely because verification failed.
 
 ## 3. Ask for each CV and save the original
 
@@ -69,6 +71,10 @@ Extract identity, contact details, employment dates and responsibilities, educat
 
 Create one independent profile per user-selected role. A CV mentioning support work does not automatically enable a support profile. If one supplied CV should serve several selected roles, record that explicit choice in each document index; do not invent separate tailored CVs. Ask which document belongs to which role when the mapping is unclear. Preserve the existing folder layout and create the same blank-template/private-counterpart structure for any new role. There is no Shared candidate folder.
 
+### Prepare a usable upload version
+
+Keep the original immutable. Check the selected boards' observed accepted formats and size limits; unknown portal constraints remain unknown. If TXT or another source needs a PDF/DOCX rendition, use available document tools within the user's factual-tailoring instructions, inspect its contents/layout, and record the derived file, source hash, version, size and designation in the existing private Documents index. Ask for a suitable version only when the tools or source cannot support this. A filename extension is not a conversion. [documents.ts](../automation/onboarding/documents.ts) checks file/hash/format metadata; it neither generates nor visually approves a CV.
+
 ## 4. Ask relevant follow-up questions
 
 Ask one to three concise questions per message. Use the groups below in order, skipping supplied information and irrelevant branches. Do not compress a large questionnaire into one question. Save each answer before moving to the next group. Explain why an unusual or ambiguous answer is needed.
@@ -80,6 +86,9 @@ Ask one to three concise questions per message. Use the groups below in order, s
 | Job preferences | Desired work locations and remote/hybrid/onsite options; employment type and seniority; salary and its currency/period/basis when a salary rule is wanted; relevant exclusions | `job-preferences.local.md` |
 | Screening answers | Country-specific work authorization and sponsorship, notice period/start availability, and other recurring questions relevant to the selected role | `application-answers.local.md` |
 | Application instructions | Application scope/channels, permitted factual tailoring, account registration, optional-question handling, closed/unsuitable vacancy handling, destinations, limits and notifications | `application-instructions.local.md` |
+| Browser preference | Automatic, in-app or Playwright; reuse an existing actual choice, never infer it from installed packages | Private browser preferences and response reference |
+| Verification access | How the selected role's application email receives verification; existing authorized access or human OTP/MFA handoff | `verification-access.local.md` |
+| Operating choices | On-demand or recurring; if recurring, cadence and named timezone; per-run/day limits and summary/blocker/digest preference, allowing unspecified optional limits | Relevant private instructions; `.local/operation-preferences.json` |
 | Access for the chosen channel | Manual tasks or email alerts; selected portal/session access and local `.env` or secure-store reference; detect and reuse an existing suitable AgentMail integration first; request an API key only if none is usable; inbox discovery remains agent work | Relevant `Job Boards/<site>/access-and-instructions.local.md`; private shared progress for discovered inbox setup |
 
 Candidate filenames in this table are relative to `Job Context/Candidate/Role Profiles/<selected role>` except the routing entry. [The profile index](../Job%20Context/Candidate/README.md#profile-contents) explains the file boundaries.
@@ -117,11 +126,11 @@ For file-copy operations, preserve existing documents and never overwrite a diff
 
 ## 5. Connect the selected websites and inbox
 
-After tooling and candidate instructions are usable, verify access to the selected boards under [the credential procedure](../Job%20Context/Job%20Boards/README.md). Reuse the authorized session or private credential reference; do not ask for a password in chat. Record actual access conditions and private evidence. Access failure is distinct from a mapping failure. For email or both-source scope, use the AgentMail detection, mailbox-choice and access procedure above. Manual-only mode skips inbox setup. Setup sends/deletes no mail and activates no schedule.
+After tooling and candidate instructions are usable, verify access to the selected boards under [the credential procedure](../Job%20Context/Job%20Boards/README.md). Reuse the authorized session or private credential reference; do not ask for a password in chat. Record actual access conditions and private evidence. Access failure is distinct from a mapping failure. For email or both-source scope, use the AgentMail detection, mailbox-choice and access procedure above. Manual-only mode skips inbox setup. Establish [application-email verification](../automation/email/verification/README.md) separately from the alert inbox, with a concrete OTP/MFA checkpoint and resumption action. Verify access for the default browser and upload fallback under their own session conditions. Setup sends/deletes no mail. A recurring choice follows [schedule setup](../automation/scheduling/README.md); otherwise no schedule is activated.
 
 ## 6. Map the selected boards
 
-Run [initial onboarding discovery](discovery-workflow.md#onboarding-discovery) for each selected board. Use its observed access conditions to learn search/results, vacancy details, application entry, accessible form/upload/review steps and reusable Playwright methods. Map actual encountered employer destinations under the originating board, with their specific hosts and limits. Keep an observation ID, actual date, evidence/code references and refresh conditions. Authentication alone does not complete this step.
+Run [initial onboarding discovery](discovery-workflow.md#onboarding-discovery) for each selected board. Use its observed access conditions to learn search/results, vacancy details, application entry, accessible form/upload/review steps and reusable methods for the selected browser and applicable Playwright upload branch. Keep common journeys in Markdown, in-app actions in `in-app/actions.local.md` and Playwright locators/flows in their TypeScript files. Map actual encountered employer destinations under the originating board, with their specific hosts and limits. Keep an observation ID, actual date, evidence/code references and refresh conditions. Authentication alone does not complete this step.
 
 Record navigation, application routing, accessible forms, reusable code and limits separately under [per-board progress](../automation/onboarding/README.md#mapping-completion). Reuse existing applicable observations; do not crawl the whole website or restart known journeys. Unvisited branches and final-submission outcomes remain unknown. No real application is submitted, no account created and no candidate document uploaded merely to complete onboarding mapping. Any action that would create a draft or alter account data needs applicable instructions; inspect nonmutating routes first and record the boundary when that action is outside scope.
 
@@ -131,9 +140,9 @@ An inaccessible form or destination gets a specific observed boundary with evide
 
 State the configured scope accurately: profile setup, manual applications, email-alert applications, or both intake sources. Summarize what was saved, which roles/CVs are available, and any deferred answers or access dependencies. This is an informative handoff, not a mandatory approval gate. A correction can be supplied conversationally at any time.
 
-For profile setup, stop after the supplied facts and chosen follow-ups are saved. Do not require a portal account, inbox or schedule. For manual applications, verify the operating instructions, browser operation and initial access/mapping for selected boards. New destinations are discovered when encountered by an assigned task. Email-alert mode additionally needs the configured inbox, permitted alert selection and [inbox procedure](../automation/email/agentmail/README.md#inbox-access). Scheduling is separate and starts only when requested.
+For profile setup, stop after the supplied facts and chosen follow-ups are saved. Do not require a portal account, inbox or schedule. For manual applications, verify the operating instructions, browser operation and initial access/mapping for selected boards. New destinations are discovered when encountered by an assigned task. Email-alert mode additionally needs the configured inbox, permitted alert selection and [inbox procedure](../automation/email/agentmail/README.md#inbox-access). On-demand mode requires no scheduler. Explicit recurring mode requires actual scheduled default/fallback access checks and a recorded native schedule identity; interactive success alone is insufficient.
 
-Use [the readiness utility](../automation/onboarding/README.md#deferrals-and-completion) to check required preparation and evidence paths/hashes. Inspect actual profile/CV content, instructions, tool operation, selected-board access/mapping, inbox access when selected and private writable storage. Write a private handoff with selected roles and CV versions, intake sources, prepared boards, unverified form/destination boundaries, explicit deferrals, remaining dependencies and the first-task instructions. Reference it before marking the scope complete. If some boards were explicitly deferred, describe completion as partial preparation for the stated scope.
+Use [the readiness utility](../automation/onboarding/README.md#deferrals-and-completion) to check required preparation and evidence paths/hashes. Inspect actual profile/CV content and upload versions, instructions, default/fallback tool operation, selected-board access/mapping, application-email verification method, alert inbox when selected, operating choices and private writable storage. Exercise harmless synthetic navigation, field entry, checkpoint recovery, upload and outcome inspection through the tools being claimed. Unsupported, denied and unverified capabilities remain distinct; no live application is used as a rehearsal. Write a private handoff with selected roles and CV versions, intake sources, prepared boards, unverified form/destination boundaries, explicit deferrals, remaining dependencies and the first-task instructions. Reference it before marking the scope complete. If some boards were explicitly deferred, describe completion as partial preparation for the stated scope.
 
 Mark onboarding complete only for its configured scope when required information is available and optional deferrals are recorded. “Complete” never means every future employer question is answered or a live application succeeded. Missing scope-required information remains waiting for the user's answer. If no application task exists, keep that dependency in private onboarding progress; do not create a fake job ticket or a fifth board folder.
 
@@ -147,10 +156,11 @@ Copy [the empty example](../automation/onboarding/onboarding-state.example.json)
 
 | Field | Meaning |
 | --- | --- |
-| `schemaVersion` | Progress format version; currently `2` |
+| `schemaVersion` | Progress format version; currently `3` |
 | `scope` | `profileSetup`, `manualApplications`, `emailApplications` or `bothApplications`; initially `null` |
 | `phase` | `notStarted`, `inProgress`, `waitingForUser` or `complete` |
 | `steps` | Seven step checks with status, evidence file/hash references, actual check time and next action |
+| `preparation` | Browser choice, upload documents, verification access, operating preferences, schedule choice, scheduled access and practical rehearsal checks; no duplicated candidate answers |
 | `boards` | One to three selected boards for application mode; separate access and mapping checks, context paths and explicit deferrals |
 | `emailConnection` | Actual selected-inbox verification for email or both-source scope |
 | `selectedRoles` | Role ID and profile path for each role actually selected by the user |
@@ -161,3 +171,5 @@ Copy [the empty example](../automation/onboarding/onboarding-state.example.json)
 | `updatedAt` | Actual ISO timestamp for a material change, or `null` initially |
 
 The agent checks canonical content before trusting progress metadata. A stale or absent progress file never authorizes resetting a profile, inferring an answer or repeating an application.
+
+Schema-1 and schema-2 upgrades preserve supplied profiles, questions, evidence and checkpoints. Newly required preparation starts pending. Reuse applicable evidence after inspection; do not infer a browser or scheduling choice, overwrite credentials, clear deferrals or restart the questionnaire. Report incomplete tool verification as a specific remaining step while preserving usable preparation elsewhere.

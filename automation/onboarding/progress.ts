@@ -2,12 +2,23 @@ export type OnboardingScope = "profileSetup" | "manualApplications" | "emailAppl
 export type ProgressStatus = "pending" | "inProgress" | "complete" | "blocked" | "skipped";
 export type StepId = "boardSelection" | "browserTools" | "candidateProfiles" | "applicationInstructions" | "connections" | "siteMapping" | "readiness";
 export const stepLabels: Record<StepId, string> = {
-  boardSelection: "Select 1–3 primary job boards", browserTools: "Prepare automation tools and browser",
-  candidateProfiles: "Import CVs and configure role profiles", applicationInstructions: "Save preferences and application instructions",
-  connections: "Connect selected websites and email inbox", siteMapping: "Map selected boards and encountered application destinations",
-  readiness: "Verify readiness and explain how to start",
+  boardSelection: "Choose scope, primary boards and default browser", browserTools: "Prepare the selected browser and upload fallback",
+  candidateProfiles: "Import CVs and prepare role-specific documents", applicationInstructions: "Save preferences and operating instructions",
+  connections: "Connect websites, alert inbox and verification access", siteMapping: "Map selected boards and application destinations",
+  readiness: "Rehearse capabilities, verify readiness and hand over",
 };
 export const stepIds = Object.keys(stepLabels) as StepId[];
+export const preparationLabels = {
+  browserChoice: "Save the default-browser choice and upload fallback",
+  uploadDocuments: "Verify designated upload documents and preserved originals",
+  verificationAccess: "Establish application-email verification and authentication handoff",
+  operatingPreferences: "Save application limits and reporting choices",
+  scheduleChoice: "Choose on-demand or recurring operation",
+  scheduledAccess: "Verify selected tools in the recurring execution environment",
+  rehearsal: "Rehearse form completion, upload and checkpoint recovery",
+} as const;
+export type PreparationId = keyof typeof preparationLabels;
+export const preparationIds = Object.keys(preparationLabels) as PreparationId[];
 export interface EvidenceReference { path: string; sha256: string }
 export interface ProgressCheck {
   status: ProgressStatus;
@@ -31,7 +42,7 @@ export interface BoardProgress {
   deferred: { reason: string; sourceReference: string; recordedAt: string } | null;
 }
 export interface OnboardingProgress {
-  schemaVersion: 2;
+  schemaVersion: 3;
   scope: OnboardingScope | null;
   phase: "notStarted" | "inProgress" | "waitingForUser" | "complete";
   selectedRoles: unknown[];
@@ -42,6 +53,7 @@ export interface OnboardingProgress {
   steps: Record<StepId, ProgressCheck>;
   boards: BoardProgress[];
   emailConnection: ProgressCheck;
+  preparation: Record<PreparationId, ProgressCheck>;
   updatedAt: string | null;
   [key: string]: unknown;
 }
@@ -53,10 +65,10 @@ export function hasEmail(scope: OnboardingScope | null) {
   return scope === "emailApplications" || scope === "bothApplications";
 }
 export function createProgress(): OnboardingProgress {
-  return { schemaVersion: 2, scope: null, phase: "notStarted", selectedRoles: [], currentRoleId: null,
+  return { schemaVersion: 3, scope: null, phase: "notStarted", selectedRoles: [], currentRoleId: null,
     pendingQuestions: [], deferredQuestions: [], contextRevisions: {},
     steps: Object.fromEntries(stepIds.map(id => [id, emptyCheck()])) as Record<StepId, ProgressCheck>,
-    boards: [], emailConnection: emptyCheck(), updatedAt: null };
+    boards: [], emailConnection: emptyCheck(), preparation: Object.fromEntries(preparationIds.map(id => [id, emptyCheck()])) as OnboardingProgress["preparation"], updatedAt: null };
 }
 
 export function newBoard(name: string, url: string, contextPath: string): BoardProgress {
@@ -96,14 +108,16 @@ export function configureProgress(state: OnboardingProgress, scope: OnboardingSc
 export function migrateProgress(input: unknown, now: string): OnboardingProgress {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid progress file; preserve it for investigation.");
   const data = input as Record<string, unknown>;
-  if (data.schemaVersion === 2) { validateProgress(data); return structuredClone(data) as OnboardingProgress; }
-  if (data.schemaVersion !== 1 || !Array.isArray(data.selectedRoles) || !Array.isArray(data.pendingQuestions) ||
+  if (data.schemaVersion === 3) { validateProgress(data); return structuredClone(data) as OnboardingProgress; }
+  if (![1, 2].includes(data.schemaVersion as number) || !Array.isArray(data.selectedRoles) || !Array.isArray(data.pendingQuestions) ||
     !Array.isArray(data.deferredQuestions) || typeof data.contextRevisions !== "object" || !data.contextRevisions) {
     throw new Error("Unsupported progress file; preserve it for investigation.");
   }
-  const next = { ...createProgress(), ...structuredClone(data), schemaVersion: 2,
+  const next = { ...createProgress(), ...structuredClone(data), schemaVersion: 3,
     phase: data.phase === "notStarted" ? "notStarted" : "inProgress", updatedAt: now,
-    migration: { fromSchemaVersion: 1, previousPhase: data.phase, nextAction: "Check canonical saved context; revalidate only the relevant steps and select primary boards from the user's existing instructions." },
+    migration: { fromSchemaVersion: data.schemaVersion, previousPhase: data.phase,
+      ...(data.migration ? { previous: structuredClone(data.migration) } : {}),
+      nextAction: "Preserve existing answers, board knowledge and tool evidence. Ask once for a missing browser/operating choice; revalidate only new or affected preparation." },
   } as OnboardingProgress;
   validateProgress(next);
   return next;
@@ -118,12 +132,13 @@ function validateCheck(value: unknown): asserts value is ProgressCheck {
 }
 export function validateProgress(value: unknown): asserts value is OnboardingProgress {
   const state = value as OnboardingProgress;
-  if (!state || state.schemaVersion !== 2 || ![null, "profileSetup", "manualApplications", "emailApplications", "bothApplications"].includes(state.scope) ||
+  if (!state || state.schemaVersion !== 3 || ![null, "profileSetup", "manualApplications", "emailApplications", "bothApplications"].includes(state.scope) ||
     !["notStarted", "inProgress", "waitingForUser", "complete"].includes(state.phase) || !Array.isArray(state.selectedRoles) ||
     !Array.isArray(state.pendingQuestions) || !Array.isArray(state.deferredQuestions) || !state.contextRevisions ||
-    typeof state.contextRevisions !== "object" || !state.steps || !Array.isArray(state.boards) || state.boards.length > 3) throw new Error("Invalid onboarding progress.");
+    typeof state.contextRevisions !== "object" || !state.steps || !state.preparation || !Array.isArray(state.boards) || state.boards.length > 3) throw new Error("Invalid onboarding progress.");
   for (const id of stepIds) validateCheck(state.steps[id]);
   validateCheck(state.emailConnection);
+  for (const id of preparationIds) validateCheck(state.preparation[id]);
   for (const board of state.boards) {
     newBoard(board.name, board.url, board.contextPath);
     validateCheck(board.access);
@@ -147,6 +162,11 @@ export function readiness(state: OnboardingProgress): { ready: boolean; partial:
   }
   if (state.pendingQuestions.length) blockers.push("Resolve the outstanding scope-required questions, or record an appropriate optional deferral.");
   if (state.scope && state.scope !== "profileSetup") {
+    for (const id of preparationIds) {
+      const check = state.preparation[id];
+      const onDemand = id === "scheduledAccess" && check.status === "skipped" && !!check.reason?.trim() && !!check.checkedAt && check.evidence.length > 0;
+      if (!evidenced(check) && !onDemand) blockers.push(preparationLabels[id]);
+    }
     if (!state.boards.length) blockers.push("Select one to three primary job boards.");
     if (!evidenced(state.steps.browserTools)) blockers.push(stepLabels.browserTools);
     for (const board of state.boards.filter(board => !board.deferred)) {
@@ -204,6 +224,14 @@ export function formatProgress(state: OnboardingProgress): string {
   for (const id of required) {
     lines.push(`${symbol[next.steps[id].status]} ${stepLabels[id]}`);
     if (next.steps[id].nextAction && next.steps[id].status !== "complete") lines.push(`  Next: ${next.steps[id].nextAction}`);
+  }
+  if (next.scope && next.scope !== "profileSetup") {
+    lines.push("", "Preparation checks:");
+    for (const id of preparationIds) {
+      const check = next.preparation[id];
+      lines.push(`${symbol[check.status]} ${preparationLabels[id]}${check.status === "skipped" ? ` — ${check.reason ?? "outside scope"}` : ""}`);
+      if (check.nextAction && check.status !== "complete") lines.push(`  Next: ${check.nextAction}`);
+    }
   }
   for (const board of next.scope === "profileSetup" ? [] : next.boards) {
     lines.push("", board.deferred ? `${board.name} — deferred: ${board.deferred.reason}` : board.name);

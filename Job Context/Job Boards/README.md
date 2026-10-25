@@ -46,3 +46,7 @@ if (!email || !password) {
 Use the corresponding file and keys for another board. Browser tools that do not use a Node runner need an equivalent private runtime-loading mechanism. Do not dump environment files or the full process environment to tool output. Keep login credentials out of screenshots, traces and reusable site knowledge.
 
 The included website routines remain unlearned until [discovery](../../Application%20Workflow/discovery-workflow.md) observes the actual flow. Populating `.env` does not establish working access. If the site uses SSO, a magic link, MFA or a challenge, follow its actual access procedure; a password entry does not bypass those steps. Missing or unusable access becomes a specific dependency under the existing workflow.
+
+## Browser-specific access
+
+Respect the saved default browser and prepare Playwright for upload applications. Verify account access in the default and required fallback separately; profiles and cookies are not automatically shared. Keep only secure session/credential references in access instructions. If OTP/MFA is needed, use the selected role's verification-access instructions and resume its existing checkpoint. A tool or platform denial remains a blocker; fallback must not evade it.

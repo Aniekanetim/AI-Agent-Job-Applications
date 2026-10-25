@@ -20,3 +20,5 @@ This is an organizational scaffold, not an observed site map or verified integra
 [Page object](playwright/pages.ts) and [application flow](playwright/application-flow.ts) are typed unlearned stubs. They throw DiscoveryRequired before browser interaction. Replace only the relevant scaffold with actual observations and code; do not fill this template with assumptions based on a platform name.
 
 For an external destination, record the actual company, host/tenant and originating portal. Keep credentials in the secure access mechanism and personal evidence in private storage. Use stable OBS IDs and record real conditions/versions when learning.
+
+For a host-browser default, use the separate [in-app action template](in-app/actions.md). It starts unlearned. Keep this common journey shared; verify tool-specific methods and session conditions before use.

@@ -19,3 +19,5 @@ The selected role supplies all candidate-specific information. Platform files de
 [Job-board credential setup](Job%20Boards/README.md) supports an ignored `.env` in each board folder. The public `.env.example` files contain commented email/password placeholders. Store actual login values only in private `.env` files or a secure store; private access Markdown records their paths/key names rather than passwords. The agent explicitly loads the selected file when authenticating in the browser.
 
 For a blocker, reply with the missing answer or provide the requested access action. The agent updates the precise private file named on the ticket, verifies the dependency is resolved and resumes the existing task. An unchanged file or incomplete answer does not restart an application.
+
+Browser selection and operating choices are recorded privately during onboarding, not inferred from installed tools. Role profiles retain their own facts, answers, document versions and verification-email access references. The alert-inbox configuration is separate. The agent asks for relevant missing information and saves the response; users do not need to fill these templates manually.

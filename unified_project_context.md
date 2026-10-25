@@ -1,6 +1,6 @@
 # Job-application shared progress
 
-**Package:** 1.8.0. **Date:** 24 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
+**Package:** 1.9.0. **Date:** 25 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
 
 | Item | Current template state |
 | --- | --- |
@@ -10,6 +10,9 @@
 | Platform accounts | Not supplied; no live access performed |
 | Browser credential templates | Commented per-board `.env.example` files; actual `.env` values stay private and unconfigured |
 | Primary job boards | Not selected; application setup requires one to three user-selected boards |
+| Browser preference / upload fallback | Not chosen; automatic, in-app or Playwright; uploads use Playwright without changing the default |
+| Application-email verification | Not configured; distinct from alert-inbox access |
+| Operating limits / reporting | Not supplied; follow actual user instructions |
 | Browser tooling | Pinned CLI/library included; install and verify actual browser operation under [browser setup](automation/browser/README.md) |
 | Website knowledge | All included maps/routines unlearned; initial selected-board mapping is part of onboarding |
 | Active / Blocked / Applied tickets | None |

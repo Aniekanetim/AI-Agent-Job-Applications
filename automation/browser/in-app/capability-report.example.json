@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "backend": "inApp",
+  "providerId": "REPLACE_WITH_ACTUAL_PROVIDER",
+  "workingRoot": "REPLACE_WITH_ACTUAL_PRIVATE_ROOT",
+  "executionContext": "interactive",
+  "checkedAt": "REPLACE_WITH_ACTUAL_ISO_TIMESTAMP",
+  "capabilities": {
+    "navigation": { "status": "unverified", "evidence": [], "reason": null },
+    "formFilling": { "status": "unverified", "evidence": [], "reason": null },
+    "fileUpload": { "status": "unverified", "evidence": [], "reason": null },
+    "outcomeInspection": { "status": "unverified", "evidence": [], "reason": null }
+  }
+}
