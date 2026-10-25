@@ -1,4 +1,5 @@
 import { messageReadyForDeletion, type MessageProgress } from "../../workflow/application-state.js";
+import { consumeInboxAuthorization, type CleanupAuthorization } from "../authorization.js";
 
 export interface MessageHeader {
   inbox_id: string;
@@ -97,17 +98,15 @@ export class AgentMailInbox {
 
   async deleteCompletedAlert(
     progress: MessageProgress,
-    verifyPersistence: (progress: MessageProgress) => Promise<boolean>,
+    authorization: CleanupAuthorization | ((progress: MessageProgress) => Promise<boolean>),
   ): Promise<void> {
     const snapshot = structuredClone(progress);
     if (snapshot.inboxId !== this.#inboxId || snapshot.cleanupState !== "cleanupPending" ||
       !messageReadyForDeletion(snapshot)) {
       throw new Error("The source alert still has unresolved or unpersisted work.");
     }
-    // The caller must check saved ledger + actual Applied tasks/evidence/rule references.
-    if (!await verifyPersistence(structuredClone(snapshot))) {
-      throw new Error("Completion records have not been verified in private storage.");
-    }
+    if (typeof authorization === "function") throw new Error("Use coordinated cleanup; a callback Boolean cannot authorize deletion.");
+    consumeInboxAuthorization(authorization, this.#inboxId, snapshot.messageId);
     await this.#request(`${this.#root}/${encodeURIComponent(snapshot.messageId)}`, "DELETE");
     // Caller records the actual successful response/checkpoint atomically afterward.
   }

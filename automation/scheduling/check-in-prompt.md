@@ -73,9 +73,16 @@ last completed step, exact context path/question and resumption action. Do not
 require the user to edit files: save their conversational reply, verify the
 dependency and resume. Do not repeat unchanged questions or ask for per-application approval.
 
-After durable Applied records and all permitted vacancy dispositions exist,
-perform only the selected supported message-level cleanup, or retain with a local
-handled marker. Preserve non-alert correspondence and cached classifications. Incomplete extraction, active or
+Follow automation/email/alert-completion.md. Capture the full source privately,
+reconcile all links/postings and save distinct task/outcome/confirmation evidence
+with hashes. Never trust an enumeration Boolean or callback alone. Use
+cleanupCompletedAlert for callbacks, or email:work native-prepare/authorize/observe
+for native tools. Hold the per-message claim through result persistence. Respect
+active owners; never steal a native claim because a CLI exited or time passed.
+Resume saved owned checkpoints and inspect an uncertain exact-message outcome
+before cleanup-only retry. Independent machines require shared coordination or
+one active deployment. Perform only the selected supported message-level action,
+or retain with a local handled marker. Preserve non-alert correspondence and cached classifications. Incomplete extraction, active or
 blocked vacancies keep the alert. Retry failed cleanup without reapplying.
 Keep credentials, personal data, browser state, tickets and inbox progress private.
 Respect other workers' claims and preserve task history through moves.

@@ -1,5 +1,6 @@
 import { emailCapabilityIssues, type EmailSource, type EmailConnection, type EmailCapabilityReport, type CleanupChoice } from "../connection.js";
 import { messageKey, type EmailIdentity, type MailHeader, type MailMessage } from "../intake.js";
+import { assertCleanupAuthorization, type CleanupAuthorization } from "../authorization.js";
 
 export interface CleanupObservation { state: "applied" | "notApplied" | "unknown"; evidenceReference: string; observedAt: string }
 export interface CleanupResult { evidenceReference: string; observedAt: string }
@@ -7,7 +8,7 @@ export interface EmailTransport {
   source: EmailSource;
   listPage(cursor?: string): Promise<{ messages: MailHeader[]; nextCursor?: string }>;
   readMessage(messageId: string): Promise<MailMessage>;
-  applyCleanup(identity: EmailIdentity, action: CleanupChoice): Promise<CleanupResult>;
+  applyCleanup(identity: EmailIdentity, action: CleanupChoice, authorization?: CleanupAuthorization): Promise<CleanupResult>;
   observeCleanup?(identity: EmailIdentity, action: CleanupChoice): Promise<CleanupObservation>;
 }
 /** Bind these callbacks to actual tools exposed by the harness; this module performs no OAuth. */
@@ -44,12 +45,13 @@ export class HostEmailAdapter implements EmailTransport {
       return message;
     } catch { throw new Error("The selected host email connection could not read this exact message."); }
   }
-  async applyCleanup(identity: EmailIdentity, action: CleanupChoice) {
+  async applyCleanup(identity: EmailIdentity, action: CleanupChoice, authorization?: CleanupAuthorization) {
     if (messageKey(identity) !== messageKey({ source: this.source, messageId: identity.messageId }) ||
       JSON.stringify(action) !== JSON.stringify(this.connection.cleanup) || !this.bindings.cleanup) throw new Error("This connection cannot perform the selected message-specific cleanup.");
     const issues = emailCapabilityIssues(this.connection, this.report, this.root, this.context);
     if (issues.length) throw new Error(issues.join(" "));
-    try { return await this.bindings.cleanup({ source: structuredClone(this.source), messageId: identity.messageId }, structuredClone(action)); }
+    assertCleanupAuthorization(authorization, this.source, identity.messageId, action, true);
+    try { return await this.bindings.cleanup({ source: structuredClone(this.source), messageId: identity.messageId }, structuredClone(action), authorization); }
     catch { throw new Error("Email cleanup was not confirmed; preserve the pending checkpoint and inspect the exact message before retrying."); }
   }
   async observeCleanup(identity: EmailIdentity, action: CleanupChoice): Promise<CleanupObservation> {

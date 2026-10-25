@@ -2,6 +2,7 @@ import { existsSync, readFileSync, realpathSync, mkdirSync, writeFileSync, renam
 import { resolve, relative, isAbsolute, dirname } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { withWriteOwnership } from "./ownership.js";
 
 const hash = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
 function pathInCopy(root: string, name: string) {
@@ -20,6 +21,9 @@ export function readPrivateJson(root: string, name: string): { data: unknown; re
   catch { throw new Error("Private configuration is unreadable; preserve it for investigation."); }
 }
 export function savePrivateJson(root: string, name: string, data: unknown, expectedRevision: string | null) {
+  return withWriteOwnership(root, name, () => saveLocked(root, name, data, expectedRevision));
+}
+function saveLocked(root: string, name: string, data: unknown, expectedRevision: string | null) {
   const path = pathInCopy(root, name);
   mkdirSync(dirname(path), { recursive: true }); pathInCopy(root, name);
   const current = existsSync(path) ? readFileSync(path) : null;

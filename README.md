@@ -2,7 +2,9 @@
 
 A portable, autonomous job-application workflow. Job-alert emails and manual tickets supply work. Self-contained candidate role profiles supply the facts and instructions. The agent reuses learned website navigation, discovers unfamiliar steps, submits applications and records confirmed outcomes.
 
-**Version:** 1.11.0 — 25 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
+An alert may contain several jobs. The agent [accounts for every posting](automation/email/alert-completion.md), saves each outcome and keeps the email while any job is unresolved. Verified completion permits only the selected email-handling action.
+
+**Version:** 1.12.0 — 25 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Website maps are unlearned templates, not verified integrations.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
@@ -46,7 +48,10 @@ Site Architecture Context and the selected browser methods; discover missing or 
 steps using Application Workflow/discovery-workflow.md. Move unresolved tasks to
 Blocked with the exact context file and action needed. Move only confirmed
 submissions to Applied. Handle a fully completed alert using my selected supported
-delete, archive, label or retain mode only after every vacancy is accounted for. Read automation/README.md for component requirements,
+delete, archive, label or retain mode only after automation/email/alert-completion.md
+reconciles every posting, saved task and confirmation. Hold exclusive per-alert
+ownership through cleanup, including native email-tool execution.
+Read automation/README.md for component requirements,
 supporting utilities and scheduling.
 For email-alert mode, follow automation/email/README.md. Detect actual available
 providers through this harness's directory and actual tools; follow

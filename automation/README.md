@@ -37,7 +37,10 @@ automation/
 │   ├── onboarding.ts       # Provider choice, sign-in checkpoints and explicit deferral
 │   ├── intake.ts           # Message classification and assignment identity
 │   ├── state-store.ts      # Private message markers and migration
-│   ├── cleanup.ts          # Durable cleanup checkpoints and recovery
+│   ├── cleanup.ts          # Exclusive cleanup ownership and outcome recovery
+│   ├── inventory.ts        # Full-message source-link inventory
+│   ├── verification.ts     # Actual task/outcome/confirmation file checks
+│   ├── work-cli.ts         # Reconciliation and native-tool cleanup protocol
 │   ├── agentmail/           # Existing AgentMail backend
 │   └── verification/        # Application-email access and OTP/MFA resumption
 ├── workflow/                # Application state and revision-checked private JSON
@@ -89,6 +92,7 @@ Browser setup can download missing components; its operation check visits loopba
 | `npm run email:options` | Show Google-first provider choices and actual account actions without connecting anything |
 | `npm run email:catalog -- ...` | Save normalized observations from the actual harness catalog; no account or readiness claim |
 | `npm run email:onboarding -- ...` | Save a provider choice, checkpoint or explicit deferral; show/resume email setup |
+| `npm run email:work -- help` | Source inventory, reconciliation, file verification and native cleanup ownership; see [execution instructions](email/alert-completion.md) |
 | `npm run email:status` | Inspect shared account/cleanup/capability readiness without changing email or saved state |
 | `npm run email:select -- ...` | Record the actual user-selected source and intake rules |
 | `npm run email:cleanup -- ...` | Save the user's supported cleanup choice; perform no cleanup |

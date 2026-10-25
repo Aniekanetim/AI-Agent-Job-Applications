@@ -1,4 +1,6 @@
 import type { BrowserExecution } from "../browser/fallback.js";
+import { inventoryPostings, postingUrl, type AlertInventory } from "../email/inventory-shape.js";
+import type { FileEvidence } from "../email/evidence.js";
 /** Local integrity checks; these do not establish that external evidence is true. */
 export type IntakeFolder = "Email Alerts" | "To Do";
 export type BoardFolder = IntakeFolder | "Blocked" | "Applied";
@@ -34,6 +36,9 @@ export interface VacancyProgress {
   applicationRecordSaved?: boolean;
   nonapplicationReason?: string | null;
   instructionReference?: string | null;
+  postingUrl?: string;
+  taskEvidence?: FileEvidence;
+  outcomeEvidence?: FileEvidence;
 }
 
 export interface MessageProgress {
@@ -42,6 +47,7 @@ export interface MessageProgress {
   enumerationComplete: boolean;
   cleanupState: "notReady" | "cleanupPending" | "deleted";
   vacancies: VacancyProgress[];
+  inventory?: AlertInventory;
 }
 
 const supplied = (value: string | null | undefined): boolean =>
@@ -99,8 +105,15 @@ export function messageReadyForDeletion(message: MessageProgress): boolean {
     !message.enumerationComplete || message.vacancies.length === 0) return false;
   const keys = message.vacancies.map(v => v.vacancyKey);
   if (keys.some(key => !supplied(key)) || new Set(keys).size !== keys.length) return false;
+  const postings = inventoryPostings(message.inventory);
+  if (!postings || postings.size !== keys.length || keys.some(key => !postings.has(key))) return false;
+  const taskIds = new Set<string>(), taskPaths = new Set<string>(), outcomes = new Set<string>();
   return message.vacancies.every(v => {
+    try { if (!v.postingUrl || postingUrl(v.postingUrl) !== postings.get(v.vacancyKey) || !v.outcomeEvidence) return false; } catch { return false; }
+    if (outcomes.has(v.outcomeEvidence.path)) return false; outcomes.add(v.outcomeEvidence.path);
     if (v.disposition === "applied") {
+      if (!v.taskId || !v.taskPath || !v.taskEvidence || v.taskEvidence.path !== v.taskPath || taskIds.has(v.taskId) || taskPaths.has(v.taskPath)) return false;
+      taskIds.add(v.taskId); taskPaths.add(v.taskPath);
       return supplied(v.taskId) && isAppliedRecord(v.taskPath) &&
         v.applicationRecordSaved === true && supplied(v.confirmationReference);
     }

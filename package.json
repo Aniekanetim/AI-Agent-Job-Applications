@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-job-applications",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "private": true,
   "type": "module",
   "description": "Portable autonomous job applications with existing email connections, browser choice and resumable onboarding.",
@@ -10,7 +10,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsc --outDir .local/build",
-    "test": "tsc --outDir .local/check && node --test .local/check/automation/tests/application-state.test.js .local/check/automation/tests/agentmail.test.js .local/check/automation/tests/agentmail-setup.test.js .local/check/automation/tests/agentmail-connection.test.js .local/check/automation/tests/onboarding.test.js automation/tests/browser.test.mjs .local/check/automation/tests/browser-policy.test.js .local/check/automation/tests/documents.test.js .local/check/automation/tests/email-intake.test.js .local/check/automation/tests/email-discovery.test.js",
+    "test": "tsc --outDir .local/check && node --test --test-concurrency=4 .local/check/automation/tests/application-state.test.js .local/check/automation/tests/agentmail.test.js .local/check/automation/tests/agentmail-setup.test.js .local/check/automation/tests/agentmail-connection.test.js .local/check/automation/tests/onboarding.test.js automation/tests/browser.test.mjs .local/check/automation/tests/browser-policy.test.js .local/check/automation/tests/documents.test.js .local/check/automation/tests/email-intake.test.js .local/check/automation/tests/email-discovery.test.js .local/check/automation/tests/multi-vacancy.test.js",
     "inbox:check": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js",
     "inbox:setup": "npm run build --silent && node .local/build/automation/email/agentmail/setup.js --setup",
     "inbox:detect": "npm run build --silent && node .local/build/automation/email/agentmail/connection.js",
@@ -41,6 +41,7 @@
     "email:capabilities": "npm run build --silent && node .local/build/automation/email/cli.js capabilities",
     "email:classify": "npm run build --silent && node .local/build/automation/email/cli.js classify",
     "email:migrate": "npm run build --silent && node .local/build/automation/email/cli.js migrate",
+    "email:work": "npm run build --silent && node .local/build/automation/email/work-cli.js",
     "email:help": "npm run build --silent && node .local/build/automation/email/cli.js help"
   },
   "license": "MIT",
@@ -49,5 +50,8 @@
     "@types/node": "22.20.5",
     "playwright": "1.64.1",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "parse5": "8.0.1"
   }
 }

@@ -22,7 +22,8 @@ export interface EmailRecord extends Omit<MessageProgress, "cleanupState"> {
   cleanupState: "notReady" | "cleanupPending" | "deleted" | "retained" | "archived" | "labeled";
   cleanupAction: CleanupChoice | null;
   cleanupReceipt?: CleanupReceipt;
-  cleanupAttempt?: { startedAt: string; reference: string };
+  cleanupAttempt?: { startedAt: string; reference: string; workDigest?: string;
+    native?: { ownerId: string; token: string; phase: "prepared" | "invoked" | "inspect"; round: number; lastObservation?: import("./evidence.js").FileEvidence } };
   [key: string]: unknown;
 }
 export interface InboxState { schemaVersion: 2; messages: EmailRecord[]; [key: string]: unknown }
@@ -52,6 +53,10 @@ export function validateRecord(record: EmailRecord): void {
     !Number.isFinite(Date.parse(c.classifiedAt)) || !Array.isArray(record.vacancies) || typeof record.enumerationComplete !== "boolean" ||
     !["notReady", "cleanupPending", "deleted", "retained", "archived", "labeled"].includes(record.cleanupState)) throw new Error("Preserve and investigate the incomplete email progress record.");
   if (record.cleanupAction) validateCleanup(record.cleanupAction);
+  if (record.cleanupAttempt && (!record.cleanupAttempt.reference?.trim() || !Number.isFinite(Date.parse(record.cleanupAttempt.startedAt)))) throw new Error("Preserve and reconcile incomplete cleanup-attempt metadata.");
+  const owner = record.cleanupAttempt?.native;
+  if (owner && (!owner.ownerId?.trim() || !owner.token?.trim() || !["prepared", "invoked", "inspect"].includes(owner.phase) ||
+    !Number.isInteger(owner.round) || owner.round < 0 || !/^[a-f0-9]{64}$/.test(record.cleanupAttempt!.workDigest ?? ""))) throw new Error("Preserve the native owner and reconcile its incomplete checkpoint.");
   const keys = new Set<string>();
   for (const vacancy of record.vacancies) {
     if (!vacancy.vacancyKey?.trim() || keys.has(vacancy.vacancyKey) || !["pending", "blocked", "applied", "notApplicable"].includes(vacancy.disposition)) throw new Error("Preserve distinct, identified vacancy checkpoints.");

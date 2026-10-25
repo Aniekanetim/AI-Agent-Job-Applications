@@ -87,43 +87,24 @@ test("cleanup cannot target an inbox other than the configured one", async () =>
   assert.equal(calls, 0);
 });
 
-test("completed mail deletes only the URL-encoded individual message", async () => {
-  const calls: { input: string; init?: RequestInit }[] = [];
-  const client = new AgentMailInbox({ inboxId, apiKey: fakeKey, fetch: async (input, init) => {
-    calls.push({ input: String(input), init }); return new Response(null, { status: 204 });
-  } });
-  const progress = complete();
-  await client.deleteCompletedAlert(progress, async () => true);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].input,
-    `https://api.agentmail.to/v0/inboxes/${encodeURIComponent(inboxId)}/messages/${encodeURIComponent(progress.messageId)}`);
-  assert.equal(calls[0].init?.method, "DELETE");
-  assert.equal(calls[0].input.includes("/threads/"), false);
+test("a legacy persistence callback cannot authorize a direct deletion", async () => {
+  let calls = 0;
+  const client = new AgentMailInbox({ inboxId, apiKey: fakeKey, fetch: async () => { calls++; return new Response(null, { status: 204 }); } });
+  await assert.rejects(client.deleteCompletedAlert(complete(), async () => true));
+  assert.equal(calls, 0);
 });
 
-test("an asynchronous storage check cannot retarget deletion by mutating its input", async () => {
-  let actualUrl = "";
-  const client = new AgentMailInbox({ inboxId, apiKey: fakeKey, fetch: async input => {
-    actualUrl = String(input); return new Response(null, { status: 204 });
-  } });
-  const progress = complete(); const originalId = progress.messageId;
-  await client.deleteCompletedAlert(progress, async passed => {
-    passed.messageId = "other"; progress.messageId = "also-other"; return true;
-  });
-  assert.equal(actualUrl.endsWith(encodeURIComponent(originalId)), true);
-});
-
-test("HTTP failure preserves a retryable cleanup outcome without leaking body or key", async () => {
+test("HTTP errors preserve their status without leaking body or key", async () => {
   const client = new AgentMailInbox({ inboxId, apiKey: fakeKey,
     fetch: async () => new Response(`private-body ${fakeKey}`, { status: 429 }) });
-  await assert.rejects(client.deleteCompletedAlert(complete(), async () => true), (error: unknown) => {
+  await assert.rejects(client.getMessage("fixture-message"), (error: unknown) => {
     assert.ok(error instanceof AgentMailError); assert.equal(error.status, 429);
     assert.equal(error.message.includes(fakeKey), false);
     assert.equal(error.message.includes("private-body"), false); return true;
   });
 });
 
-test("network exceptions are sanitized and a 404 is not falsely claimed as deletion", async () => {
+test("network exceptions are sanitized and a missing message remains an explicit 404", async () => {
   const failing: Fetch = async () => { throw new Error(`network ${fakeKey}`); };
   const client = new AgentMailInbox({ inboxId, apiKey: fakeKey, fetch: failing });
   await assert.rejects(client.getMessage("m"), (error: unknown) => {
@@ -131,5 +112,5 @@ test("network exceptions are sanitized and a 404 is not falsely claimed as delet
   });
   const missing = new AgentMailInbox({ inboxId, apiKey: fakeKey,
     fetch: async () => new Response(null, { status: 404 }) });
-  await assert.rejects(missing.deleteCompletedAlert(complete(), async () => true), AgentMailError);
+  await assert.rejects(missing.getMessage("fixture-message"), AgentMailError);
 });

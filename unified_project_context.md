@@ -1,6 +1,6 @@
 # Job-application shared progress
 
-**Package:** 1.11.0. **Date:** 25 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
+**Package:** 1.12.0. **Date:** 25 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
 
 | Item | Current template state |
 | --- | --- |

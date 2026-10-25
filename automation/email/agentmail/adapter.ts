@@ -3,6 +3,7 @@ import type { EmailSource, CleanupChoice } from "../connection.js";
 import { sourceKey } from "../connection.js";
 import { messageKey, type EmailIdentity, type MailMessage, type EmailRecord } from "../intake.js";
 import type { EmailTransport, CleanupResult } from "../host-connectors/adapter.js";
+import { assertCleanupAuthorization, bindInboxAuthorization } from "../authorization.js";
 
 /** Keep the existing AgentMail client and its guarded individual-message deletion. */
 export function agentMailTransport(client: AgentMailInbox, source: EmailSource,
@@ -23,11 +24,14 @@ export function agentMailTransport(client: AgentMailInbox, source: EmailSource,
       return { source, messageId, threadId: message.thread_id, from: message.from, subject: message.subject,
         timestamp: message.timestamp, labels: message.labels, text: message.text, html: message.html } satisfies MailMessage;
     },
-    async applyCleanup(identity, action) {
+    async applyCleanup(identity, action, authorization) {
       if (sourceKey(identity.source) !== sourceKey(source) || action.mode !== "delete" || action.effect !== "permanentDelete") throw new Error("This AgentMail adapter supports only its documented individual-message deletion.");
       const record = await loadVerifiedRecord(identity);
       if (record.classification.kind !== "jobAlert" || messageKey(record.identity) !== messageKey(identity)) throw new Error("Only this classified alert can reach AgentMail cleanup.");
-      await client.deleteCompletedAlert({ ...record, cleanupState: "cleanupPending" }, () => verifyPersistence(record));
+      if (!await verifyPersistence(record)) throw new Error("Additional persistence checks refused cleanup.");
+      assertCleanupAuthorization(authorization, source, identity.messageId, action);
+      bindInboxAuthorization(authorization!, source.mailboxId);
+      await client.deleteCompletedAlert({ ...record, cleanupState: "cleanupPending" }, authorization!);
       return recordResult(identity, action);
     },
     async observeCleanup(identity, action) {

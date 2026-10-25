@@ -9,7 +9,7 @@ const confirmed = (): ApplicationTask => ({
   cvVersion: "fixture-1", cvSha256: "a".repeat(64), checkpoint: "confirmed",
   confirmation: { reference: "fixture-receipt", observedAt: "2026-10-23T10:00:00Z" },
 });
-const complete = (): MessageProgress => ({
+const complete = (): MessageProgress => attachInventory({
   inboxId: "fixture@example.invalid", messageId: "fixture-message",
   enumerationComplete: true, cleanupState: "cleanupPending", vacancies: [{
     vacancyKey: "fixture-job", disposition: "applied", taskId: "APP-fixture",
@@ -17,6 +17,14 @@ const complete = (): MessageProgress => ({
     confirmationReference: "fixture-receipt",
   }],
 });
+function attachInventory(email: MessageProgress) {
+  const ref = { path: ".local/source.json", sha256: "a".repeat(64) };
+  email.vacancies.forEach((v, i) => { v.postingUrl = `https://example.invalid/jobs/${i}`; v.outcomeEvidence = { ...ref, path: `.local/outcome-${i}.json` }; if (v.taskPath) v.taskEvidence = { ...ref, path: v.taskPath }; });
+  email.inventory = { schemaVersion: 1, messageKey: "b".repeat(64), source: ref,
+    candidates: email.vacancies.map((v, i) => ({ candidateId: `link-${i}`, href: v.postingUrl! })),
+    decisions: email.vacancies.map((v, i) => ({ candidateId: `link-${i}`, kind: "posting", vacancyKey: v.vacancyKey, postingUrl: v.postingUrl, evidence: ref })) };
+  return email;
+}
 
 test("a click/attempt alone cannot become Applied", () => {
   const task = confirmed(); task.checkpoint = "submissionAttempted";
@@ -108,6 +116,7 @@ test("a nonapplication needs a reason and the candidate instruction allowing it"
     disposition: "notApplicable", nonapplicationReason: "Location excluded" });
   assert.equal(messageReadyForDeletion(email), false);
   email.vacancies[1].instructionReference = "fixture preferences: allowed locations";
+  attachInventory(email);
   assert.equal(messageReadyForDeletion(email), true);
 });
 

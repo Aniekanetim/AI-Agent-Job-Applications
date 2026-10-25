@@ -10,7 +10,7 @@ AgentMail setup does not establish full message-body access, cleanup or schedule
 
 ## Email processing and cleanup
 
-Use [the common email procedure](../README.md#email-processing-and-cleanup) and schema-2 `.local/inbox-state.json`. [adapter.ts](adapter.ts) normalizes AgentMail listing/reading and preserves the existing client's guarded individual-message deletion. Its deletion operation is permanent; do not describe it as Gmail Trash or archive. Retain mode is implemented in the shared layer without an external mutation. Unsupported AgentMail archive/label operations must not be invented.
+Use [the common email procedure](../README.md#email-processing-and-cleanup) and schema-2 `.local/inbox-state.json`. [adapter.ts](adapter.ts) normalizes AgentMail listing/reading and preserves the existing client's guarded individual-message deletion. The client accepts only the coordinated single-use authorization after actual inventory/task/evidence verification; a legacy persistence Boolean cannot authorize DELETE. Use [the completion procedure](../alert-completion.md). Its deletion operation is permanent; do not describe it as Gmail Trash or archive. Retain mode is implemented in the shared layer without an external mutation. Unsupported AgentMail archive/label operations must not be invented.
 
 For a timeout, the adapter can inspect the exact message. A 404 is corroborated by a successful full selected-inbox listing before it is treated as absence; access errors remain unknown. Recovery never starts another application.
 

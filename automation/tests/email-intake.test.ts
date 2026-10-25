@@ -17,6 +17,7 @@ import { AgentMailInbox } from "../email/agentmail/client.js";
 import { agentMailTransport } from "../email/agentmail/adapter.js";
 import { configureProgress, createProgress, newBoard } from "../onboarding/progress.js";
 import { completedCheck, inspectReadiness } from "../onboarding/state-store.js";
+import { bindFixture } from "./email-fixture.js";
 
 const now = "2026-10-25T15:00:00.000Z";
 const gmail: EmailSource = { provider: "gmail", accountId: "synthetic-account", mailboxId: "synthetic-mailbox",
@@ -46,8 +47,7 @@ function setup(t: TestContext, mode: CleanupChoice["mode"] = "retain") {
       reason: ["list", "read", mode].includes(operation) ? null : "Synthetic unavailable operation." }])) as EmailCapabilityReport["operations"] };
   const saveReport = () => writeFileSync(join(root, ".local/email-capabilities.json"), JSON.stringify(report)); saveReport();
   const record = classifyMessage(header, "jobAlert", "rules-v1", ".local/proof.md", ".local/proof.md", now);
-  record.enumerationComplete = true; record.vacancies = [{ vacancyKey: "job-1", disposition: "applied", taskId: "APP-synthetic",
-    taskPath: "Task Board/Applied/APP-synthetic.md", confirmationReference: "synthetic-receipt", applicationRecordSaved: true }];
+  bindFixture(root, record);
   saveEmailRecord(root, record, null);
   let calls = 0;
   const bindings: HostBindings = { listPage: async () => ({ messages: [header] }), readMessage: async () => ({ ...header, text: "Synthetic alert body" }),

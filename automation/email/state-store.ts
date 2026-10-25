@@ -13,7 +13,25 @@ export function loadInboxState(root: string) {
   validateInboxState(found.data); return { state: found.data, revision: found.revision };
 }
 export function saveInboxState(root: string, state: InboxState, revision: string | null) {
-  validateInboxState(state); return savePrivateJson(root, ".local/inbox-state.json", state, revision);
+  validateInboxState(state);
+  const previous = loadInboxState(root);
+  if (previous.revision !== revision) throw new Error("Private configuration changed in another session; reload it before saving.");
+  for (const old of previous.state.messages) {
+    const next = state.messages.find(r => messageKey(r.identity) === messageKey(old.identity));
+    if (!next) throw new Error("Preserve existing message progress and completed markers.");
+    preserveRecord(old, next);
+  }
+  return savePrivateJson(root, ".local/inbox-state.json", state, revision);
+}
+function preserveRecord(old: EmailRecord, record: EmailRecord) {
+  if (["deleted", "retained", "archived", "labeled"].includes(old.cleanupState) &&
+    (record.cleanupState !== old.cleanupState || JSON.stringify(record.cleanupReceipt) !== JSON.stringify(old.cleanupReceipt))) throw new Error("Preserve the completed message marker and cleanup history.");
+  for (const previous of old.vacancies) {
+    const next = record.vacancies.find(v => v.vacancyKey === previous.vacancyKey);
+    if (!next || (previous.taskId && previous.taskId !== next.taskId) ||
+      (previous.postingUrl && previous.postingUrl !== next.postingUrl) ||
+      (previous.disposition === "applied" && (next.disposition !== "applied" || next.confirmationReference !== previous.confirmationReference))) throw new Error("Preserve existing vacancy, posting, task and confirmation identities.");
+  }
 }
 export function saveEmailRecord(root: string, record: EmailRecord, expectedRevision: string | null) {
   const loaded = loadInboxState(root);
@@ -21,13 +39,7 @@ export function saveEmailRecord(root: string, record: EmailRecord, expectedRevis
   const index = loaded.state.messages.findIndex(existing => messageKey(existing.identity) === messageKey(record.identity));
   if (index < 0) loaded.state.messages.push(record); else {
     const old = loaded.state.messages[index];
-    if (["deleted", "retained", "archived", "labeled"].includes(old.cleanupState) &&
-      (record.cleanupState !== old.cleanupState || JSON.stringify(record.cleanupReceipt) !== JSON.stringify(old.cleanupReceipt))) throw new Error("Preserve the completed message marker and cleanup history.");
-    for (const previous of old.vacancies) {
-      const next = record.vacancies.find(v => v.vacancyKey === previous.vacancyKey);
-      if (!next || (previous.taskId && previous.taskId !== next.taskId) ||
-        (previous.disposition === "applied" && (next.disposition !== "applied" || next.confirmationReference !== previous.confirmationReference))) throw new Error("Preserve existing vacancy, task and confirmation identities.");
-    }
+    preserveRecord(old, record);
     loaded.state.messages[index] = { ...old, ...record };
   }
   return saveInboxState(root, loaded.state, loaded.revision);
