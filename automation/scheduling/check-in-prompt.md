@@ -11,7 +11,11 @@ application instructions without routine review gates.
 
 For missing candidate setup, follow Application Workflow/onboarding-workflow.md.
 Reuse supplied CVs and populated private profiles. Ask only relevant missing
-questions in small batches and save actual replies into canonical *.local.md files.
+one focused missing decision per turn. Follow automation/onboarding/focused-conversation.md:
+read the whole reply, save every clear extra answer in its correct canonical file,
+and recover retained responses before asking again. Keep one active question across
+subflows. Respect pause/resume and optional deferrals; a paused or already presented
+unanswered question stays quiet. Save actual replies into canonical *.local.md files.
 If a role has no CV, request its PDF, DOCX or TXT file, save the unchanged original
 in that role's private Documents folder and verify the hash and extraction.
 Read .local/onboarding-state.json and automation/onboarding/README.md when present.

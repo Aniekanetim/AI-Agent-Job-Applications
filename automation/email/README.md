@@ -4,6 +4,8 @@
 
 ## Onboarding and account selection
 
+Follow the shared [focused conversation checkpoint](../onboarding/focused-conversation.md). Provider choice, account choice, authentication action, optional alert scope and completed-alert handling are separate focused substeps. Save clear choices volunteered early; do not ask again or start a parallel questionnaire while another decision is active. A paused onboarding conversation stays paused; existing authorized application work is a separate scope.
+
 1. Read `.local/email-connection.json` when present. Reuse its confirmed account and scope. An unavailable selected connection needs repair; it is not permission to switch accounts.
 2. On first setup, follow [provider discovery](host-connectors/discovery.md). Inspect the host's available integrations and tools before presenting Google first. Distinguish provider availability, authenticated accounts and actual readiness. Use the actions Connect, Use existing connection, Reconnect or Not yet verified as supported by observations. Offer discovered Outlook and other email services, optional AgentMail and Set up email later. A missing tool is not proof that the harness cannot support the provider.
 3. Guide the selected provider's supported connection screen, then list accessible account addresses through metadata tools. Ask which account to use even if only one exists; accept an address already supplied and verify it without asking again. Keep authentication in the harness. Do not ask for an email password in chat or require a separate Gmail API key. An expired connection needs the actual reconnect action; never silently switch providers.

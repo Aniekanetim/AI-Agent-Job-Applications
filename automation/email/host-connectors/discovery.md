@@ -1,6 +1,6 @@
 # Discover email providers before asking for a connection
 
-Use this procedure during the **Connect your email** onboarding step. The agent performs discovery; the person chooses a provider and account in conversation. The repository supplies metadata helpers, not a universal connector installer or OAuth client.
+Use this procedure during the **Connect your email** onboarding step, sharing [one focused conversation](../../onboarding/focused-conversation.md). Discover providers first, then ask only the current missing choice. Keep provider, account and authentication substeps separate; accept choices supplied early. The agent performs discovery; the person chooses a provider and account in conversation. The repository supplies metadata helpers, not a universal connector installer or OAuth client.
 
 ## 1. Identify the current agent environment
 

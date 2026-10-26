@@ -1,3 +1,5 @@
+import { emptyConversation, validateConversation, type ConversationState } from "./conversation-types.js";
+
 export type OnboardingScope = "profileSetup" | "manualApplications" | "emailApplications" | "bothApplications";
 export type ProgressStatus = "pending" | "inProgress" | "complete" | "blocked" | "skipped";
 export type StepId = "boardSelection" | "browserTools" | "candidateProfiles" | "applicationInstructions" | "connections" | "siteMapping" | "readiness";
@@ -55,6 +57,7 @@ export interface OnboardingProgress {
   emailConnection: ProgressCheck;
   preparation: Record<PreparationId, ProgressCheck>;
   updatedAt: string | null;
+  conversation?: ConversationState;
   [key: string]: unknown;
 }
 
@@ -66,7 +69,7 @@ export function hasEmail(scope: OnboardingScope | null) {
 }
 export function createProgress(): OnboardingProgress {
   return { schemaVersion: 3, scope: null, phase: "notStarted", selectedRoles: [], currentRoleId: null,
-    pendingQuestions: [], deferredQuestions: [], contextRevisions: {},
+    pendingQuestions: [], deferredQuestions: [], contextRevisions: {}, conversation: emptyConversation(),
     steps: Object.fromEntries(stepIds.map(id => [id, emptyCheck()])) as Record<StepId, ProgressCheck>,
     boards: [], emailConnection: emptyCheck(), preparation: Object.fromEntries(preparationIds.map(id => [id, emptyCheck()])) as OnboardingProgress["preparation"], updatedAt: null };
 }
@@ -108,7 +111,10 @@ export function configureProgress(state: OnboardingProgress, scope: OnboardingSc
 export function migrateProgress(input: unknown, now: string): OnboardingProgress {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid progress file; preserve it for investigation.");
   const data = input as Record<string, unknown>;
-  if (data.schemaVersion === 3) { validateProgress(data); return structuredClone(data) as OnboardingProgress; }
+  if (data.schemaVersion === 3) {
+    validateProgress(data);
+    return { ...structuredClone(data), conversation: data.conversation ? structuredClone(data.conversation) : emptyConversation() } as OnboardingProgress;
+  }
   if (![1, 2].includes(data.schemaVersion as number) || !Array.isArray(data.selectedRoles) || !Array.isArray(data.pendingQuestions) ||
     !Array.isArray(data.deferredQuestions) || typeof data.contextRevisions !== "object" || !data.contextRevisions) {
     throw new Error("Unsupported progress file; preserve it for investigation.");
@@ -119,6 +125,7 @@ export function migrateProgress(input: unknown, now: string): OnboardingProgress
       ...(data.migration ? { previous: structuredClone(data.migration) } : {}),
       nextAction: "Preserve existing answers, board knowledge and tool evidence. Ask once for a missing browser/operating choice; revalidate only new or affected preparation." },
   } as OnboardingProgress;
+  next.conversation ??= emptyConversation();
   validateProgress(next);
   return next;
 }
@@ -136,6 +143,7 @@ export function validateProgress(value: unknown): asserts value is OnboardingPro
     !["notStarted", "inProgress", "waitingForUser", "complete"].includes(state.phase) || !Array.isArray(state.selectedRoles) ||
     !Array.isArray(state.pendingQuestions) || !Array.isArray(state.deferredQuestions) || !state.contextRevisions ||
     typeof state.contextRevisions !== "object" || !state.steps || !state.preparation || !Array.isArray(state.boards) || state.boards.length > 3) throw new Error("Invalid onboarding progress.");
+  if (state.conversation !== undefined) validateConversation(state.conversation);
   for (const id of stepIds) validateCheck(state.steps[id]);
   validateCheck(state.emailConnection);
   for (const id of preparationIds) validateCheck(state.preparation[id]);
@@ -161,6 +169,7 @@ export function readiness(state: OnboardingProgress): { ready: boolean; partial:
     if (!evidenced(state.steps[id])) blockers.push(stepLabels[id]);
   }
   if (state.pendingQuestions.length) blockers.push("Resolve the outstanding scope-required questions, or record an appropriate optional deferral.");
+  if (state.conversation?.questions.some(q => q.required && q.status === "pending")) blockers.push("Resolve the remaining required focused decisions.");
   if (state.scope && state.scope !== "profileSetup") {
     for (const id of preparationIds) {
       const check = state.preparation[id];
@@ -206,7 +215,7 @@ export function refreshProgress(state: OnboardingProgress): OnboardingProgress {
   const result = readiness(next);
   if (!result.ready) {
     next.steps.readiness = emptyCheck();
-    if (next.phase !== "notStarted") next.phase = next.pendingQuestions.length ? "waitingForUser" : "inProgress";
+    if (next.phase !== "notStarted") next.phase = next.pendingQuestions.length || next.conversation?.activeQuestionId ? "waitingForUser" : "inProgress";
   } else if (next.steps.readiness.status === "complete" && evidenced(next.steps.readiness)) next.phase = "complete";
   else next.phase = "inProgress";
   return next;

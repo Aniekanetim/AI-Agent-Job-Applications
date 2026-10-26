@@ -136,6 +136,7 @@ blocked/skipped mapping boundary with evidence, reason and next action. Never pa
         board.deferred = { reason, sourceReference, recordedAt: now };
       } else board.deferred = null;
     } else if (command === "finish") {
+      if (state.conversation?.mode === "paused" || state.conversation?.activeQuestionId || readPrivateJson(root, ".local/onboarding-pending-response.json").data !== null) throw new Error("Resume onboarding, recover any staged answer and resolve or explicitly defer its active question before finishing.");
       // An explicit new handoff replaces the old one after required preparation is checked.
       state.steps.readiness = emptyCheck();
       const result = inspectReadiness(root, state);

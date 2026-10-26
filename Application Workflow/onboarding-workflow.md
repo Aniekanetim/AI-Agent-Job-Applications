@@ -6,7 +6,7 @@ It needs a writable private working copy and an agent that can read the supplied
 
 ## 1. Agree the scope and show the roadmap
 
-Read existing context before asking anything. Establish `profileSetup`, `manualApplications`, `emailApplications` or `bothApplications`. Use supplied instructions when they already settle this choice. For application mode, ask which one to three primary boards the user wants prepared: one required, a second and third optional. Accept a custom website/URL and create its matching blank access/site structure when necessary. Do not turn the example folders into implicit selections. Primary boards define initial preparation, not a permanent restriction on future assignments.
+Follow [focused conversation](../automation/onboarding/focused-conversation.md) throughout this workflow. Read existing context before asking anything. Reuse answers already supplied. If scope is missing, ask that decision first; select primary boards and default browser in separate focused substeps afterward. Show a short initial roadmap, then adapt it to the chosen scope without repeating the introduction. Establish `profileSetup`, `manualApplications`, `emailApplications` or `bothApplications`. Use supplied instructions when they already settle this choice. For application mode, ask which one to three primary boards the user wants prepared: one required, a second and third optional. Accept a custom website/URL and create its matching blank access/site structure when necessary. Do not turn the example folders into implicit selections. Primary boards define initial preparation, not a permanent restriction on future assignments.
 
 Before installation, CV collection or login, explain the relevant steps and display progress:
 
@@ -77,7 +77,7 @@ Keep the original immutable. Check the selected boards' observed accepted format
 
 ## 4. Ask relevant follow-up questions
 
-Ask one to three concise questions per message. Use the groups below in order, skipping supplied information and irrelevant branches. Do not compress a large questionnaire into one question. Save each answer before moving to the next group. Explain why an unusual or ambiguous answer is needed.
+Ask one focused question per turn, using the groups below as an ordering guide rather than a questionnaire to display. Keep one active decision across candidate, browser, email and scheduling subflows. Closely related units needed to express one value can stay together; independent decisions need separate turns. Process the whole reply first: save all clear volunteered answers and explicit corrections, including later stages, before selecting the next missing question. Save and verify canonical fields before marking their questions answered. Use a focused clarification for ambiguous data; do not guess or repeat the whole group. Explain why an unusual fact is needed.
 
 | Group | Missing details to ask about | Save answers in the selected role's private file |
 | --- | --- | --- |
@@ -111,15 +111,11 @@ Offer an optional folder/label/filter and ask how to handle fully completed aler
 
 Show email subprogress during interactive setup and after material changes: provider discovery, provider choice, authentication, account selection, preferences and access verification. Save the current stage and next action in `.local/email-onboarding.json`; candidate answers and mailbox identity keep their existing canonical locations. A selected mailbox is not proof that authentication or capabilities remain valid. If email is deferred, keep email/both-source readiness unfinished. Record a manual-only scope only when the person chooses that change. Later sessions resume the checkpoint without repeating unchanged questions.
 
-For example, after extracting a QA CV whose preferences and screening answers are missing, ask:
+For example, after extracting a QA CV, ask only the next missing decision:
 
-> Which locations and working arrangements should I consider for QA roles?
->
-> Do you have a salary requirement? If so, include the currency and pay period; otherwise I can leave it unspecified.
->
-> In those target countries, where are you authorized to work, and where would you need sponsorship?
+> Which work arrangement should I target for QA roles: remote, hybrid or onsite?
 
-Follow the actual answer: an unspecified salary remains unspecified; a supplied salary may need a gross/net clarification. Ask notice period in the next batch if still missing. Do not infer No from an unanswered question. Do not collect sensitive optional demographic answers during general onboarding. Ask about a required declaration only when its actual wording is known.
+Save the reply, then ask the next missing preference. If the user also volunteers salary, employment type and notice period, save all of them and skip those questions later. If the salary lacks currency, ask only the needed clarification. An unspecified salary stays unspecified. Ask country-specific work authorization separately when relevant; geography or a remote-work preference is not legal authorization. Do not infer No from an unanswered question or collect sensitive optional demographics during general setup.
 
 If a user says an answer applies to all selected roles, write it to each affected role with the same user-response source reference. Otherwise keep it scoped to the selected role. Do not force the user to repeat a fact already supplied for the relevant scope.
 
@@ -133,7 +129,7 @@ The agent performs these writes; asking the user to open a context file is not t
 2. Before writing, verify the destination is inside the intended working copy, ignored by Git and not already tracked. Use adjacent `*.local.md` files; keep public templates blank. Never put passwords, API keys, session cookies or recovery codes in candidate files. Ask for an authorized sign-in action or secure-store reference when access is needed.
 3. Keep source references and the actual update date with facts. A CV-derived value cites the document version/hash; a conversational answer cites the user response/date. A later explicit correction supersedes only the affected value. Resolve a material conflict explicitly rather than silently replacing an existing answer with a new CV extraction.
 4. Coordinate one writer per selected role. Save each changed file atomically using a same-directory ignored `*.local.md` temporary file and replacement. Re-read the current revision before replacement; if another writer changed it, merge only the intended answer. Never overwrite unrelated profile information or tickets.
-5. Read the saved fields back and validate document paths/hashes and relevant routing entries. Then resolve the pending question in onboarding state. If interrupted before the state update, recover from the canonical saved answer before asking again.
+5. Read the saved fields back and validate document paths/hashes and relevant routing entries. Use the [shared conversation helpers](../automation/onboarding/focused-conversation.md#shared-checkpoint-and-agent-commands) to commit private Markdown proposals or reference settings saved by their existing semantic utilities. Preserve each role binding. Resolve questions only after durable canonical saves; a failed response stays recoverable in private staging. Recover before asking the user to repeat an answer. Candidate values never belong in progress metadata.
 6. Enable only a user-selected role with a readable designated CV and usable identity/contact context. A profile can be available while some preferences are deliberately unspecified; this does not invent instructions or satisfy a future mandatory field. Keep unsupported or unselected example roles disabled.
 
 For file-copy operations, preserve existing documents and never overwrite a different file with the same name. A secure external CV path is acceptable; a copied private document must retain identical bytes. Record format limitations when a later portal requires a different upload format.
@@ -189,6 +185,7 @@ Copy [the empty example](../automation/onboarding/onboarding-state.example.json)
 | `emailConnection` | Selected provider/account/scope, actual list/read access and the user's supported cleanup mode; separate scheduled verification when recurring |
 | `selectedRoles` | Role ID and profile path for each role actually selected by the user |
 | `currentRoleId` | Role being configured, or `null` |
+| `conversation` | Version-1 focused checkpoint: one active question, brief stage/substep, pause state, clarification/presentation history and saved-answer references; no answer values |
 | `pendingQuestions` | Stable question ID, role ID, group, canonical context path/field, actual question, source revision checked and time asked; no answer copy |
 | `deferredQuestions` | Question ID, role ID, canonical context path/field and condition that makes it relevant again; no answer copy |
 | `contextRevisions` | Relative private context paths and content hashes last checked |
@@ -196,7 +193,7 @@ Copy [the empty example](../automation/onboarding/onboarding-state.example.json)
 
 The agent checks canonical content before trusting progress metadata. A stale or absent progress file never authorizes resetting a profile, inferring an answer or repeating an application.
 
-Schema-1 and schema-2 upgrades preserve supplied profiles, questions, evidence and checkpoints. Newly required preparation starts pending. Reuse applicable evidence after inspection; do not infer a browser or scheduling choice, overwrite credentials, clear deferrals or restart the questionnaire. Report incomplete tool verification as a specific remaining step while preserving usable preparation elsewhere.
+Schema-1 and schema-2 upgrades preserve supplied profiles, questions, evidence and checkpoints. Older schema-3 files receive a version-1 conversation checkpoint without resetting valid completion or readiness evidence. Preserve legacy question objects and map their existing IDs rather than discarding or re-asking them. Newly required preparation starts pending. Reuse applicable evidence after inspection; do not infer a browser or scheduling choice, overwrite credentials, clear deferrals or restart the questionnaire. Report incomplete tool verification as a specific remaining step while preserving usable preparation elsewhere.
 
 For existing email setups, [migration](../automation/email/README.md#existing-setup-and-relocation) retains the actual AgentMail selection, existing deletion instruction and task history. Header-only evidence may reopen the affected email check for full content/capability verification; it must not restart the profile questionnaire. Record a scoped handoff naming the actual selected provider/account, alert scope, cleanup effect, check-in interval and any remaining access dependency. Preserve unread and read messages alike until their own progress establishes completion.
 

@@ -2,7 +2,7 @@
 
 This page configures AgentMail only. Begin with [shared email onboarding](../README.md#onboarding-and-account-selection); a suitable existing Gmail, Outlook or other harness connection needs no AgentMail setup.
 
-AgentMail onboarding checks existing access before requesting setup details. Reuse a suitable configured integration; ask for an API key only when no usable connection exists. The agent handles inbox IDs and discovery. Manual tasks and candidate-profile setup need no email account.
+AgentMail follows the shared [focused conversation checkpoint](../../onboarding/focused-conversation.md); inbox choice is one decision, and secure key entry is a separate access step only when needed. Reuse answers volunteered earlier. AgentMail onboarding checks existing access before requesting setup details. Reuse a suitable configured integration; ask for an API key only when no usable connection exists. The agent handles inbox IDs and discovery. Manual tasks and candidate-profile setup need no email account.
 
 ## 1. Detect existing access first
 

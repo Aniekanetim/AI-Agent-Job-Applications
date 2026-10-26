@@ -2,7 +2,7 @@
 
 The repository is a reusable package. It starts with no connected inbox, enabled candidate profile, complete executable application flow, live ticket or schedule. A limited public form/CAPTCHA observation is included as a site-knowledge example. An AI agent with file and browser access performs the work; email mode also needs authorized inbox access. Installing Node dependencies alone does not start an agent.
 
-To begin, tell your agent: “Set this up with my CV. Ask for the missing details and save my answers.” It follows [candidate onboarding](Application%20Workflow/onboarding-workflow.md). The steps below explain what the agent sets up; you do not need to populate the context files manually.
+To begin, tell your agent: “Set this up with my CV. Ask for the missing details and save my answers.” It follows [candidate onboarding](Application%20Workflow/onboarding-workflow.md) and [one focused decision at a time](automation/onboarding/focused-conversation.md). You can provide extra answers in any reply; the agent saves them and asks only what remains unclear or missing. Pause, resume and corrections preserve your checkpoint. The steps below explain what the agent sets up; you do not need to populate the context files manually.
 
 ## 1. Create your private working copy
 

@@ -4,9 +4,11 @@ A portable, autonomous job-application workflow. Job-alert emails and manual tic
 
 An alert may contain several jobs. The agent [accounts for every posting](automation/email/alert-completion.md), saves each outcome and keeps the email while any job is unresolved. Verified completion permits only the selected email-handling action. The same protected store guards progress updates and cleanup attempts, so an ordinary save cannot erase pending recovery.
 
+Onboarding uses [one focused question at a time](automation/onboarding/focused-conversation.md), automatically saving any additional answers you volunteer. You can pause, resume or correct an answer; the agent keeps your existing progress.
+
 A CAPTCHA pauses the existing application in **Blocked** for [human completion](automation/browser/captcha-handoff.md). If you are away, the agent saves the checkpoint, reports the blocker once and continues other eligible work. When you return, it verifies the same application and resumes; browser sessions and drafts may need recovery. It does not solve CAPTCHAs automatically.
 
-**Version:** 1.13.0 — 26 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Job-board maps start as unlearned templates. The Tezza example records a limited public form/CAPTCHA boundary; no complete employer integration is claimed.
+**Version:** 1.14.0 — 26 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Job-board maps start as unlearned templates. The Tezza example records a limited public form/CAPTCHA boundary; no complete employer integration is claimed.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
@@ -14,7 +16,7 @@ A CAPTCHA pauses the existing application in **Blocked** for [human completion](
 
 1. Give a file- and browser-capable agent the adoption prompt below. It opens or creates a private working copy and shows the onboarding roadmap before starting.
 2. Choose profile setup, manual applications, email-alert applications or both sources. For application setup, choose one to three primary job boards: one required and two optional. Another website can still be used later for an assigned task.
-3. Choose automatic, in-app or Playwright browser use. The agent respects that default and prepares Playwright for applications requiring file upload. It imports each selected role's PDF, DOCX or TXT CV, saves its unchanged original and asks short follow-up questions. It saves answers privately; you do not need to edit Markdown.
+3. Choose automatic, in-app or Playwright browser use. The agent respects that default and prepares Playwright for applications requiring file upload. It imports each selected role's PDF, DOCX or TXT CV, saves its unchanged original and asks one focused follow-up at a time, saving extra details you volunteer without asking you to repeat them. It saves answers privately; you do not need to edit Markdown.
 4. It connects the selected websites and asks you to **Connect your email** when email intake is selected. [Email setup](automation/email/README.md) shows **Google — Gmail / Google Workspace** first, followed by available Outlook and other discovered services, optional AgentMail and **Set up email later**. It reuses existing connections or guides sign-in, then lets you choose the account. A manual task needs no alert inbox. Website passwords stay in the board's private configuration.
 5. It maps the selected boards' vacancy and application routes, records shared journey knowledge and observed methods for the selected browser and upload fallback and identifies unvisited branches. Progress is visible per step and per board. It submits no practice application.
 6. A final [readiness check](automation/onboarding/README.md) covers actual browser capabilities, upload-ready CVs, application-email verification access and operating preferences. Choose how often to check for work—such as hourly, daily or a custom supported interval—or use on-demand checks; the agent reports what is ready and how to start.
@@ -32,8 +34,12 @@ upload without changing that default. Prepare the selected tools using
 automation/browser/README.md before account connection and discovery. Ask for my CV
 for each selected role (PDF, DOCX or TXT) unless already supplied. Save and hash
 its unchanged original in that role's private Documents folder, check extraction,
-reuse existing profile answers, and ask only relevant missing questions in
-small batches and save my replies into the private candidate files automatically.
+reuse existing profile answers, and follow automation/onboarding/focused-conversation.md.
+Ask one focused missing decision per turn. Save every clear additional answer I
+volunteer, including later stages, before asking the next question. Keep one active
+question across subflows; preserve clarification history and recover interrupted
+saves. Show brief stage/substep progress, respect pause/resume and optional
+deferrals, and save my replies into private candidate files automatically.
 Resume unfinished onboarding without repeating unchanged questions. Include initial
 site mapping for selected boards and encountered destinations, with Markdown and
 tool-specific observed methods. Establish application-email verification access

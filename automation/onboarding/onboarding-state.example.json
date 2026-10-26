@@ -117,5 +117,15 @@
       "reason": null
     }
   },
-  "updatedAt": null
+  "updatedAt": null,
+  "conversation": {
+    "schemaVersion": 1,
+    "mode": "active",
+    "activeQuestionId": null,
+    "roadmapShown": false,
+    "questions": [],
+    "answers": [],
+    "responses": [],
+    "pauseReference": null
+  }
 }

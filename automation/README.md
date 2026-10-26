@@ -53,7 +53,7 @@ automation/
 - **browser** resolves the pinned local CLI, prepares missing browser revisions and verifies an isolated local interaction. It has no candidate/account dependency.
 - **email** contains shared selection, classification, progress, cleanup and migration under [the email guide](email/README.md). **host-connectors** binds tools actually exposed by the agent environment; **agentmail** retains its provider-specific client/setup.
 - **workflow** contains shared application-state types and integrity checks for task movement, confirmation and message completion. These checks do not establish whether external evidence is true; the agent must inspect it.
-- **onboarding** contains schema-3 progress, migration, readiness and agent CLI utilities. The [onboarding workflow](../Application%20Workflow/onboarding-workflow.md) directs the conversation, one-to-three primary-board selection and initial mapping. Candidate answers stay in private role files.
+- **onboarding** contains schema-3 progress, a version-1 [focused conversation checkpoint](onboarding/focused-conversation.md), migration, response recovery, readiness and agent CLI utilities. The [onboarding workflow](../Application%20Workflow/onboarding-workflow.md) directs the conversation, one-to-three primary-board selection and initial mapping. Candidate answers stay in private role files.
 - **scheduling** contains the prompt an existing scheduler uses to start a check-in. It contains no independent scheduler service.
 - **tests** contains offline checks using synthetic data and mocked HTTP. They neither log in to websites nor submit applications.
 

@@ -8,6 +8,7 @@ import { loadBrowserPreferences } from "../browser/preferences-store.js";
 import { validateCapabilityReport, capabilityIssues } from "../browser/capabilities.js";
 import { validateOperatingPreferences } from "../scheduling/preferences.js";
 import { inspectEmailReadiness } from "../email/state-store.js";
+import { withWriteOwnership } from "../workflow/ownership.js";
 
 export function digest(value: string | Buffer) { return createHash("sha256").update(value).digest("hex"); }
 function contained(root: string, path: string): string {
@@ -31,11 +32,14 @@ export function loadProgress(root: string, now = new Date().toISOString()) {
   let data;
   try { data = JSON.parse(bytes.toString("utf8")); }
   catch { throw new Error("Onboarding progress is unreadable. Preserve the file and investigate; candidate records remain authoritative."); }
-  return { state: migrateProgress(data, now), revision: digest(bytes), migrated: data.schemaVersion !== 3 };
+  return { state: migrateProgress(data, now), revision: digest(bytes), migrated: data.schemaVersion !== 3 || data.conversation === undefined };
 }
 
 /** Atomic, revision-checked saves; no state or credentials may be published through this helper. */
 export function saveProgress(root: string, state: OnboardingProgress, expectedRevision: string | null): boolean {
+  return withWriteOwnership(root, ".local/onboarding-state.json", () => saveProgressLocked(root, state, expectedRevision));
+}
+function saveProgressLocked(root: string, state: OnboardingProgress, expectedRevision: string | null): boolean {
   validateProgress(state);
   const folder = resolve(root, ".local");
   mkdirSync(folder, { recursive: true });
@@ -63,6 +67,11 @@ export function saveProgress(root: string, state: OnboardingProgress, expectedRe
 export function inspectReadiness(root: string, source: OnboardingProgress) {
   const state = refreshProgress(source);
   const invalidEvidence: string[] = [];
+  if (existsSync(contained(root, ".local/onboarding-pending-response.json"))) {
+    invalidEvidence.push("Recover or reconcile the retained response before completing onboarding; do not ask for the answers again.");
+    state.steps.readiness.status = "inProgress";
+    state.steps.readiness.nextAction = "Recover the existing staged response.";
+  }
   const checks: [string, ProgressCheck][] = [
     ["candidateProfiles", state.steps.candidateProfiles], ["applicationInstructions", state.steps.applicationInstructions],
   ];

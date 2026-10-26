@@ -1,5 +1,7 @@
 # On-demand or recurring operation
 
+During onboarding follow [one focused decision at a time](../onboarding/focused-conversation.md); interval, missing timezone, optional limits and reporting are separate substeps. Reuse volunteered answers. A paused interview or unchanged unanswered question stays quiet and does not itself disable existing authorized work or schedules.
+
 During application onboarding, explicitly ask how often to check the task board: every 30 minutes, every hour, daily, a custom supported interval, or only when asked. Reuse an existing user choice. One recurring check-in checks both enabled intake sources—the selected alert inbox and manual To Do tasks—and resumes eligible Blocked work. This is not an email-only polling schedule.
 
 Save the selected interval in `cadence` and the named timezone in `timezone`; use the phrase “task-board check-in interval” in the conversation and handoff. If the native scheduler cannot support the requested interval, explain the limitation and let the user choose an available alternative. Do not silently replace the interval or activate separate competing workers.

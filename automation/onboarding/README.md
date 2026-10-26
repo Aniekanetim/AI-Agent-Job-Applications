@@ -1,10 +1,10 @@
 # Onboarding progress and readiness
 
-The agent follows [the onboarding workflow](../../Application%20Workflow/onboarding-workflow.md), shows its roadmap before setup and updates the user after meaningful progress. These helpers preserve its checkpoint and check completion. They are not a separate application, scheduler or approval system.
+The agent follows [the onboarding workflow](../../Application%20Workflow/onboarding-workflow.md), shows its roadmap before setup and updates the user after meaningful progress. The [focused conversation layer](focused-conversation.md) asks one missing decision at a time while saving all clear additional answers. These helpers preserve its checkpoint and check completion. They are not a separate application, scheduler or approval system.
 
 ## Working state
 
-Use ignored `.local/onboarding-state.json`. The [empty example](onboarding-state.example.json) is public and contains no configured candidate, account or completed check. Schema 3 records scope, selected board paths, steps, per-board access/mapping checks, question references and evidence hashes. Candidate answers remain solely in the role's private files; credentials never belong in progress.
+Use ignored `.local/onboarding-state.json`. The [empty example](onboarding-state.example.json) is public and contains no configured candidate, account or completed check. Schema 3 records scope, selected board paths, steps, per-board access/mapping checks, question references and evidence hashes. Candidate answers remain solely in the role's private files; credentials never belong in progress. A version-1 `conversation` extension records one active question, clarification history, pause state and saved-answer references. Its addition preserves existing schema-3 completion; it does not introduce a new readiness requirement.
 
 | Status | Meaning |
 | --- | --- |
@@ -35,6 +35,12 @@ The names are examples, not enabled profiles or observed mappings. Record candid
 
 Use `record --status inProgress --next-action TEXT`, `--status blocked --reason TEXT --next-action TEXT`, or `--status skipped --reason TEXT --reference PATH` for agent-managed checkpoints, concrete dependencies and evidenced observation boundaries. The same step/board selectors apply. Completion still requires actual evidence. For structured updates to role/question references, use `progress.ts` and `state-store.ts`: load, update only the affected check's status/evidence/next action, refresh the derived progress and save using the loaded revision. Do not clear pending questions to make the counter green; save the answer or a legitimate optional deferral in its canonical context first.
 
+## Focused interaction
+
+Use `npm run onboarding:conversation -- status` for the brief stage/substep view. Follow [the conversation procedure](focused-conversation.md) for question metadata, presentation references, response bundles, clarification, pause/resume, optional deferral and interrupted-save recovery. One actual reply can update many fields; unanswered or ambiguous fields remain pending. A saved setting does not verify access or perform an external account operation. Existing semantic utilities remain authoritative for browser/email/operating choices.
+
+Supported progress writes are serialized and revision checked. A retained `.local/onboarding-pending-response.json` prevents another question or completion until recovery. Its proposed values are temporary private working data; successful processing keeps only canonical answer/source references in progress. Do not pass answers or secrets in command arguments.
+
 ## Mapping completion
 
 Each selected board has `access` plus five mapping checks:
@@ -63,7 +69,7 @@ This records a handoff, not a job submission or schedule activation. The overall
 
 ## Existing setup and relocation
 
-`npm run onboarding:migrate` converts schema 1 or 2 while preserving selected roles, pending/deferred questions, context revisions and extra checkpoint metadata. An earlier `complete` phase becomes `inProgress`: the new browser-choice, upload, verification and operating checks were not established by that completion. Read the saved context and previous observations, verify their applicable content and record the relevant checks instead of repeating the questionnaire. Select primary boards from already supplied instructions; ask only if that choice is missing or ambiguous. Reconcile the scope with existing intake instructions, including both intake sources when already selected.
+`npm run onboarding:migrate` also adds the version-1 conversation checkpoint to older schema-3 files without resetting their questions, evidence or completion. It converts schema 1 or 2 while preserving selected roles, pending/deferred questions, context revisions and extra checkpoint metadata. An earlier `complete` phase becomes `inProgress`: the new browser-choice, upload, verification and operating checks were not established by that completion. Read the saved context and previous observations, verify their applicable content and record the relevant checks instead of repeating the questionnaire. Select primary boards from already supplied instructions; ask only if that choice is missing or ambiguous. Reconcile the scope with existing intake instructions, including both intake sources when already selected.
 
 Do not create a fake application ticket for an onboarding dependency. Save it here until a real assignment exists. A private state transferred to another machine is a checkpoint, not proof that tools or access work there. Recheck the local runtime, paths and account conditions. Keep actual progress/evidence private; public docs describe operation, not individual users' verification history.
 

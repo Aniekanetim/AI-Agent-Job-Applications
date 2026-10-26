@@ -1,11 +1,12 @@
 # Job-application shared progress
 
-**Package:** 1.13.0. **Date:** 26 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
+**Package:** 1.14.0. **Date:** 26 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
 
 | Item | Current template state |
 | --- | --- |
 | Candidate / enabled roles | Not supplied; example role folders are disabled |
 | Onboarding | Not started; scope, visible roadmap, per-board progress and final readiness follow [onboarding](Application%20Workflow/onboarding-workflow.md) |
+| Onboarding conversation | One focused question per turn; extra answers saved; version-1 conversation checkpoint within progress schema 3; no actual conversation started |
 | Email source / access | Not selected; [Connect your email](automation/email/README.md) discovers providers, shows Google first and accepts the account choice; AgentMail and email deferral are optional |
 | Completed-alert handling | Not chosen; supported delete, archive, label or retain mode is selected during onboarding |
 | Platform accounts | Not supplied; no live access performed |
