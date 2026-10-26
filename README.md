@@ -4,11 +4,11 @@ A portable, autonomous job-application workflow. Job-alert emails and manual tic
 
 An alert may contain several jobs. The agent [accounts for every posting](automation/email/alert-completion.md), saves each outcome and keeps the email while any job is unresolved. Verified completion permits only the selected email-handling action. The same protected store guards progress updates and cleanup attempts, so an ordinary save cannot erase pending recovery.
 
-Onboarding uses [one focused question at a time](automation/onboarding/focused-conversation.md), automatically saving any additional answers you volunteer. Say “Continue onboarding” after an interruption, or “Change my settings” at any time. The agent [continues the saved step or updates the requested setting](automation/onboarding/settings.md), preserving the rest of your setup. Playwright opens a visible browser by default so you can watch it work.
+Onboarding uses [one focused question at a time](automation/onboarding/focused-conversation.md), automatically saving any additional answers you volunteer. Say “Continue onboarding” after an interruption, or **“Open settings”** at any time to use the [interactive settings menu](automation/settings/README.md). Select an area, view the current value and change it through one focused question. Specific requests such as “Change my minimum salary” also work directly. The agent [continues the saved step or updates the requested setting](automation/onboarding/settings.md), preserving the rest of your setup. Playwright opens a visible browser by default so you can watch it work.
 
 A CAPTCHA pauses the existing application in **Blocked** for [human completion](automation/browser/captcha-handoff.md). If you are away, the agent saves the checkpoint, reports the blocker once and continues other eligible work. When you return, it verifies the same application and resumes; browser sessions and drafts may need recovery. It does not solve CAPTCHAs automatically.
 
-**Version:** 1.15.0 — 26 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Job-board maps start as unlearned templates. The Tezza example records a limited public form/CAPTCHA boundary; no complete employer integration is claimed.
+**Version:** 1.16.0 — 26 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Job-board maps start as unlearned templates. The Tezza example records a limited public form/CAPTCHA boundary; no complete employer integration is claimed.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
@@ -43,7 +43,11 @@ deferrals, and save my replies into private candidate files automatically.
 On an explicit request to continue onboarding, use onboarding:resume with the actual
 request reference and act on its returned question or preparation checkpoint.
 Otherwise keep unchanged scheduled questions quiet. Support later settings changes
-under automation/onboarding/settings.md, preserving unrelated setup. Use visible
+under automation/onboarding/settings.md, preserving unrelated setup. An actual
+“Open settings” request runs the menu in automation/settings/README.md. Present its
+returned options through native harness choices or a numbered conversational menu;
+do not stop after printing CLI output. Reuse canonical settings and the existing
+save helpers, and retain the menu checkpoint across interruption. Use visible
 headed Playwright by default; headless requires an explicit choice. Include initial
 site mapping for selected boards and encountered destinations, with Markdown and
 tool-specific observed methods. Establish application-email verification access

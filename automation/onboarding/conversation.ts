@@ -9,6 +9,7 @@ import { refreshProgress, stepIds, stepLabels, emptyCheck, type OnboardingProgre
 import { emptyConversation, validateDecision, sameDecision, supplied, validTime,
   type Decision, type FocusedQuestion, type ConversationState } from "./conversation-types.js";
 import { workCheckpoint, type WorkCheckpoint } from "./continuation.js";
+import { loadMenu } from "../settings/state.js";
 
 const journal = ".local/onboarding-pending-response.json";
 const globalTargets = new Set(["Job Context/Candidate/role-routing.local.md", ".local/browser-preferences.json", ".local/browser/visibility.json",
@@ -74,7 +75,7 @@ export function queueQuestions(root: string, questions: Omit<FocusedQuestion, "s
   });
 }
 
-export type NextQuestion = WorkCheckpoint | { action: "paused" | "wait" | "verifyPresentation" | "recoverResponse" } |
+export type NextQuestion = WorkCheckpoint | { action: "paused" | "wait" | "verifyPresentation" | "recoverResponse" | "settings" } |
   { action: "present" | "repeatOnRequest"; question: FocusedQuestion };
 export function nextQuestion(root: string, requestedRepeat = false): { state: OnboardingProgress; next: NextQuestion } {
   let next: NextQuestion = { action: "wait" };
@@ -82,6 +83,7 @@ export function nextQuestion(root: string, requestedRepeat = false): { state: On
     const c = state.conversation!;
     if (c.mode === "paused") { next = { action: "paused" }; return; }
     if (readPrivateJson(root, journal).data !== null) { next = { action: "recoverResponse" }; return; }
+    if (loadMenu(root).state.phase !== "closed") { next = { action: "settings" }; return; }
     let q = c.questions.find(q => q.id === c.activeQuestionId);
     if (!q) {
       q = c.questions.find(q => q.status === "pending");

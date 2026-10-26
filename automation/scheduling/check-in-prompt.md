@@ -119,3 +119,5 @@ Update shared progress only for material changes. With no actionable or changed
 work, leave files unchanged. Apply saved operating limits and reporting mode. Report meaningful confirmed
 applications, new blockers or required actions; do not invent execution or create empty-run updates.
 ~~~
+
+While an interactive settings menu is open, preserve its checkpoint and leave its unchanged question quiet. Do not open or answer it on the user's behalf. Its saved settings still use the existing eligibility, active-task and pending-cleanup rules.

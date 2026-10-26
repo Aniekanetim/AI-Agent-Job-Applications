@@ -1,6 +1,6 @@
 # Job-application shared progress
 
-**Package:** 1.15.0. **Date:** 26 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
+**Package:** 1.16.0. **Date:** 26 October 2026. **State:** unconfigured template. Record real setup and progress in ignored `unified_project_context.local.md`; use it instead of this file when present.
 
 | Item | Current template state |
 | --- | --- |
@@ -20,6 +20,7 @@
 | CAPTCHA assistance | [Human handoff](automation/browser/captcha-handoff.md), unattended Blocked waiting and same-application recovery; no automatic solving |
 | Active / Blocked / Applied tickets | None |
 | Schedule / cadence / timezone | Not configured for this project |
+| Settings menu | Say Open settings; native choices or numbered conversation under [interactive settings](automation/settings/README.md); no actual user menu opened in this template |
 | Operational next action | Begin agent-led onboarding in a private working copy using SETUP.md |
 
 For an active copy, keep a concise checkpoint: claim/ticket, folder, source-message association, selected profile/CV versions, current site/destination, next action and linked blocker. Facts stay in the selected role profile; detailed application history stays on the task. Inbox enumeration and cleanup stay in the compact private message map. Do not duplicate them here.

@@ -205,3 +205,5 @@ When mapping reveals a CAPTCHA, explain [the handoff](../automation/browser/capt
 ## Return to setup or change a setting
 
 Follow [settings and resumption](../automation/onboarding/settings.md) when the user asks to continue or change an earlier choice. Explicit continuation acts on the saved question or next preparation action without restarting. Reuse saved extra answers. Settings remain editable after completion, with only affected readiness reopened. Playwright preparation and normal execution use a visible browser by default. Save a specific next action before an interrupted agent-owned step so another session can continue it.
+
+The explicit **Open settings** entry follows [the interactive menu](../automation/settings/README.md). It is available before or after completion, reads the same private context and preserves this workflow's checkpoint. A specific edit request still goes directly to the relevant setting.

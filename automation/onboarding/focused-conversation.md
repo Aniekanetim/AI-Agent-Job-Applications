@@ -67,3 +67,7 @@ Pausing onboarding neither disables an existing schedule nor cancels unrelated a
 Completion still requires actual readiness and a scoped handoff. A staged/failed response, unresolved required question or paused/active interview cannot be waved away with a green counter. This conversation improvement adds no application approval gates and performs no live applications, inbox mutations or schedule activation.
 
 The staged structure and visible progress adapt [W3C multi-page form guidance](https://www.w3.org/WAI/tutorials/forms/multi-page/) to conversation; one focused question per turn is this workflow's interaction rule.
+
+## Settings focus
+
+Follow [the interactive settings procedure](../settings/README.md) for **Open settings**. Present its native choices or numbered chat menu, keeping one interactive focus. The menu does not replace onboarding's pending question or pause state. A menu save uses the same response bundles and can record clear additional answers; closing it preserves the earlier onboarding checkpoint. Use ordinary settings navigation for its clarification/current-value display rather than opening a second onboarding interview.

@@ -23,3 +23,5 @@ For a blocker, reply with the missing answer or provide the requested access act
 Browser selection and operating choices are recorded privately during onboarding, not inferred from installed tools. Role profiles retain their own facts, answers, document versions and verification-email access references. The alert-inbox configuration is separate. The agent asks one focused missing decision, saves all clear additional answers in a reply and preserves pause/resume through [the shared conversation checkpoint](../automation/onboarding/focused-conversation.md); users do not need to fill these templates manually.
 
 To change a profile, preference, account or operating choice, tell the agent what to change. It follows [settings changes](../automation/onboarding/settings.md), preserves unrelated context and rechecks only affected preparation. Direct file editing is optional.
+
+Say **Open settings** for an [interactive menu](../automation/settings/README.md) of the current configuration. Choose the relevant role before a profile-specific edit. The menu reads these same private files and does not create duplicate candidate context.

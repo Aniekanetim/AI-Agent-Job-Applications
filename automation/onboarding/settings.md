@@ -2,7 +2,7 @@
 
 You can change setup choices later by telling your agent what to change. For example: “Use the in-app browser”, “Replace my QA CV”, “Check daily instead of hourly” or “Change my minimum salary”. You do not need to edit files or repeat onboarding.
 
-If you say only “Change my settings”, the agent offers the areas below and asks which one you want to change. If you supplied the new value already, it saves that value without asking again.
+Say **“Open settings”** for the [interactive menu](../settings/README.md). It offers six areas plus Close settings, shows the selected saved values and routes each edit through the procedures below. The bare request “Change my settings” opens the same menu. If you supplied the new value already, it saves that value without asking again.
 
 | Area | Working location | What the agent rechecks |
 | --- | --- | --- |
@@ -27,7 +27,7 @@ An existing recurring schedule must be changed or stopped through its actual sch
 Agent shortcuts:
 
 ```shell
-npm run onboarding:settings
+npm run settings -- open
 npm run onboarding:operation -- --reporting summary --source ACTUAL_CHANGE_REFERENCE
 npm run browser -- visibility --mode headed --source ACTUAL_CHANGE_REFERENCE
 ```
