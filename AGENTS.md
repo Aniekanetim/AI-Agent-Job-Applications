@@ -12,6 +12,12 @@ Before declaring onboarding complete, check actual tools, profiles/CVs, instruct
 
 The agent operates autonomously within configured candidate instructions without per-application review gates. Do not request repeated permission for profile selection, factual tailoring, discovery, submission or completed-alert handling already covered by those instructions. Missing facts, unclear instructions, inaccessible accounts and tool restrictions are dependencies, not routine approval stages. An unconfigured template is not authorization to impersonate a candidate or use an arbitrary inbox.
 
+## Settings and explicit continuation
+
+Support later settings changes under [settings and resumption](automation/onboarding/settings.md). Read the current value, save the requested correction and clear extra answers, preserve history and unrelated setup, then revalidate affected preparation. If a new value is missing, reopen only that decision with `revise` or queue a new field. Preserve active application identities and protected email recovery when changing context. Do not force a full reset.
+
+An explicit “continue onboarding” or equivalent calls `onboarding:resume -- --source ACTUAL_REQUEST_REFERENCE` and acts on its returned question or exact preparation checkpoint. Recover a retained response first. Continue agent-owned setup work and save its next action before yielding; do not stop with a generic status when useful authorized work remains. Normal scheduled `next` calls keep unchanged unanswered questions quiet. Completed onboarding is not restarted by a request to continue.
+
 ## Read only the needed context
 
 Use Candidate/role-routing.md under Job Context to identify enabled profiles. Read the selected profile's role-profile.md, experience, preferences, answers, instructions and document index. There is no Candidate/Shared folder or merged candidate baseline. Do not load other profiles' complete documents for every vacancy or mix their CVs/answers by default. Routing contains paths and selection rules, not duplicated biographies. Record the chosen profile, relevant file versions and exact CV version/hash per task.
@@ -61,6 +67,8 @@ Keep actual role values in ignored `*.local.md`, CVs in ignored document files, 
 On transfer, read current tickets and progress, recheck paths/CV versions/access and resume the checkpoint. A fresh clone does not include ignored personal data, account sessions, schedules or unpublished site knowledge. Do not import another candidate's facts, application records or tasks. No-op check-ins leave files unchanged. Record material progress, real blockers and actual submissions; distinguish offline package tests from live application outcomes.
 
 ## Browser preference, documents and verification readiness
+
+Launch Playwright headed by default through the bundled launcher. It applies a private effective config without overwriting original configuration or authentication references. Headless requires an actual user choice or explicit test override; never choose it silently for convenience or after a display failure. Verify the selected mode with the local rehearsal. Existing headless sessions need a safe checkpoint and draft/session recovery before a visible restart. Never interrupt an uncertain submission or close unrelated sessions. The visible window is on the machine running Playwright; a remote host needs an accessible desktop.
 
 Read `.local/browser-preferences.json` before application work. Do not infer a preference from installed tools. Respect the user's in-app default. Start known-upload applications in Playwright; for a newly discovered upload requirement, save the same task's checkpoint and follow [the handoff procedure](automation/browser/upload-fallback.md). Verify the same vacancy/draft and authorized Playwright session, preserve the original CV/context references and keep that application in Playwright afterward. The next task uses the saved default. Never switch or resubmit while a submission outcome is uncertain; a denial is a blocker, not fallback permission.
 

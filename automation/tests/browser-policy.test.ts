@@ -9,10 +9,11 @@ import { selectBrowser, emptyBrowserPreferences, resolveAutomaticBrowser, valida
 import { browserOperations, capabilityIssues, validateCapabilityReport, type BrowserCapabilityReport } from "../browser/capabilities.js";
 import { beginBrowserExecution, decideBrowser, saveUploadHandoff, resumeUploadHandoff } from "../browser/fallback.js";
 import { loadBrowserPreferences, saveBrowserPreferences } from "../browser/preferences-store.js";
-import { validateOperatingPreferences } from "../scheduling/preferences.js";
+import { validateOperatingPreferences, amendOperatingPreferences, type OperatingPreferences } from "../scheduling/preferences.js";
 import { createProgress, configureProgress, newBoard, emptyCheck, migrateProgress } from "../onboarding/progress.js";
 import { completedCheck, inspectReadiness, evidenceReference, loadProgress } from "../onboarding/state-store.js";
 import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
+import { resumeOnboarding } from "../onboarding/conversation.js";
 import type { ApplicationTask } from "../workflow/application-state.js";
 import { canMarkApplied } from "../workflow/application-state.js";
 
@@ -172,7 +173,7 @@ function preparedFixture(t: TestContext, backend: "inApp" | "playwright" = "play
   const pkg = { devDependencies: { "@playwright/cli": "synthetic-cli", playwright: "synthetic-library" } };
   save("package.json", pkg); save("node_modules/@playwright/cli/playwright-cli.js", "// Synthetic installed CLI marker, never executed.");
   save(".local/synthetic-browser.exe", "Synthetic executable marker, never executed.");
-  save(".local/browser-readiness.json", { ready: true, capabilities: { fileUpload: true },
+  save(".local/browser-readiness.json", { ready: true, visibility: "headed", capabilities: { fileUpload: true },
     fingerprint: { root, platform: process.platform, arch: process.arch, nodeMajor: Number(process.versions.node.split(".")[0]), cliVersion: "synthetic-cli", libraryVersion: "synthetic-library" },
     checks: ["cli", "library"].map(kind => ({ kind, installed: true, executablePath: join(root, ".local/synthetic-browser.exe") })) });
   state.steps.browserTools = completedCheck(root, [".local/browser-readiness.json"], now);
@@ -199,6 +200,52 @@ test("on-demand readiness accepts a verified default and upload fallback without
   const fixture = preparedFixture(t);
   assert.equal(inspectReadiness(fixture.root, fixture.state).ready, true);
   assert.equal(JSON.parse(readFileSync(join(fixture.root, ".local/operation-preferences.json"), "utf8")).scheduleReference, null);
+});
+
+test("old headless rehearsal evidence cannot establish visible-browser readiness", t => {
+  const { root, state, save } = preparedFixture(t);
+  const report = JSON.parse(readFileSync(join(root, ".local/browser-readiness.json"), "utf8"));
+  delete report.visibility; save(".local/browser-readiness.json", report);
+  state.steps.browserTools = completedCheck(root, [".local/browser-readiness.json"], now);
+  const checked = inspectReadiness(root, state);
+  assert.equal(checked.ready, false); assert.equal(checked.state.steps.browserTools.status, "inProgress");
+  assert.equal(checked.state.steps.candidateProfiles.status, "complete");
+  assert.deepEqual(checked.state.boards, state.boards);
+});
+
+test("continuing a verified completed setup does not restart its questions or preparation", t => {
+  const { root, state, actual } = preparedFixture(t);
+  state.steps.readiness = actual();
+  savePrivateJson(root, ".local/onboarding-state.json", inspectReadiness(root, state).state, null);
+  const before = readFileSync(join(root, ".local/onboarding-state.json"), "utf8");
+  assert.equal(resumeOnboarding(root, "synthetic-continue", now).next.action, "complete");
+  assert.equal(readFileSync(join(root, ".local/onboarding-state.json"), "utf8"), before);
+});
+
+test("operating amendments preserve unrelated choices and an existing schedule", () => {
+  const old: OperatingPreferences = { schemaVersion: 1, mode: "recurring", cadence: "hourly", timezone: "Africa/Lagos",
+    perRunLimit: 5, perDayLimit: 20, reporting: "summary", sourceReference: "synthetic-initial", scheduleReference: "synthetic-schedule" };
+  const changed = amendOperatingPreferences(old, { reporting: "blockersOnly" }, "synthetic-change");
+  assert.deepEqual(changed, { ...old, reporting: "blockersOnly", sourceReference: "synthetic-change" });
+  assert.equal(amendOperatingPreferences(old, { perRunLimit: null }, "synthetic-no-limit").perRunLimit, null);
+  assert.throws(() => amendOperatingPreferences(old, { cadence: "daily" }, "synthetic-change"), /scheduler/);
+  assert.throws(() => amendOperatingPreferences(old, { mode: "onDemand" }, "synthetic-change"), /scheduler/);
+  assert.equal(old.reporting, "summary"); assert.equal(old.perRunLimit, 5);
+});
+
+test("the operating CLI changes one field without clearing saved limits or interval", t => {
+  const { root, save } = preparedFixture(t);
+  cpSync(resolve(dirname(fileURLToPath(import.meta.url)), ".."), resolve(root, ".local/build/automation"), { recursive: true });
+  save("package.json", { type: "module", devDependencies: {} });
+  const old: OperatingPreferences = { schemaVersion: 1, mode: "recurring", cadence: "daily", timezone: "Africa/Lagos", perRunLimit: 3,
+    perDayLimit: 10, reporting: "summary", sourceReference: "synthetic-first", scheduleReference: "synthetic-schedule" };
+  save(".local/operation-preferences.json", old);
+  const run = (...args: string[]) => spawnSync(process.execPath, [join(root, ".local/build/automation/onboarding/cli.js"), "operation-choice", ...args], { cwd: root, encoding: "utf8", windowsHide: true });
+  const result = run("--reporting", "digest", "--source", "synthetic-change"); assert.equal(result.status, 0, result.stderr);
+  const read = () => JSON.parse(readFileSync(join(root, ".local/operation-preferences.json"), "utf8"));
+  assert.deepEqual(read(), { ...old, reporting: "digest", sourceReference: "synthetic-change" });
+  assert.equal(run("--cadence", "hourly", "--source", "synthetic-interval-change").status, 1);
+  assert.deepEqual(read(), { ...old, reporting: "digest", sourceReference: "synthetic-change" });
 });
 
 test("an in-app default accepts an unsupported upload only with its independent Playwright proof", t => {

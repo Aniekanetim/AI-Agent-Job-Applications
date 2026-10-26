@@ -101,6 +101,9 @@ export function inspectReadiness(root: string, source: OnboardingProgress) {
     try {
       const report = JSON.parse(readFileSync(contained(root, ".local/browser-readiness.json"), "utf8"));
       const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
+      const visibilityPath = contained(root, ".local/browser/visibility.json");
+      const visibility = existsSync(visibilityPath) ? JSON.parse(readFileSync(visibilityPath, "utf8")) : { schemaVersion: 1, mode: "headed", sourceReference: "package-default" };
+      if (visibility.schemaVersion !== 1 || !["headed", "headless"].includes(visibility.mode) || !visibility.sourceReference?.trim() || report.visibility !== visibility.mode) throw new Error();
       if (report.ready !== true || report.fingerprint?.root !== root || report.fingerprint.platform !== process.platform ||
         report.fingerprint.arch !== process.arch || report.fingerprint.nodeMajor !== Number(process.versions.node.split(".")[0]) ||
         report.fingerprint.cliVersion !== pkg.devDependencies["@playwright/cli"] || report.fingerprint.libraryVersion !== pkg.devDependencies.playwright ||
@@ -109,7 +112,7 @@ export function inspectReadiness(root: string, source: OnboardingProgress) {
         !Array.isArray(report.checks) || report.checks.length !== 2 ||
         report.checks.some((check: { installed?: boolean; executablePath?: string }) => !check.installed || !check.executablePath || !existsSync(check.executablePath))) throw new Error();
     } catch {
-      invalidEvidence.push("browserTools: verify the CLI in this working copy and runtime before marking it ready.");
+      invalidEvidence.push("browserTools: verify the CLI in this working copy, runtime and selected visibility mode before marking it ready.");
       state.steps.browserTools.status = "inProgress";
       state.steps.browserTools.nextAction = "Run the local browser setup/check and record its actual successful report.";
     }

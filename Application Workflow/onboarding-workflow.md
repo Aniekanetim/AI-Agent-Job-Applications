@@ -201,3 +201,7 @@ For existing email setups, [migration](../automation/email/README.md#existing-se
 ## Explain human CAPTCHA assistance
 
 When mapping reveals a CAPTCHA, explain [the handoff](../automation/browser/captcha-handoff.md): actual application tasks wait in Blocked when the user is away, with one recorded request and a resume checkpoint. Setup-only observations stay in onboarding/site context without a fake ticket. Record whether the selected browser can actually be presented for human interaction; headless or inaccessible sessions need a recovery action. Do not claim CAPTCHA-solving capability, indefinite session persistence or a delivered notification without evidence. This explanation reuses the user's existing reporting/browser choices and adds no routine approval gate.
+
+## Return to setup or change a setting
+
+Follow [settings and resumption](../automation/onboarding/settings.md) when the user asks to continue or change an earlier choice. Explicit continuation acts on the saved question or next preparation action without restarting. Reuse saved extra answers. Settings remain editable after completion, with only affected readiness reopened. Playwright preparation and normal execution use a visible browser by default. Save a specific next action before an interrupted agent-owned step so another session can continue it.

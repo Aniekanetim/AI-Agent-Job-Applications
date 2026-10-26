@@ -2,7 +2,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadProgress } from "./state-store.js";
 import { queueQuestions, nextQuestion, recordQuestionPresented, setConversationMode, deferQuestion, recordRoadmapShown,
-  applyResponse, readConversationInput, conversationSummary, clarifyQuestion, recoverUnshownQuestion, reconcileStagedResponse, type ResponseBundle } from "./conversation.js";
+  applyResponse, readConversationInput, conversationSummary, clarifyQuestion, recoverUnshownQuestion, reconcileStagedResponse, resumeOnboarding, reviseQuestion, type ResponseBundle } from "./conversation.js";
 import type { FocusedQuestion } from "./conversation-types.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
@@ -22,7 +22,9 @@ try {
   recover                        Finish the retained interrupted response before asking again
   reconcile --file FILE --source REF   Rebase an actual conflicting file while preserving the reply
   pause --source REF             Pause onboarding under the user's instruction
-  resume --source REF            Resume its existing checkpoint; does not start a schedule
+  resume --source REF            Continue the saved question or exact preparation gap
+  revise --file .local/FILE       Reopen one setting with its change-request reference
+  settings                       Show settings areas and the conversational update path
   defer --id ID --source REF      Defer an optional question only
   roadmap-shown                  Record that the applicable roadmap was actually shown
 Use private files for response proposals; never put answers or secrets in command arguments.
@@ -49,7 +51,14 @@ These helpers enforce one active question and save integrity; they do not send m
       state = loadProgress(root).state;
     }
     else if (command === "recover") state = applyResponse(root);
-    else if (command === "pause" || command === "resume") state = setConversationMode(root, command === "pause" ? "paused" : "active", value("--source"), now);
+    else if (command === "pause") state = setConversationMode(root, "paused", value("--source"), now);
+    else if (command === "resume") {
+      const result = resumeOnboarding(root, value("--source"), now); state = result.state;
+      console.log(JSON.stringify(result.next, null, 2));
+    } else if (command === "revise") {
+      const input = readConversationInput(root, value("--file")) as { id: string; prompt: string; sourceReference: string };
+      state = reviseQuestion(root, input.id, input.prompt, input.sourceReference, now);
+    } else if (command === "settings") console.log("Change settings by telling the agent what to change: roles/CVs, job preferences, answers, boards, browser/visibility, email, check-in interval, limits or reporting. It reads the saved value, asks only for a missing detail, saves the correction and rechecks affected preparation. See automation/onboarding/settings.md.");
     else if (command === "defer") state = deferQuestion(root, value("--id"), value("--source"));
     else if (command === "roadmap-shown") state = recordRoadmapShown(root);
     else if (command !== "status") throw new Error("Unknown focused-onboarding command; use help.");

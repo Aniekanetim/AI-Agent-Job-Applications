@@ -16,6 +16,10 @@ read the whole reply, save every clear extra answer in its correct canonical fil
 and recover retained responses before asking again. Keep one active question across
 subflows. Respect pause/resume and optional deferrals; a paused or already presented
 unanswered question stays quiet. Save actual replies into canonical *.local.md files.
+Use onboarding:resume only for an actual user request to continue, and act on its
+question or saved preparation action. Do not invent that request in an unattended
+run. Later changes follow automation/onboarding/settings.md. Playwright is headed
+by default; report an inaccessible desktop rather than silently choosing headless.
 If a role has no CV, request its PDF, DOCX or TXT file, save the unchanged original
 in that role's private Documents folder and verify the hash and extraction.
 Read .local/onboarding-state.json and automation/onboarding/README.md when present.

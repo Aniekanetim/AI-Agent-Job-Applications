@@ -10,6 +10,14 @@ Choose the default before installing tools, signing in or mapping websites. The 
 
 An installed CLI does not establish a preference. An unavailable chosen browser remains a setup dependency; it does not authorize silently changing the default. Record the user's choice with `npm run onboarding:browser -- --browser inApp --source REFERENCE`, substituting the actual choice and private response reference. For automatic selection, verify the available tools first, then use `npm run onboarding:resolve-browser -- --reference .local/browser-selection.md` with the actual capability comparison.
 
+## Visible browser by default
+
+Playwright runs headed by default, including the setup rehearsal. You can watch navigation and form filling on the computer running the agent. A remote machine needs an accessible desktop; headed mode does not stream its window to your computer. If the selected mode cannot launch, report that dependency and preserve progress rather than silently switching to headless.
+
+The launcher applies the selected visibility to every new `open`, including a supplied `--config`. It preserves the original configuration and authentication references. Older generated `headless: true` settings no longer hide normal launches. Existing sessions retain their launch mode: checkpoint the application and recover its draft/session before restarting visibly. Never interrupt an uncertain submission or close unrelated sessions.
+
+For an explicit later choice, the agent uses `npm run browser -- visibility --mode headed --source ACTUAL_REQUEST_REFERENCE` (or `headless` only when requested). A deliberate `--headless` or `--headed` on one `open` overrides visibility for that session only. Recheck actual readiness after changing modes; an old headless report does not prove visible operation.
+
 ## Prepare the selected browser and upload fallback
 
 1. For in-app use, follow [the host-browser procedure](in-app/README.md). Check the actual provider, navigation, form filling and outcome inspection. Do not claim a browser works from its presence in a tool list. Keep its session separate from Playwright.

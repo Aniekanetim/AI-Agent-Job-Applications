@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { browserRuntime, runNode, runtimeFingerprint, workingRoot } from './runtime.mjs';
+import { browserRuntime, browserVisibility, runNode, runtimeFingerprint, workingRoot } from './runtime.mjs';
 import { createRehearsal } from './rehearsal.mjs';
 
 // A subprocess resolves executable paths after the selected cache environment is set.
@@ -37,20 +37,22 @@ export async function installMissingBrowsers(runtime, run = runNode) {
 
 /** Exercise the actual CLI in an isolated session against loopback, without credentials. */
 export async function verifyBrowser(runtime, run = runNode) {
+  const visibility = browserVisibility(runtime.root).mode;
   const session = `setup-${randomUUID().slice(0, 12)}`;
   const folder = resolve(runtime.root, 'output/playwright', session);
   mkdirSync(folder, { recursive: true });
   const config = resolve(folder, 'config.json');
   writeFileSync(config, JSON.stringify({ browser: { browserName: 'chromium', isolated: true,
-    launchOptions: { channel: 'chromium', headless: true } }, outputDir: folder, outputMode: 'file' }), { mode: 0o600 });
+    launchOptions: { channel: 'chromium', headless: visibility === 'headless' } }, outputDir: folder, outputMode: 'file' }), { mode: 0o600 });
   const fixture = await createRehearsal(folder);
   const uploadSession = `${session}-upload`;
   let stage = 'open';
   try {
     const invoke = (args, selected = session) => run(runtime.cli, [`-s=${selected}`, ...args], {
-      root: runtime.root, environment: runtime.environment, timeout: 45_000,
+      root: runtime.root, environment: { ...runtime.environment, PLAYWRIGHT_MCP_HEADLESS: visibility === 'headless' ? 'true' : 'false' }, timeout: 45_000,
     });
-    const opened = await invoke(['open', fixture.url, `--config=${config}`]);
+    const open = ['open', fixture.url, `--config=${config}`, ...(visibility === 'headed' ? ['--headed'] : [])];
+    const opened = await invoke(open);
     if (opened.code !== 0 || /### Error/.test(opened.stdout)) return { ok: false, stage };
     stage = 'snapshot';
     const snapshot = await invoke(['snapshot']);
@@ -61,7 +63,7 @@ export async function verifyBrowser(runtime, run = runNode) {
     if (saved.code !== 0 || /### Error/.test(saved.stdout) || !saved.stdout.includes('checkpoint verified')) return { ok: false, stage };
     await invoke(['close']);
     stage = 'resume';
-    const resumed = await invoke(['open', fixture.url, `--config=${config}`], uploadSession);
+    const resumed = await invoke(open, uploadSession);
     if (resumed.code !== 0 || /### Error/.test(resumed.stdout)) return { ok: false, stage };
     stage = 'upload';
     const code = `async page => { if (await page.getByLabel("Candidate name").inputValue() !== "Synthetic Candidate") throw new Error("checkpoint not restored"); await page.getByLabel("Test document").setInputFiles(${JSON.stringify(fixture.uploadPath)}); await page.locator("#upload").filter({hasText:"Synthetic file upload verified"}).waitFor(); await page.getByRole("button", {name:"Check browser",exact:true}).click(); await page.locator("#outcome").filter({hasText:"Browser interaction and upload verified"}).waitFor(); return await page.locator("#outcome").textContent(); }`;
@@ -76,7 +78,7 @@ export async function verifyBrowser(runtime, run = runNode) {
 }
 
 function saveReport(root, result, runtime) {
-  const report = { schemaVersion: 1, ...result, fingerprint: runtime ? runtimeFingerprint(runtime) : null,
+  const report = { schemaVersion: 1, ...result, visibility: browserVisibility(root).mode, fingerprint: runtime ? runtimeFingerprint(runtime) : null,
     checkedAt: new Date().toISOString(), scope: 'Playwright-only local navigation, form completion, draft recovery across isolated sessions and synthetic file upload. No in-app browser, website authentication or job submission is established.' };
   const folder = resolve(root, '.local');
   mkdirSync(folder, { recursive: true });
@@ -104,7 +106,7 @@ export async function prepareBrowser({ install = false, root = workingRoot } = {
   else {
     const verified = await verifyBrowser(runtime);
     report = verified.ok ? { ready: true, reason: 'verified', capabilities: { navigation: true, formFilling: true, fileUpload: true, outcomeInspection: true, checkpointRecovery: true } } : { ready: false,
-      reason: `browserCheck:${verified.stage}`, nextAction: 'Agent: inspect the private setup artifacts and resolve the browser launch or interaction failure.' };
+      reason: `browserCheck:${verified.stage}`, nextAction: 'Agent: inspect the private setup artifacts and restore the selected browser mode in an accessible desktop. Do not silently switch to headless.' };
   }
   return saveReport(root, { ...report, checks }, runtime);
 }

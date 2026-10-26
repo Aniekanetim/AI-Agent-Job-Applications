@@ -8,9 +8,10 @@ import { loadProgress, saveProgress, digest } from "./state-store.js";
 import { refreshProgress, stepIds, stepLabels, emptyCheck, type OnboardingProgress, type EvidenceReference } from "./progress.js";
 import { emptyConversation, validateDecision, sameDecision, supplied, validTime,
   type Decision, type FocusedQuestion, type ConversationState } from "./conversation-types.js";
+import { workCheckpoint, type WorkCheckpoint } from "./continuation.js";
 
 const journal = ".local/onboarding-pending-response.json";
-const globalTargets = new Set(["Job Context/Candidate/role-routing.local.md", ".local/browser-preferences.json",
+const globalTargets = new Set(["Job Context/Candidate/role-routing.local.md", ".local/browser-preferences.json", ".local/browser/visibility.json",
   ".local/operation-preferences.json", ".local/email-onboarding.json", ".local/email-connection.json"]);
 const conversation = (s: OnboardingProgress): ConversationState => s.conversation ?? emptyConversation();
 const fieldKey = (d: Decision) => JSON.stringify([d.roleId, d.contextPath, d.field]);
@@ -73,10 +74,10 @@ export function queueQuestions(root: string, questions: Omit<FocusedQuestion, "s
   });
 }
 
-export type NextQuestion = { action: "paused" | "wait" | "verifyPresentation" | "recoverResponse" | "work" } |
+export type NextQuestion = WorkCheckpoint | { action: "paused" | "wait" | "verifyPresentation" | "recoverResponse" } |
   { action: "present" | "repeatOnRequest"; question: FocusedQuestion };
 export function nextQuestion(root: string, requestedRepeat = false): { state: OnboardingProgress; next: NextQuestion } {
-  let next: NextQuestion = { action: "work" };
+  let next: NextQuestion = { action: "wait" };
   const state = update(root, state => {
     const c = state.conversation!;
     if (c.mode === "paused") { next = { action: "paused" }; return; }
@@ -86,7 +87,7 @@ export function nextQuestion(root: string, requestedRepeat = false): { state: On
       q = c.questions.find(q => q.status === "pending");
       if (q) c.activeQuestionId = q.id;
     }
-    if (!q) return;
+    if (!q) { next = workCheckpoint(root, state); return; }
     const clarification = q.clarifications?.at(-1), presented = clarification ? clarification.presentedAt : q.askedAt;
     const display = clarification ? { ...q, prompt: clarification.prompt } : q;
     if (!presented && q.presentationPending && !requestedRepeat) { next = { action: "verifyPresentation" }; return; }
@@ -94,6 +95,26 @@ export function nextQuestion(root: string, requestedRepeat = false): { state: On
     next = presented ? requestedRepeat ? { action: "repeatOnRequest", question: display } : { action: "wait" } : { action: "present", question: display };
   });
   return { state, next };
+}
+export function resumeOnboarding(root: string, sourceReference: string, now: string) {
+  setConversationMode(root, "active", sourceReference, now);
+  return nextQuestion(root, true);
+}
+
+/** Reopen only the requested decision; keep its prior prompt and all saved answers. */
+export function reviseQuestion(root: string, id: string, prompt: string, sourceReference: string, now: string) {
+  if (!supplied(prompt) || prompt.length > 500 || !supplied(sourceReference) || !validTime(now)) throw new Error("Use one focused settings question and the actual change request.");
+  return update(root, state => {
+    if (readPrivateJson(root, journal).data !== null) throw new Error("Recover the saved response before changing another setting.");
+    const c = state.conversation!, q = c.questions.find(q => q.id === id);
+    if (!q) throw new Error("Queue a new decision for an unrecorded setting; revise an existing question by its saved ID.");
+    if (q.status === "pending") throw new Error("Continue or clarify this pending decision instead of reopening it.");
+    c.revisions ??= []; c.revisions.push({ question: structuredClone(q), sourceReference, recordedAt: now });
+    q.prompt = prompt; q.status = "pending"; q.askedAt = null; q.presentationPending = false;
+    delete q.sourceReference; delete q.deferredReference; delete q.clarifications;
+    c.activeQuestionId = id;
+    state.steps.readiness = emptyCheck();
+  });
 }
 export function recordQuestionPresented(root: string, id: string, reference: string, now: string) {
   return update(root, state => {

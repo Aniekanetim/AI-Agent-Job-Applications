@@ -7,7 +7,7 @@ import { selectBrowser, resolveAutomaticBrowser, type BrowserChoice } from "../b
 import { loadBrowserPreferences, saveBrowserPreferences } from "../browser/preferences-store.js";
 import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
 import { validateCapabilityReport, capabilityIssues } from "../browser/capabilities.js";
-import { validateOperatingPreferences, type OperatingPreferences } from "../scheduling/preferences.js";
+import { amendOperatingPreferences, type OperatingPreferences, type OperatingPatch } from "../scheduling/preferences.js";
 import { emailSetupStatus, formatEmailSetup } from "../email/onboarding.js";
 import { inspectEmailReadiness } from "../email/state-store.js";
 
@@ -29,7 +29,8 @@ try {
   browser-resolve --reference PATH   Resolve an automatic choice from actual browser reports
   operation-choice --mode onDemand|recurring --source REFERENCE
     --cadence TEXT --timezone IANA_NAME (required for recurring)
-    --per-run-limit N --per-day-limit N --reporting summary|blockersOnly|digest|unspecified
+    --per-run-limit N|none --per-day-limit N|none --reporting summary|blockersOnly|digest|unspecified
+    Later changes preserve omitted fields; --mode is required only for the first choice.
     --timezone IANA_NAME is also required for a daily limit in onDemand mode
   record --preparation ${preparationIds.join("|")} --reference PATH
   record --step ID --reference PATH (repeat references)
@@ -81,22 +82,22 @@ blocked/skipped mapping boundary with evidence, reason and next action. Never pa
       state.steps.readiness = emptyCheck();
     } else if (command === "operation-choice") {
       const previous = readPrivateJson(root, ".local/operation-preferences.json");
-      const number = (name: string) => value(name) === undefined ? null : Number(value(name));
-      const operating: OperatingPreferences = { schemaVersion: 1, mode: value("--mode") as OperatingPreferences["mode"],
-        cadence: value("--cadence") ?? null, timezone: value("--timezone") ?? null,
-        perRunLimit: number("--per-run-limit"), perDayLimit: number("--per-day-limit"),
-        reporting: (value("--reporting") ?? "unspecified") as OperatingPreferences["reporting"],
-        sourceReference: value("--source") ?? "", scheduleReference: null };
-      validateOperatingPreferences(operating);
-      if (previous.data) {
-        validateOperatingPreferences(previous.data);
-        if (previous.data.scheduleReference) throw new Error("Reconcile the existing schedule before changing operating settings; its reference was preserved.");
+      const patch: OperatingPatch = {};
+      for (const [flag, key] of [["--mode", "mode"], ["--cadence", "cadence"], ["--timezone", "timezone"], ["--reporting", "reporting"]] as const) {
+        if (value(flag) !== undefined) Object.assign(patch, { [key]: value(flag) });
       }
+      for (const [flag, key] of [["--per-run-limit", "perRunLimit"], ["--per-day-limit", "perDayLimit"]] as const) {
+        if (value(flag) !== undefined) patch[key] = value(flag) === "none" ? null : Number(value(flag));
+      }
+      const operating = amendOperatingPreferences(previous.data as OperatingPreferences | null, patch, value("--source") ?? "");
       savePrivateJson(root, ".local/operation-preferences.json", operating, previous.revision);
       state.preparation.scheduleChoice = completedCheck(root, [".local/operation-preferences.json"], now);
       state.preparation.operatingPreferences = completedCheck(root, [".local/operation-preferences.json"], now);
-      state.preparation.scheduledAccess = operating.mode === "onDemand" ?
-        { ...completedCheck(root, [".local/operation-preferences.json"], now), status: "skipped", reason: "User selected on-demand operation." } : emptyCheck();
+      if (operating.mode === "onDemand") state.preparation.scheduledAccess =
+        { ...completedCheck(root, [".local/operation-preferences.json"], now), status: "skipped", reason: "User selected on-demand operation." };
+      else if (!(previous.data as OperatingPreferences | null)?.scheduleReference) state.preparation.scheduledAccess = emptyCheck();
+      else state.preparation.scheduledAccess.evidence = state.preparation.scheduledAccess.evidence.map(ref =>
+        ref.path === ".local/operation-preferences.json" ? evidenceReference(root, ref.path) : ref);
       state.steps.readiness = emptyCheck();
     } else if (command === "record") {
       state.steps.readiness = emptyCheck();

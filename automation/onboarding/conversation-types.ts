@@ -37,6 +37,7 @@ export interface ConversationState {
   responses: { id: string; sourceReference: string; savedAt: string; decisionIds: string[]; proposalSha256: string }[];
   pauseReference: { sourceReference: string; recordedAt: string } | null;
   legacyResolutions?: { decisionId: string; responseId: string; question: unknown }[];
+  revisions?: { question: FocusedQuestion; sourceReference: string; recordedAt: string }[];
 }
 export function emptyConversation(): ConversationState {
   return { schemaVersion: 1, mode: "active", activeQuestionId: null, roadmapShown: false,
@@ -61,6 +62,7 @@ export function validateConversation(value: unknown): asserts value is Conversat
     !Array.isArray(c.questions) || !Array.isArray(c.answers) || !Array.isArray(c.responses) ||
     !(c.activeQuestionId === null || supplied(c.activeQuestionId))) throw new Error("Invalid conversation checkpoint; preserve it for investigation.");
   const ids = new Set<string>();
+  if (c.revisions && (!Array.isArray(c.revisions) || c.revisions.some(r => !supplied(r.sourceReference) || !validTime(r.recordedAt) || !supplied(r.question?.id)))) throw new Error("Keep the previous question and actual settings-change request.");
   for (const q of c.questions) {
     validateDecision(q);
     if (ids.has(q.id) || !supplied(q.prompt) || typeof q.required !== "boolean" || !["pending", "answered", "deferred"].includes(q.status) ||

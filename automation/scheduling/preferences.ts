@@ -22,3 +22,21 @@ export function validateOperatingPreferences(value: unknown): asserts value is O
     catch { throw new Error("Use a valid named timezone for operating preferences."); }
   }
 }
+
+export type OperatingPatch = Partial<Omit<OperatingPreferences, "schemaVersion" | "sourceReference" | "scheduleReference">>;
+/** A later answer changes only supplied fields. Null explicitly removes a limit. */
+export function amendOperatingPreferences(previous: OperatingPreferences | null, patch: OperatingPatch, sourceReference: string): OperatingPreferences {
+  if (previous) validateOperatingPreferences(previous);
+  if (!sourceReference.trim()) throw new Error("Reference the actual settings change.");
+  const next: OperatingPreferences = { schemaVersion: 1, mode: "onDemand", cadence: null, timezone: null,
+    perRunLimit: null, perDayLimit: null, reporting: "unspecified", scheduleReference: null,
+    ...previous, ...patch, sourceReference };
+  if (!previous && !patch.mode) throw new Error("Choose on-demand or recurring operation before saving other operating settings.");
+  if (patch.mode === "onDemand") next.cadence = null;
+  if (previous?.scheduleReference && ["mode", "cadence", "timezone"].some(key =>
+    previous[key as keyof OperatingPreferences] !== next[key as keyof OperatingPreferences])) {
+    throw new Error("Update or stop the existing schedule through its scheduler first, verify the result and reconcile its saved reference before changing the interval. Other settings can be changed independently.");
+  }
+  validateOperatingPreferences(next);
+  return next;
+}

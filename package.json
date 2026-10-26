@@ -1,6 +1,6 @@
 {
   "name": "ai-agent-job-applications",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "private": true,
   "type": "module",
   "description": "Portable autonomous job applications with existing email connections, browser choice and resumable onboarding.",
@@ -26,7 +26,7 @@
     "onboarding:finish": "npm run build --silent && node .local/build/automation/onboarding/cli.js finish",
     "onboarding:help": "npm run build --silent && node .local/build/automation/onboarding/cli.js help",
     "onboarding:defer": "npm run build --silent && node .local/build/automation/onboarding/cli.js defer-board",
-    "onboarding:resume": "npm run build --silent && node .local/build/automation/onboarding/cli.js resume-board",
+    "onboarding:resume": "npm run build --silent && node .local/build/automation/onboarding/conversation-cli.js resume",
     "onboarding:browser": "npm run build --silent && node .local/build/automation/onboarding/cli.js browser-choice",
     "onboarding:resolve-browser": "npm run build --silent && node .local/build/automation/onboarding/cli.js browser-resolve",
     "onboarding:operation": "npm run build --silent && node .local/build/automation/onboarding/cli.js operation-choice",
@@ -43,7 +43,9 @@
     "email:migrate": "npm run build --silent && node .local/build/automation/email/cli.js migrate",
     "email:work": "npm run build --silent && node .local/build/automation/email/work-cli.js",
     "email:help": "npm run build --silent && node .local/build/automation/email/cli.js help",
-    "onboarding:conversation": "npm run build --silent && node .local/build/automation/onboarding/conversation-cli.js"
+    "onboarding:conversation": "npm run build --silent && node .local/build/automation/onboarding/conversation-cli.js",
+    "onboarding:resume-board": "npm run build --silent && node .local/build/automation/onboarding/cli.js resume-board",
+    "onboarding:settings": "npm run build --silent && node .local/build/automation/onboarding/conversation-cli.js settings"
   },
   "license": "MIT",
   "devDependencies": {

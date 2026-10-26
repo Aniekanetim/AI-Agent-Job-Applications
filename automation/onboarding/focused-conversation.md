@@ -56,6 +56,8 @@ The store checks the whole bundle before writing, then retains an ignored `.loca
 
 ## Progress, pauses and completion
 
+For an explicit request to continue, use `npm run onboarding:resume -- --source ACTUAL_REQUEST_REFERENCE`. It resumes pause state when applicable and returns the pending prompt, retained-response recovery or a concrete unfinished stage/substep. When no question is queued, `next` returns the preparation gap. Perform agent-owned work, save its checkpoint and continue until a question, dependency or completed handoff requires yielding. Ordinary scheduled `next` keeps quiet-wait behavior. For later changes, follow [settings](settings.md); `revise` retains the prior question and saved answers while reopening just that decision.
+
 Use the brief conversation summary during normal onboarding. It shows the current stage/substep and saved decisions without presenting every preparation checklist again. Saved decisions and verified capabilities remain separate. Detailed `onboarding:status` is available for inspection; do not paste its full output after every answer.
 
 An explicit pause retains focus and answers. `next` returns `paused`; scheduled runs leave unchanged onboarding quiet. Extra answers volunteered while paused can be saved without resuming questions. An explicit resume restores the same checkpoint, rather than restarting setup. Optional deferrals need the actual user instruction; required unanswered decisions cannot be silently skipped. No application-board folder is created for setup questions.

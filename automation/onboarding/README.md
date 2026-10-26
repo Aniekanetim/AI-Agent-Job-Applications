@@ -2,6 +2,8 @@
 
 The agent follows [the onboarding workflow](../../Application%20Workflow/onboarding-workflow.md), shows its roadmap before setup and updates the user after meaningful progress. The [focused conversation layer](focused-conversation.md) asks one missing decision at a time while saving all clear additional answers. These helpers preserve its checkpoint and check completion. They are not a separate application, scheduler or approval system.
 
+For later changes and interrupted setup, follow [settings and resumption](settings.md). `onboarding:settings` identifies available areas. `onboarding:resume -- --source ACTUAL_REQUEST_REFERENCE` returns the pending question or a specific unfinished action. The agent performs that action instead of stopping at a status display. Neither command resets profiles or activates a schedule.
+
 ## Working state
 
 Use ignored `.local/onboarding-state.json`. The [empty example](onboarding-state.example.json) is public and contains no configured candidate, account or completed check. Schema 3 records scope, selected board paths, steps, per-board access/mapping checks, question references and evidence hashes. Candidate answers remain solely in the role's private files; credentials never belong in progress. A version-1 `conversation` extension records one active question, clarification history, pause state and saved-answer references. Its addition preserves existing schema-3 completion; it does not introduce a new readiness requirement.
@@ -57,7 +59,7 @@ The helper checks evidence shape, existence and saved hashes; the agent must est
 
 ## Deferrals and completion
 
-Use `npm run onboarding:defer -- --board NAME --reason TEXT --source REFERENCE` only for the user's explicit decision to postpone that selected board. `npm run onboarding:resume -- --board NAME` restores it. All selected boards deferred is not application-ready; at least one must be prepared. One prepared board plus an explicitly deferred board produces partial preparation with the deferred name visible. The agent must not decide a user's deferral silently.
+Use `npm run onboarding:defer -- --board NAME --reason TEXT --source REFERENCE` only for the user's explicit decision to postpone that selected board. `npm run onboarding:resume-board -- --board NAME` restores it. All selected boards deferred is not application-ready; at least one must be prepared. One prepared board plus an explicitly deferred board produces partial preparation with the deferred name visible. The agent must not decide a user's deferral silently.
 
 Before finishing, run the readiness check, resolve stale evidence and write a private handoff with the configured roles, CV versions, intake sources, prepared boards, observation boundaries, deferrals and next action. Then run:
 

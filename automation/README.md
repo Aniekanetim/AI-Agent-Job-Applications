@@ -149,3 +149,5 @@ Each check-in resumes eligible work, reads new intake, checks resolved blockers 
 | [Optional schedule setup](scheduling/README.md) | On-demand/recurring choice and actual scheduled-environment checks |
 
 Private `.local/browser-preferences.json` stores the chosen and resolved default. `.local/operation-preferences.json` stores operating mode, cadence/timezone, limits, reporting and the actual schedule reference. Host capability reports live in `.local/browser-in-app.json`; scheduled reports use separate `*-scheduled.json` files. Keep these alongside existing progress without copying candidate facts or secrets. Schema-3 preparation exposes known setup gaps before the first application. Selecting recurring use does not make interactive evidence into scheduled proof.
+
+For later configuration changes or interrupted setup, follow [settings and resumption](onboarding/settings.md). Playwright opens visibly by default under [browser preparation](browser/README.md); prior headless verification does not establish the new mode.

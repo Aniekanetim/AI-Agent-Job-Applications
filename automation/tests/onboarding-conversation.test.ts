@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { createProgress, configureProgress, emptyCheck, readiness, migrateProgress } from "../onboarding/progress.js";
 import { loadProgress, saveProgress, digest, completedCheck } from "../onboarding/state-store.js";
 import { queueQuestions, nextQuestion, recordQuestionPresented, recordRoadmapShown, setConversationMode, deferQuestion,
-  clarifyQuestion, recoverUnshownQuestion, reconcileStagedResponse, applyResponse, conversationSummary, type ResponseBundle } from "../onboarding/conversation.js";
+  clarifyQuestion, recoverUnshownQuestion, reconcileStagedResponse, applyResponse, conversationSummary, resumeOnboarding, reviseQuestion, type ResponseBundle } from "../onboarding/conversation.js";
 import { readPrivateJson } from "../workflow/private-json.js";
 import type { Decision, FocusedQuestion } from "../onboarding/conversation-types.js";
 import { saveBrowserPreferences } from "../browser/preferences-store.js";
@@ -264,5 +264,44 @@ test("the focused CLI queues one prompt, waits quietly and persists explicit pau
   assert.equal(run("asked", "--id", "remote", "--source", "synthetic-prompt").status, 0);
   assert.match(run("next").stdout, /"action": "wait"/);
   assert.equal(run("pause", "--source", "synthetic-pause").status, 0); assert.match(run("next").stdout, /"action": "paused"/);
-  assert.equal(run("resume", "--source", "synthetic-resume").status, 0); assert.match(run("next").stdout, /"action": "wait"/);
+  const resumed = run("resume", "--source", "synthetic-resume");
+  assert.equal(resumed.status, 0); assert.match(resumed.stdout, /"action": "repeatOnRequest"/); assert.match(resumed.stdout, /"id": "remote"/);
+  assert.match(run("next").stdout, /"action": "wait"/);
+});
+
+test("a later settings question keeps the old answer and only reopens the requested decision", t => {
+  const { root } = sandbox(t); queueQuestions(root, [question("remote"), question("notice")]); ask(root);
+  applyResponse(root, response(root, "initial", [decision("remote"), decision("notice")], { [qa]: "Remote only; notice two weeks." }));
+  reviseQuestion(root, "remote", "Which work arrangement should replace remote-only?", "synthetic-change-request", later);
+  const q = nextQuestion(root).next; assert.equal(q.action, "present");
+  if (q.action === "present") assert.equal(q.question.id, "remote");
+  const state = loadProgress(root).state;
+  assert.equal(state.conversation!.revisions![0].question.status, "answered");
+  assert.equal(state.conversation!.questions.find(q => q.id === "notice")!.status, "answered");
+  const amended = response(root, "change", [decision("remote")], { [qa]: "Remote or hybrid; notice two weeks." });
+  amended.answers[0].kind = "correction"; applyResponse(root, amended);
+  assert.equal(loadProgress(root).state.conversation!.answers.length, 3);
+  assert.equal(fs.readFileSync(resolve(root, qa), "utf8"), "Remote or hybrid; notice two weeks.");
+});
+
+test("resuming without a question returns the exact saved preparation checkpoint", t => {
+  const { root } = sandbox(t);
+  const state = createProgress(); state.scope = "profileSetup";
+  state.steps.candidateProfiles = { ...emptyCheck("inProgress"), nextAction: "Finish importing the already-supplied PDF; do not request it again." };
+  saveProgress(root, state, null);
+  const resumed = resumeOnboarding(root, "synthetic-continue", later).next;
+  assert.equal(resumed.action, "work");
+  if (resumed.action === "work") { assert.equal(resumed.step, "candidateProfiles"); assert.match(resumed.nextAction, /already-supplied PDF/); }
+  assert.equal(loadProgress(root).state.conversation!.questions.length, 0);
+});
+
+test("explicit resume recovers a staged reply before re-presenting its question", t => {
+  const { root, write } = sandbox(t); queueQuestions(root, [question("remote")]); ask(root);
+  const bundle = response(root, "interrupted", [decision("remote")], { [qa]: "Remote only; unrelated facts preserved." });
+  write(".local/onboarding-pending-response.json", JSON.stringify(bundle));
+  assert.equal(resumeOnboarding(root, "synthetic-continue", later).next.action, "recoverResponse");
+  applyResponse(root);
+  assert.equal(loadProgress(root).state.conversation!.questions[0].status, "answered");
+  assert.equal(fs.readFileSync(resolve(root, qa), "utf8"), "Remote only; unrelated facts preserved.");
+  assert.notEqual(resumeOnboarding(root, "synthetic-continue-again", later).next.action, "repeatOnRequest");
 });
