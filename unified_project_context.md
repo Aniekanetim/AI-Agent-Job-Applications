@@ -20,6 +20,7 @@
 | Website knowledge | Job-board templates unlearned; limited Tezza public form/CAPTCHA observation included; full submission remains unlearned |
 | CAPTCHA assistance | [Human handoff](automation/browser/captcha-handoff.md), unattended Blocked waiting and same-application recovery; no automatic solving |
 | Active / Blocked / Applied tickets | None |
+| Default intake / requeue | Email Alerts and To Do only; inspect Blocked only on explicit request; user moves existing resolved tickets to To Do |
 | Schedule / cadence / timezone | Not configured for this project |
 | Settings menu | Say Open settings; native choices or numbered conversation under [interactive settings](automation/settings/README.md); no actual user menu opened in this template |
 | Operational next action | Begin agent-led onboarding in a private working copy using SETUP.md |

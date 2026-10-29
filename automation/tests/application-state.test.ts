@@ -1,5 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import { resolve } from "node:path";
+import { listIntakeTickets } from "../workflow/intake.js";
+import { requeueMovedEmailTicket } from "../email/requeue.js";
+import { loadInboxState, saveEmailRecord } from "../email/state-store.js";
+import { classifyMessage } from "../email/intake.js";
+import { alertFixture, fixtureNow, writeFixture } from "./email-fixture.js";
+import { acquireOwnership } from "../workflow/ownership.js";
+import { alertOwnershipKey } from "../email/state-store.js";
+import { saveAlertArtifact } from "../email/artifact-store.js";
 import { assertTaskMove, canMarkApplied, messageReadyForDeletion, DiscoveryRequired,
   type ApplicationTask, type MessageProgress } from "../workflow/application-state.js";
 
@@ -65,16 +75,86 @@ test("blocked tasks must name the dependency, context file and resume action", (
   assert.throws(() => assertTaskMove(task, "Email Alerts", "Blocked"));
 });
 
-test("blocked resumption requires resolution evidence and returns to original intake", () => {
+test("the user requeues Blocked in To Do without clearing its unresolved dependency", () => {
   const task = confirmed(); task.blocker = { reason: "Missing answer",
     lastCompletedStep: "Questions", contextPath: "answers.local.md",
     nextAction: "Answer question", resumeCheckpoint: "Questions" };
   assert.throws(() => assertTaskMove(task, "Blocked", "Email Alerts"));
+  assert.doesNotThrow(() => assertTaskMove(task, "Blocked", "To Do"));
+  assert.throws(() => assertTaskMove(task, "To Do", "Applied"));
   task.blocker.resolvedAt = "2026-10-23T11:00:00Z";
   task.blocker.resolutionEvidence = "Required factual answer supplied and inspected";
-  assert.doesNotThrow(() => assertTaskMove(task, "Blocked", "Email Alerts"));
-  assert.throws(() => assertTaskMove(task, "Blocked", "To Do"));
+  assert.throws(() => assertTaskMove(task, "Blocked", "Email Alerts"));
+  assert.doesNotThrow(() => assertTaskMove(task, "Blocked", "To Do"));
+  assert.doesNotThrow(() => assertTaskMove(task, "To Do", "Applied"));
+  assert.equal(task.originalIntake, "Email Alerts");
   assert.throws(() => assertTaskMove(task, "Blocked", "Applied"));
+});
+
+test("default intake lists only Email Alerts and To Do without traversing Blocked or Applied", t => {
+  const f = alertFixture(t, 1);
+  writeFixture(f.root, "Task Board/Email Alerts/current.md", "Current task");
+  writeFixture(f.root, "Task Board/To Do/requeued.md", "Queued task");
+  writeFixture(f.root, "Task Board/Blocked/do-not-read.md", "Unresolved task");
+  const visited: string[] = [], original = fs.readdirSync.bind(fs);
+  const readDirectory = ((path: fs.PathLike, options: unknown) => {
+    visited.push(String(path));
+    assert.ok(!String(path).includes("Blocked") && !String(path).includes("Applied"));
+    return original(path, options as never);
+  }) as typeof fs.readdirSync;
+  assert.deepEqual(listIntakeTickets(f.root, readDirectory).map(t => t.path), [
+    "Task Board/Email Alerts/current.md", "Task Board/To Do/requeued.md",
+  ]);
+  assert.equal(visited.length, 2);
+});
+
+function movedFixture(t: Parameters<typeof alertFixture>[0]) {
+  const f = alertFixture(t, 1), identity = { ...f.identity, messageId: "synthetic-requeue" };
+  const record = classifyMessage({ ...identity, from: "alerts@example.invalid", timestamp: fixtureNow },
+    "jobAlert", "synthetic-rule", ".local/rules.md", ".local/source.md", fixtureNow);
+  const oldPath = "Task Board/Blocked/APP-requeue.md", newPath = "Task Board/To Do/APP-requeue.md";
+  const ticket = writeFixture(f.root, oldPath, "# APP-requeue\nOriginal source and saved checkpoint.\n");
+  record.vacancies = [{ vacancyKey: "job-requeue", disposition: "blocked", taskId: "APP-requeue", taskPath: oldPath, taskEvidence: ticket }];
+  saveEmailRecord(f.root, record, loadInboxState(f.root).revision);
+  fs.mkdirSync(resolve(f.root, "Task Board/To Do"), { recursive: true });
+  fs.renameSync(resolve(f.root, oldPath), resolve(f.root, newPath));
+  return { ...f, identity, oldPath, newPath };
+}
+
+test("a user-moved To Do ticket rebinds its exact email assignment without reading Blocked", t => {
+  const f = movedFixture(t), result = requeueMovedEmailTicket(f.root, f.newPath, fixtureNow);
+  assert.equal(result.kind, "requeued");
+  if (result.kind !== "requeued") assert.fail("Expected the original email task");
+  assert.equal(result.taskId, "APP-requeue"); assert.equal(result.dependencyVerified, false);
+  const record = loadInboxState(f.root).state.messages.find(r => r.identity.messageId === f.identity.messageId)!;
+  assert.equal(record.vacancies[0]!.disposition, "pending");
+  assert.equal(record.vacancies[0]!.taskEvidence!.path, f.newPath);
+  assert.equal(fs.existsSync(resolve(f.root, f.oldPath)), false);
+  assert.equal(requeueMovedEmailTicket(f.root, f.newPath, fixtureNow).kind, "notMovedEmailTicket");
+});
+
+test("a moved-and-edited ticket requires selected-task reconciliation, never a fresh assignment", t => {
+  const f = movedFixture(t), before = loadInboxState(f.root);
+  fs.appendFileSync(resolve(f.root, f.newPath), "User reply\n");
+  assert.throws(() => requeueMovedEmailTicket(f.root, f.newPath, fixtureNow), /also edited/);
+  assert.equal(loadInboxState(f.root).revision, before.revision);
+});
+
+test("a requeued email ticket supports guarded To Do writes and preserves source identity", t => {
+  const f = movedFixture(t); requeueMovedEmailTicket(f.root, f.newPath, fixtureNow);
+  const loaded = loadInboxState(f.root), record = loaded.state.messages.find(r => r.identity.messageId === f.identity.messageId)!;
+  const bytes = fs.readFileSync(resolve(f.root, f.newPath));
+  assert.doesNotThrow(() => saveAlertArtifact(f.root, f.identity, f.newPath, bytes, record.vacancies[0]!.taskEvidence!.sha256));
+  assert.equal(record.vacancies[0]!.taskId, "APP-requeue");
+  assert.equal(record.identity.messageId, "synthetic-requeue");
+});
+
+test("requeue respects an active alert owner without changing pending work", t => {
+  const f = movedFixture(t), owner = acquireOwnership(f.root, alertOwnershipKey(f.identity), { kind: "native", ownerId: "synthetic-owner" });
+  const before = loadInboxState(f.root).revision;
+  try { assert.throws(() => requeueMovedEmailTicket(f.root, f.newPath, fixtureNow), /owns/); }
+  finally { owner.release(); }
+  assert.equal(loadInboxState(f.root).revision, before);
 });
 
 test("completed tasks are not reopened as intake by a routine check-in", () => {

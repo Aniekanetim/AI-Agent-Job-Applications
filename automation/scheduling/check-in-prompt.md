@@ -1,6 +1,6 @@
 # Agent check-in prompt
 
-Replace WORKING_ROOT with the actual private copy location when configuring a scheduler. The user-selected task-board check-in interval and timezone are configured in the native scheduler. Each run covers both enabled intake sources and eligible Blocked work. This prompt alone activates nothing.
+Replace WORKING_ROOT with the actual private copy location when configuring a scheduler. The user-selected task-board check-in interval and timezone are configured in the native scheduler. Each default run covers Email Alerts and To Do only, including existing tickets the user requeued in To Do. This prompt alone activates nothing.
 
 ~~~text
 Work in WORKING_ROOT.
@@ -60,11 +60,20 @@ For a new interactive email setup, follow automation/email/host-connectors/disco
 and show Connect your email with Google first. Provider catalog availability is not
 authentication or readiness. Preserve .local/email-onboarding.json checkpoints.
 If email is explicitly deferred, do not read alerts or repeat the provider question;
-continue authorized eligible manual tasks and resolved Blocked work. Keep email
+continue authorized eligible To Do tasks. Keep email
 readiness unfinished and preserve the selected mailbox and its pending work.
 
-Resume eligible claimed work. Check Blocked tasks for actual answers/context
-changes that resolve the named dependency; return resolved tasks to original intake.
+Resume eligible claimed work in Email Alerts and To Do only. Do not list, read,
+hash or inspect linked context for Blocked tasks in routine check-ins. Review
+Blocked only when the human explicitly asks; review or a context edit does not
+automatically requeue a task. The user moves the existing ticket to To Do after
+resolving the blocker. That move is the pickup signal. Read only that selected
+task's required context, preserve its checkpoint and original source, and verify
+actual dependency resolution before sensitive actions. For a selected email-derived
+To Do ticket, use automation/email/requeue.ts to reconcile the existing source
+pointer. Never create a second manual assignment or clear a CAPTCHA/uncertain
+submission merely because a ticket moved. Reconcile edited moved tickets within
+that selected task; do not scan other Blocked files.
 Check To Do and the configured job-alert inbox, paginating metadata and preserving
 active message-to-vacancy/task associations. Do not compare unrelated email/manual
 tasks or scan historical Applied files. Do not reread a previously parsed body

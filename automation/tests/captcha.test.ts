@@ -85,10 +85,10 @@ test("a readiness reply alone, a different task/browser/session and stale eviden
   assert.equal(blocked().captchaHandoffs![0].state, "awaitingHuman");
 });
 
-test("human completion resumes through original intake and requires a fresh form review before submit", t => {
+test("human completion resumes after user requeue in To Do and requires a fresh form review before submit", t => {
   const resumed = resolveCaptcha(blocked(), resolution());
   assert.equal(resumed.checkpoint, "working"); assert.equal(resumed.captchaHandoffs![0].state, "resolved");
-  assert.doesNotThrow(() => assertTaskMove(resumed, "Blocked", "Email Alerts"));
+  assert.doesNotThrow(() => assertTaskMove(resumed, "Blocked", "To Do"));
   assert.throws(() => assertTaskMove(resumed, "Blocked", "Applied"));
   assert.throws(() => markSubmissionAttempted(resumed));
   const site = readySite(t, { ...resumed, checkpoint: "prepared" });
@@ -125,8 +125,8 @@ test("a CAPTCHA after Submit preserves uncertainty and can finish from an actual
   assert.throws(() => markSubmissionAttempted(paused));
   const completed = resolveCaptcha(paused, { ...resolution(), outcome: "confirmed", confirmation: { reference: "synthetic-existing-receipt", observedAt: now } });
   assert.equal(completed.checkpoint, "confirmed"); assert.equal(canMarkApplied(completed), true);
-  assert.doesNotThrow(() => assertTaskMove(completed, "Blocked", "Email Alerts"));
-  assert.doesNotThrow(() => assertTaskMove(completed, "Email Alerts", "Applied"));
+  assert.doesNotThrow(() => assertTaskMove(completed, "Blocked", "To Do"));
+  assert.doesNotThrow(() => assertTaskMove(completed, "To Do", "Applied"));
 });
 
 test("an explicit not-submitted result permits recovery of an interrupted submit but never a blind retry", () => {

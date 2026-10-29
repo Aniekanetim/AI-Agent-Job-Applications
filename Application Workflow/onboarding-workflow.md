@@ -142,7 +142,7 @@ Include this question during application onboarding, before the final handoff:
 
 These are examples, not a promised capability of every scheduler. Accept an already supplied interval and timezone without asking again. If the requested interval is unsupported, explain the specific available alternative and obtain the user's choice. Do not silently substitute a different interval.
 
-One scheduled check-in checks both enabled intake sources: the selected job-alert inbox and manual To Do tasks. It also revisits Blocked tasks only when their dependency may be resolved. Manual-only setup can use scheduled checks without an email inbox. Save the interval in the existing `cadence` field and display it as the task-board check-in interval. Configure and verify the native schedule under [schedule setup](../automation/scheduling/README.md) after the user's recurring choice. Optional daily application limits and reporting choices are separate from how often the agent checks for work.
+One scheduled check-in checks both enabled intake sources: the selected job-alert inbox and manual To Do tasks. It does not revisit Blocked. Review Blocked only on an explicit user request; the user moves an existing resolved ticket to To Do to requeue it. Manual-only setup can use scheduled checks without an email inbox. Save the interval in the existing `cadence` field and display it as the task-board check-in interval. Configure and verify the native schedule under [schedule setup](../automation/scheduling/README.md) after the user's recurring choice. Optional daily application limits and reporting choices are separate from how often the agent checks for work.
 
 ## 5. Connect the selected websites and inbox
 
@@ -166,7 +166,7 @@ Use [the readiness utility](../automation/onboarding/README.md#deferrals-and-com
 
 Mark onboarding complete only for its configured scope when required information is available and optional deferrals are recorded. “Complete” never means every future employer question is answered or a live application succeeded. Missing scope-required information remains waiting for the user's answer. If no application task exists, keep that dependency in private onboarding progress; do not create a fake job ticket or a fifth board folder.
 
-When an actual task is blocked, name its exact context field and ask the user for the missing answer or action. The user can reply in conversation; the agent saves the response to the canonical private file, verifies resolution and resumes the existing ticket under [the board procedure](../Task%20Board/README.md#blocking-and-resumption). Do not request an additional approval to resume authorized work.
+When an actual task is blocked, name its exact context field and ask the user for the missing answer or action. The user can reply in conversation; the agent saves the response to the canonical private file, waits for the user to move the existing ticket to To Do, then verifies resolution and resumes under [the board procedure](../Task%20Board/README.md#blocking-and-resumption). Do not request an additional approval to resume authorized work.
 
 On later adoption or check-ins, reuse populated profiles. Reopen only the affected group for a new role, changed CV, explicit correction or newly required answer. Preserve other roles, deferrals, unanswered conversations, submission checkpoints and application history. Unchanged check-ins remain quiet.
 

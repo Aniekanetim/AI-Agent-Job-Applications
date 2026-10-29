@@ -9,7 +9,7 @@ import { digest, evidenceFile } from "./evidence.js";
 
 /** Commit staged alert artifacts through the same ownership boundary as progress. */
 export function saveAlertArtifact(root: string, identity: EmailIdentity, name: string, bytes: Buffer, expectedSha256: string | null) {
-  const key = messageKey(identity), task = /^Task Board\/(Email Alerts|Applied|Blocked)\/[^/\\]+\.md$/.test(name);
+  const key = messageKey(identity), task = /^Task Board\/(Email Alerts|To Do|Applied|Blocked)\/[^/\\]+\.md$/.test(name);
   if (isAbsolute(name) || name.split(/[\\/]/).includes("..") || !(name.startsWith(`.local/alerts/${key}/`) || task)) throw new Error("Use this exact alert's private evidence namespace or its associated task path.");
   const owner = acquireOwnership(root, alertOwnershipKey(identity));
   try {

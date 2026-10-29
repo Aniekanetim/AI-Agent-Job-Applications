@@ -143,7 +143,7 @@ test("pre-profile challenge blocks either intake without fabricated role/CV; rea
     assert.throws(() => resolveSiteAccess(f.root, paused, { ...clear, sessionReference: "other" }));
     const recovered = resolveSiteAccess(f.root, paused, { ...clear, sessionReference: "recovered", recovery: { fromSessionReference: f.page.sessionReference, evidence: f.write(".local/recovery.json", "Synthetic accessible browser recovery and same unsubmitted vacancy checked") } });
     assert.equal(recovered.siteExecution!.sessionReference, "recovered"); assert.equal(recovered.siteExecution!.access, undefined); assert.equal(recovered.accessHandoffs![0].sessionReference, f.page.sessionReference);
-    const resumed = resolveSiteAccess(f.root, paused, clear); assert.doesNotThrow(() => assertTaskMove(resumed, "Blocked", originalIntake));
+    const resumed = resolveSiteAccess(f.root, paused, clear); assert.doesNotThrow(() => assertTaskMove(resumed, "Blocked", "To Do"));
     assert.equal(resumed.checkpoint, "working"); assert.equal(resumed.siteExecution!.access, undefined);
   }
 });

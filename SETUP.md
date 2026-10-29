@@ -72,7 +72,7 @@ Completion is scoped: profile setup prepares role context; application setup add
 
 A fresh clone has no candidate configuration, account access or learned private application journeys. Its public example does not establish a complete employer integration. An old completion flag must be revalidated when new required checks are introduced or the setup moves machines. Preserve supplied data and resume relevant gaps instead of restarting questions.
 
-To start work, supply a real [To Do ticket](Task%20Board/README.md#ticket-template) or use the selected job-alert inbox. Later concrete dependencies use Blocked; setup-only questions stay in private onboarding progress. Configure [periodic check-ins](automation/scheduling/check-in-prompt.md) only when requested, using the actual root, interval and timezone.
+To start work, supply a real [To Do ticket](Task%20Board/README.md#ticket-template) or use the selected job-alert inbox. Later concrete dependencies use Blocked; setup-only questions stay in private onboarding progress. Default checks read Email Alerts and To Do only. Ask explicitly to review Blocked; after resolving a blocker, move its existing ticket to To Do to resume the same application. Updating context alone does not requeue it. Configure [periodic check-ins](automation/scheduling/check-in-prompt.md) only when requested, using the actual root, interval and timezone.
 
 ## 6. Use with another agent or project
 

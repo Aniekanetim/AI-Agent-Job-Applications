@@ -79,8 +79,8 @@ export function assertTaskMove(
   task: ApplicationTask, from: BoardFolder, to: BoardFolder,
 ): void {
   if (from === "Applied") throw new Error("An Applied task is not active intake.");
-  if (from !== "Blocked" && from !== task.originalIntake) {
-    throw new Error("The task must remain associated with its original intake.");
+  if (from !== "Blocked" && from !== "To Do" && from !== task.originalIntake) {
+    throw new Error("Preserve the original source; resumed work is queued in To Do.");
   }
   if (to === "Blocked") {
     if (from === "Blocked") throw new Error("An unchanged blocker needs no move.");
@@ -92,12 +92,9 @@ export function assertTaskMove(
     return;
   }
   if (from === "Blocked") {
-    if (to !== task.originalIntake || !validTime(task.blocker?.resolvedAt) ||
-      task.accessHandoffs?.some(handoff => handoff.state !== "resolved") ||
-      task.captchaHandoffs?.some(handoff => handoff.state !== "resolved") ||
-      !supplied(task.blocker?.resolutionEvidence)) {
-      throw new Error("Resolve the actual dependency and return to original intake.");
-    }
+    // The user's move queues inspection of this task. It does not clear its
+    // blocker, CAPTCHA, access handoff or uncertain submission checkpoint.
+    if (to !== "To Do") throw new Error("The user requeues a Blocked task in To Do.");
     return;
   }
   if (to !== "Applied" || !canMarkApplied(task)) {
