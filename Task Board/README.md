@@ -32,6 +32,8 @@ The initial live board is empty. Directory placeholders and the template below a
 
 ## Blocking and resumption
 
+An unfamiliar site is agent preparation work under [the site procedure](../automation/sites/README.md), not a blocker merely because folders are absent. Record actual site ID and canonical context references on active task state. Security verification before role/CV selection uses `accessHandoffs` and a `siteAccess` blocker; later form challenges use `captchaHandoffs`. A newly created access file or changed hash never resolves either challenge. Preserve source associations, checkpoints and claims; email artifacts still require protected writes.
+
 A blocker states the observed issue, last completed action, exact required input/access, canonical role/platform context path, source version checked, resume checkpoint and original intake. A role mismatch points to role-routing; a mandatory missing answer points to the selected profile's application-answers; a missing CV points to its document index. A login challenge can name the platform's access-and-instructions with the human sign-in action.
 
 The user can provide the answer in conversation or supply the required access action. The agent saves the answer in the named local context file and preserves the response source and actual resolution check on the existing ticket. Direct file editing remains optional. A context-file timestamp change alone is not resolution. If an attempted submission has an uncertain outcome, establish the result for that same vacancy before resuming any submission action.

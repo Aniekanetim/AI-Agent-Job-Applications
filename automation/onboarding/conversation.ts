@@ -10,6 +10,7 @@ import { emptyConversation, validateDecision, sameDecision, supplied, validTime,
   type Decision, type FocusedQuestion, type ConversationState } from "./conversation-types.js";
 import { workCheckpoint, type WorkCheckpoint } from "./continuation.js";
 import { loadMenu } from "../settings/state.js";
+import { registeredAccessPath } from "../sites/registry.js";
 
 const journal = ".local/onboarding-pending-response.json";
 const globalTargets = new Set(["Job Context/Candidate/role-routing.local.md", ".local/browser-preferences.json", ".local/browser/visibility.json",
@@ -40,7 +41,7 @@ function validateTarget(root: string, d: Decision, routing?: string) {
       !d.contextPath.startsWith(`Job Context/Candidate/${matches[0][1]}/`) || !d.contextPath.endsWith(".local.md")) {
       throw new Error("Bind each role answer to its exact profile path in canonical role routing; do not mix profiles.");
     }
-  } else if (!globalTargets.has(d.contextPath) && !/^Job Context\/Job Boards\/[^/]+\/access-and-instructions\.local\.md$/.test(d.contextPath)) {
+  } else if (!globalTargets.has(d.contextPath) && !/^Job Context\/Job Boards\/[^/]+\/access-and-instructions\.local\.md$/.test(d.contextPath) && !registeredAccessPath(root, d.contextPath)) {
     throw new Error("A global decision must use an existing canonical setup/access location, not a role's facts.");
   }
 }

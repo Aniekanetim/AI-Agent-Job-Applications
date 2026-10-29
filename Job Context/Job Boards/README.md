@@ -1,5 +1,7 @@
 # Job-board access and local credentials
 
+The bundled board folders are starting examples. For every unfamiliar assigned board/destination, [prepare and register](../../automation/sites/README.md) its private canonical access and architecture paths. Preserve existing selected-board paths and all secrets/sessions. Reuse public access or authorized sessions without creating password requirements. For a selected password flow only, `sites password --site ID` creates an ignored, commented `.env` if absent; never generate runtime public examples. Direct employer access lives under `Job Context/Application destinations/`; board-specific destinations can nest under their source's access folder. Separate employer tenants, and never reuse a source-board password by assumption.
+
 Each job board has access instructions and a commented `.env.example`. Users can store their login email and password in an ignored `.env` beside that example. The agent loads those values at runtime for the board's observed browser sign-in flow.
 
 | Board | Public template | Local credential variables |

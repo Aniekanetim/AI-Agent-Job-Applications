@@ -1,5 +1,7 @@
 # Interactive settings
 
+Under **Job boards and email**, **Primary job boards** retains the onboarding selection. **Encountered websites and employer access** lists registered task-discovered sites by label and exact origin/tenant. Selecting one opens its canonical private access instructions, including nested destinations. Save through the same focused-response procedure. Do not load passwords or reset onboarding. A changed instruction invalidates bound task access until rechecked; it does not itself resolve a CAPTCHA. See [website preparation](../sites/README.md).
+
 Say **“Open settings”** to your agent. It opens this menu in the conversation:
 
 ```text

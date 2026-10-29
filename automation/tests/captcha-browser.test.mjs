@@ -6,8 +6,9 @@ import { browserRuntime } from '../browser/runtime.mjs';
 import { inspectHcaptcha, assertCaptchaInspection } from '../../.local/check/automation/browser/captcha-inspection.js';
 import { pauseForCaptcha, recordCaptchaRequest, captchaNextAction, resolveCaptcha } from '../../.local/check/automation/browser/captcha.js';
 import { markSubmissionAttempted, canMarkApplied } from '../../.local/check/automation/workflow/application-state.js';
+import { readySite } from '../../.local/check/automation/tests/sites-fixture.js';
 
-test('isolated browser rehearsal detects the widget, waits unattended, resumes after simulated human action and submits once', { timeout: 90_000 }, async () => {
+test('isolated browser rehearsal detects the widget, waits unattended, resumes after simulated human action and submits once', { timeout: 90_000 }, async t => {
   // Ordinary local controls simulate human handoff. No CAPTCHA service, account, candidate or employer receives data.
   let submissions = 0;
   const server = createServer((req, res) => {
@@ -78,7 +79,8 @@ test('isolated browser rehearsal detects the widget, waits unattended, resumes a
       humanCompletionReference: 'fixture-second-human-event', challengeCleared: true,
       sessionVisible: true, fieldsReviewed: true, cvChecked: true, recovery: 'sameSession', draftReference: null });
     assert.equal(resumedAgain.captchaHandoffs.length, 2);
-    const attempted = markSubmissionAttempted({ ...resumedAgain, checkpoint: 'prepared' });
+    const site = readySite(t, { ...resumedAgain, checkpoint: 'prepared' }, jobUrl);
+    const attempted = markSubmissionAttempted(site.task, site.root, site.page);
     await page.getByRole('button', { name: 'Submit fixture application' }).click();
     await page.getByRole('heading', { name: 'Application received: synthetic-1' }).waitFor();
     const confirmed = { ...attempted, checkpoint: 'confirmed', confirmation: { reference: 'synthetic-1', observedAt: later } };

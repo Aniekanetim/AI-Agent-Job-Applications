@@ -1,5 +1,7 @@
 # On-demand or recurring operation
 
+During every run, prepare unfamiliar task sites through [the shared website procedure](../sites/README.md). The primary-board limit does not restrict encountered boards/destinations. Reuse actual observations and contexts, avoid mapping clearly excluded work, and validate current site/task/browser/session before sensitive actions. A new access file cannot clear a saved challenge. Keep early pre-profile handoffs Blocked without invented CV fields. Retain the single submitting worker and per-alert protected persistence; site preparation ownership is not application ownership.
+
 During onboarding follow [one focused decision at a time](../onboarding/focused-conversation.md); interval, missing timezone, optional limits and reporting are separate substeps. Reuse volunteered answers. A paused interview or unchanged unanswered question stays quiet and does not itself disable existing authorized work or schedules.
 
 During application onboarding, explicitly ask how often to check the task board: every 30 minutes, every hour, daily, a custom supported interval, or only when asked. Reuse an existing user choice. One recurring check-in checks both enabled intake sources—the selected alert inbox and manual To Do tasks—and resumes eligible Blocked work. This is not an email-only polling schedule.

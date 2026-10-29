@@ -4,6 +4,15 @@ Replace WORKING_ROOT with the actual private copy location when configuring a sc
 
 ~~~text
 Work in WORKING_ROOT.
+Before using an assigned website, follow automation/sites/README.md: distinguish
+tracking/provider hops from boards and employer tenants, adopt/create missing private
+context, and bind the task to observed site/browser/session. Keep encountered sites
+separate from primary onboarding boards. Use existing details to exclude clearly
+unsuitable work before mapping/login. Validate actual access before credentials,
+upload and submission with the shared site-action helpers. A new context file or
+hash change does not clear a saved challenge. Early pre-profile access handoffs
+remain Blocked without invented role/CV. Preserve all claims and protected alert
+artifacts; native browser tools follow the same prepare/observe/validate contract.
 Read AGENTS.md, SETUP.md, the local shared-progress counterpart when present,
 Job Context/README.md, Task Board/README.md, automation/README.md and
 Application Workflow/application-workflow.md. Follow the candidate's supplied
@@ -83,7 +92,7 @@ After the user returns, verify actual challenge completion, current fields/CV,
 session/vacancy and submission outcome; recover expired or headless/inaccessible
 sessions explicitly. Do not solve CAPTCHA automatically, change browsers to evade
 it or steal an active worker's browser. Recheck any known challenge immediately
-before submitting and use markSubmissionAttempted. Preserve uncertainty after an
+before submitting and use markSubmissionAttempted(task, root, currentPage). Preserve uncertainty after an
 attempted submit and investigate its result before another action. Helpers do not
 send notifications or keep a browser alive indefinitely.
 

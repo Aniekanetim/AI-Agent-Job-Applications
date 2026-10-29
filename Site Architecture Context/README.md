@@ -1,5 +1,7 @@
 # Site Architecture Context
 
+For an unfamiliar assigned site, use [automatic website preparation](../automation/sites/README.md). Register exact observed board/employer/tenant identity before discovery; inspect both this layer and its Job Context access path. Runtime scaffolds/maps/methods are private local files. Reuse an existing destination's canonical paths with parent references instead of copying its map. Direct employer tasks have an independent context root. A scaffold is unlearned; access, navigation and submission need their own actual observations.
+
 The agent maintains website knowledge here. [Human Job Context](../Job%20Context/README.md) supplies candidate facts, preferences and account instructions. Reusable navigation contains no candidate CV, password or invented screening answer.
 
 **Initial state:** the four job-board maps and their initial Playwright routines remain unlearned scaffolds. A [Tezza direct-application example](Direct%20applications/Tezza%20Business%20Solutions/architecture.md) records its publicly observed form and hCaptcha boundary; submission and draft recovery remain unlearned. Supported directory names are organizational starting points, not claims of working integration.

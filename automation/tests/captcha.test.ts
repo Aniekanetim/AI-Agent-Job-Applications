@@ -15,6 +15,7 @@ import { classifyMessage } from "../email/intake.js";
 import { loadInboxState, saveEmailRecord } from "../email/state-store.js";
 import { saveAlertArtifact } from "../email/artifact-store.js";
 import { evidenceFile } from "../email/evidence.js";
+import { readySite } from "./sites-fixture.js";
 
 const now = "2026-10-26T08:00:00.000Z", later = "2026-10-26T08:05:00.000Z";
 const jobUrl = "https://employer.example.invalid/jobs/synthetic-qa/apply";
@@ -84,13 +85,14 @@ test("a readiness reply alone, a different task/browser/session and stale eviden
   assert.equal(blocked().captchaHandoffs![0].state, "awaitingHuman");
 });
 
-test("human completion resumes through original intake and requires a fresh form review before submit", () => {
+test("human completion resumes through original intake and requires a fresh form review before submit", t => {
   const resumed = resolveCaptcha(blocked(), resolution());
   assert.equal(resumed.checkpoint, "working"); assert.equal(resumed.captchaHandoffs![0].state, "resolved");
   assert.doesNotThrow(() => assertTaskMove(resumed, "Blocked", "Email Alerts"));
   assert.throws(() => assertTaskMove(resumed, "Blocked", "Applied"));
   assert.throws(() => markSubmissionAttempted(resumed));
-  assert.equal(markSubmissionAttempted({ ...resumed, checkpoint: "prepared" }).checkpoint, "submissionAttempted");
+  const site = readySite(t, { ...resumed, checkpoint: "prepared" });
+  assert.equal(markSubmissionAttempted(site.task, site.root, site.page).checkpoint, "submissionAttempted");
   assert.throws(() => markSubmissionAttempted({ ...resumed, taskId: "", checkpoint: "prepared" }));
   assert.equal(canMarkApplied(resumed), false);
 });
@@ -168,7 +170,8 @@ test("one blocked CAPTCHA vacancy retains a four-job alert; resumption preserves
   assert.equal(canMarkApplied(forged.task), false);
   // Human completion and fresh review restore the original vacancy, role, CV and task ID.
   const restored = resolveCaptcha(bound.task, { ...resolution(), taskId: bound.task.taskId, jobUrl: v.postingUrl! });
-  const attempted = markSubmissionAttempted({ ...restored, checkpoint: "prepared" });
+  const site = readySite(t, { ...restored, checkpoint: "prepared" }, v.postingUrl!, f.root);
+  const attempted = markSubmissionAttempted(site.task, site.root, site.page);
   const rawOutcome = JSON.parse(readFileSync(resolve(f.root, v.outcomeEvidence!.path), "utf8"));
   bound.task = { ...attempted, checkpoint: "confirmed", confirmation: { reference: rawOutcome.confirmationReference, observedAt: rawOutcome.observedAt } };
   v.taskPath = originalAppliedPath;

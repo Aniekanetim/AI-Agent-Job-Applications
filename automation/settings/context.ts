@@ -5,6 +5,7 @@ import { validateOperatingPreferences } from "../scheduling/preferences.js";
 import { validateBrowserPreferences } from "../browser/preferences.js";
 import { validateConnection } from "../email/connection.js";
 import { type Setting } from "./catalog.js";
+import { loadSites } from "../sites/registry.js";
 
 export interface Role { id: string; path: string; label: string; enabled: boolean }
 export interface CurrentSetting { status: "saved" | "notConfigured" | "default"; text: string; path: string | null; sha256: string | null; fingerprint: string }
@@ -30,8 +31,10 @@ export function roles(root: string): Role[] {
   return found;
 }
 export function boardNames(root: string) { return loadProgress(root).state.boards.map(b => b.name); }
+export function siteChoices(root: string) { return loadSites(root).state.sites.map(s => ({ id: s.id, label: `${s.label} — ${s.origin}${s.scopePath === "/" ? "" : s.scopePath}` })); }
 export function targetPath(root: string, setting: Setting, roleId: string | null, board: string | null): string | null {
   if (setting.scope === "global") return setting.path;
+  if (setting.scope === "site") return loadSites(root).state.sites.find(s => s.id === board)?.accessPath ?? null;
   if (setting.scope === "role") {
     const role = roles(root).find(r => r.id === roleId && r.enabled);
     return role ? `${role.path}/${setting.path}` : null;

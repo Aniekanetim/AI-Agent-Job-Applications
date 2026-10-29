@@ -1,5 +1,7 @@
 # Application-site discovery workflow
 
+Before opening an unfamiliar assigned site or destination, follow [website preparation](../automation/sites/README.md). Adopt existing contexts or create missing private scaffolds with exact observed account boundaries. This is independent of the one to three onboarding primary boards. Tracking/provider hops are not board records. Create no map/login work for a vacancy already clearly excluded by actual instructions. A source requiring inspection can block before role selection through the pre-profile access handoff, without a fabricated CV. Folder creation never establishes access, mapping or challenge clearance.
+
 Discovery learns the website navigation needed to complete an application. Human Job Context supplies candidate facts and instructions; agent-maintained site knowledge records actual observations. During onboarding, the learning objective and checkpoint stay in private onboarding progress; during applications they stay on the existing task. Neither requires a separate discovery ticket or review gate.
 
 ## Onboarding discovery

@@ -10,6 +10,8 @@ For inbox work, follow [the email procedure](../automation/email/README.md#email
 
 ## 2. Select a role and establish fit
 
+Use the available alert/ticket details first. If reading the listing is necessary before a reliable role/fit decision, follow website preparation in step 3 and return here. An early security challenge can block access with no selected role/CV; do not invent those fields or authenticate/map an already clearly unsuitable vacancy.
+
 Read role-routing's local counterpart when present. Identify enabled profiles from title and responsibilities. Read only the relevant role profile, experience, preferences, answers, instructions and document index. Follow supplied overlap rules. Record the chosen role ID, context file versions and exact CV filename/version/hash.
 
 Evaluate hard constraints from actual candidate instructions. Distinguish required qualifications from desirable skills, and unknowns from demonstrated mismatches. Use a manual ticket's explicit instruction where applicable. Do not invent salary, work authorization, years of experience or a qualification to pass screening.
@@ -17,6 +19,10 @@ Evaluate hard constraints from actual candidate instructions. Distinguish requir
 An unsuitable/closed role can have a nonapplication disposition only under an applicable candidate instruction with its actual reason recorded. Email nonapplications remain lightweight entries in that message's progress record; they do not go to Applied. A manual task concluded under an explicit user rule stays in its original folder with that disposition and is no longer actionable. If disposition requires missing guidance, move the task to Blocked. No fifth folder is needed.
 
 ## 3. Open the listing and find the application route
+
+Follow [automatic website preparation](../automation/sites/README.md) for every actual source and destination, including boards outside onboarding choices. Inspect both context layers and register/adopt their canonical private paths with actual observations before interacting. Separate tracking and identity-provider hops from boards and employer/tenant boundaries. Direct employer tasks need no fabricated source. Exact reused destinations reference their existing knowledge. Use ensure/bind and actual access evidence; missing scaffolds alone are not a blocker or working integration. Save each transition/checkpoint through the existing task/protected email helpers. Before credentials or upload, call assertSiteAction with the just-inspected current page. Recheck after destination, browser, session or canonical access changes.
+
+If access fails before role/CV selection, preserve a siteAccess handoff under automation/sites/access-handoff.ts and move the same task to Blocked. Keep its email and report the human action once. New context files and readiness replies do not clear an observed challenge. Resume only after actual same-site/session/vacancy clearance checks; later form/CV challenges use the stricter CAPTCHA helper.
 
 Read the actual saved browser preference and operating limits before opening the form. Use the selected default for a new task. A known file-upload requirement starts this application in Playwright. Record default browser, active browser and the requirement on the existing task; do not change the global preference or create another ticket. If upload is discovered later, follow [the upload handoff](../automation/browser/upload-fallback.md). Verify the same vacancy/draft and authorized Playwright session before resuming, and finish that application in Playwright. The next task returns to the saved default. An actual denial or uncertain prior submission blocks a switch/retry.
 
@@ -39,6 +45,8 @@ For CAPTCHA, follow [human handoff](../automation/browser/captcha-handoff.md). S
 Use the selected role's [verification-access instructions](../automation/email/verification/README.md) for an email code, magic link or MFA challenge. The alert inbox may be unrelated. Save the checkpoint before a human handoff, verify actual sign-in success and resume the same task. Do not publish codes or signed links. Verify the designated upload version against the observed file-type/size rules and preview; preserve its original and exact version/hash.
 
 ## 5. Inspect, submit and verify
+
+Use markSubmissionAttempted(task, root, currentPage) with the current site binding, actual access report and just-inspected browser page. The helper refuses missing or changed site evidence and pending access handoffs in addition to the existing role/CV and uncertainty guards. Persist the returned state before acting. Legacy confirmed records stay historical; active legacy tasks prepare context before their next sensitive action.
 
 Before the final action, inspect candidate identity, role/profile, document preview/filename, required answers, employer/destination and any declaration. Check that acknowledgements can truthfully be made under the candidate instructions. Persist a Prepared checkpoint, re-inspect any known challenge immediately before the final action, then use markSubmissionAttempted from automation/workflow/application-state.ts and persist its result before submission. A pending CAPTCHA or unresolved blocker refuses submission. A missing hCaptcha widget on a known challenge page is not clearance; use assertCaptchaInspection from automation/browser/captcha-inspection.ts and the actual current observation.
 

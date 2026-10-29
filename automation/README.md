@@ -1,5 +1,7 @@
 # Automation components
 
+[Website preparation](sites/README.md) identifies encountered boards and employer tenants, creates missing private context, binds task/browser evidence and handles early access challenges. Its registry is separate from primary onboarding choices and protected email progress. Use `npm run sites -- help` for agent commands; native browser tools follow the same documented contract.
+
 A file- and browser-capable AI agent runs the [application workflow](../Application%20Workflow/application-workflow.md). This folder supplies utilities, state examples and a scheduled check-in prompt that support its work. Shared email intake uses the selected host connection or AgentMail; website navigation, candidate onboarding and task progress have separate responsibilities. This repository starts no background worker or schedule.
 
 ## What runs where

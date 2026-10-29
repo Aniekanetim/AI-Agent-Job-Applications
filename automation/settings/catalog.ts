@@ -8,7 +8,7 @@ export const areas = [
 ] as const;
 export type AreaId = typeof areas[number]["id"];
 export interface Setting {
-  id: string; area: AreaId; label: string; scope: "global" | "role" | "board";
+  id: string; area: AreaId; label: string; scope: "global" | "role" | "board" | "site";
   path: string; field?: string; procedure: string; prompt: string;
 }
 export const settings: Setting[] = [
@@ -23,6 +23,7 @@ export const settings: Setting[] = [
   { id: "boards", area: "connections", label: "Primary job boards", scope: "global", path: ".local/onboarding-state.json", field: "boards", procedure: "onboarding:start", prompt: "Which one to three primary job boards should I prepare?" },
   { id: "intake", area: "connections", label: "Task intake sources", scope: "global", path: ".local/onboarding-state.json", field: "scope", procedure: "onboarding:start", prompt: "Should I use email alerts, manual tasks, or both?" },
   { id: "board-access", area: "connections", label: "Job-board account access", scope: "board", path: "access-and-instructions.local.md", procedure: "job-board authentication setup and focused response", prompt: "What account access or sign-in instruction should change? Do not send a password in chat." },
+  { id: "site-access", area: "connections", label: "Encountered websites and employer access", scope: "site", path: "access-and-instructions.local.md", procedure: "registered website access and focused response; recheck affected task access", prompt: "What access instruction should change for this website? Do not send a password in chat." },
   { id: "email", area: "connections", label: "Email account and alert scope", scope: "global", path: ".local/email-connection.json", field: "source", procedure: "email:select / shared email onboarding", prompt: "Which email connection or alert scope would you like to use?" },
   { id: "cleanup", area: "connections", label: "Completed-alert handling", scope: "global", path: ".local/email-connection.json", field: "cleanup", procedure: "email:cleanup / protected connection store", prompt: "How should fully handled job-alert emails be treated?" },
   { id: "default-browser", area: "browser", label: "Default browser", scope: "global", path: ".local/browser-preferences.json", field: "choice", procedure: "onboarding:browser", prompt: "Which browser should I use by default?" },

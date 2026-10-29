@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { areas, settings, settingById } from "./catalog.js";
-import { currentSetting, roles, boardNames, containedFile, type CurrentSetting } from "./context.js";
+import { currentSetting, roles, boardNames, siteChoices, containedFile, type CurrentSetting } from "./context.js";
 import { loadMenu, menuFile, type MenuState } from "./state.js";
 import { savePrivateJson } from "../workflow/private-json.js";
 import { withWriteOwnership } from "../workflow/ownership.js";
@@ -36,8 +36,8 @@ function enteredEdit(root: string, s: MenuState) {
     if (!available.some(r => r.id === s.roleId)) s.roleId = available.length === 1 ? available[0].id : null;
     if (available.length > 1 && !s.roleId) { s.phase = "role"; return; }
   }
-  if (setting.scope === "board") {
-    const available = boardNames(root);
+  if (setting.scope === "board" || setting.scope === "site") {
+    const available = setting.scope === "site" ? siteChoices(root).map(s => s.id) : boardNames(root);
     if (!available.includes(s.board ?? "")) s.board = available.length === 1 ? available[0] : null;
     if (available.length > 1 && !s.board) { s.phase = "board"; return; }
   }
@@ -66,8 +66,8 @@ export function settingsView(root: string, s = loadMenu(root).state): MenuView {
   if (s.phase === "root") view.options = [...areas.map(a => ({ ...a })), { id: "close", label: "Close settings" }];
   else if (s.phase === "role") view = { ...view, title: areaLabel(s), question: "Which role profile should this change apply to?",
     options: roles(root).filter(r => r.enabled).map(r => ({ id: r.id, label: r.label })) };
-  else if (s.phase === "board") view = { ...view, title: areaLabel(s), question: "Which job board should this change apply to?",
-    options: boardNames(root).map(name => ({ id: name, label: name })) };
+  else if (s.phase === "board") view = { ...view, title: areaLabel(s), question: "Which website should this change apply to?",
+    options: settingById(s.settingId!).scope === "site" ? siteChoices(root) : boardNames(root).map(name => ({ id: name, label: name })) };
   else if (s.phase === "area") view = { ...view, title: areaLabel(s), question: "Which setting would you like to change?",
     options: settings.filter(v => v.area === s.area).map(v => {
       const current = currentSetting(root, v, s.roleId, s.board);
@@ -78,7 +78,7 @@ export function settingsView(root: string, s = loadMenu(root).state): MenuView {
     const setting = settingById(s.settingId!), current = currentSetting(root, setting, s.roleId, s.board);
     view = { ...view, title: `${areaLabel(s)} / ${setting.label}`, question: s.clarification?.prompt ?? setting.prompt, input: "answer", current,
       procedure: setting.procedure, field: setting.field, roleId: setting.scope === "role" ? s.roleId : null };
-    if (current.path === null) view = { ...view, question: setting.scope === "role" ? "Configure a role profile before changing this setting." : "Choose your primary job boards before changing account access.",
+    if (current.path === null) view = setting.scope === "site" ? { ...view, question: "No encountered website is registered yet. The agent prepares one when an assigned task reaches it.", input: "none", options: [] } : { ...view, question: setting.scope === "role" ? "Configure a role profile before changing this setting." : "Choose your primary job boards before changing account access.",
       input: "choice", options: [{ id: "configure", label: setting.scope === "role" ? "Configure role profiles" : "Choose primary job boards" }] };
     view.options.push({ id: "cancel", label: "Cancel this edit" });
   }

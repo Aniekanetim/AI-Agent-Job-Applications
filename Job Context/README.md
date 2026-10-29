@@ -1,5 +1,7 @@
 # Job Context
 
+Assigned boards and employer destinations can be added after onboarding through [website preparation](../automation/sites/README.md). Their private access instructions stay distinct from candidate facts and learned navigation. Primary-board choices do not limit this registry. Users can update registered access conversationally or through Open settings without manually editing files. New context is not proof that an existing access blocker is resolved.
+
 You supply candidate facts and application instructions through your CVs and conversation. [Onboarding](../Application%20Workflow/onboarding-workflow.md) lets the agent record and maintain those answers here without manual file editing. The agent maintains website observations separately in [Site Architecture Context](../Site%20Architecture%20Context/README.md). Observed website behavior cannot invent a candidate answer or change a preference.
 
 **State:** templates only. No candidate identity, CV, enabled role or platform access has been supplied.
