@@ -136,6 +136,18 @@ Respect other workers' claims and preserve task history through moves.
 Update shared progress only for material changes. With no actionable or changed
 work, leave files unchanged. Apply saved operating limits and reporting mode. Report meaningful confirmed
 applications, new blockers or required actions; do not invent execution or create empty-run updates.
+
+Task lifecycle follows automation/workflow/task-lifecycle.md. Cancelled and Deferred
+are inactive statuses, not intake sources. Do not traverse them or inspect their
+context for changes during routine pickup. A user-moved Deferred ticket in To Do
+resumes its same assignment through the selected-ticket pickup helper. Cancelled
+requires an explicit restore. Bind the active ticket before browser work, persist
+stop requests for owned actions and use native task-action authorize/invoke/observe
+around sensitive browser calls. Never conclude cancellation from an uncertain
+submission. Deferred siblings retain source alerts; cancelled outcomes need actual
+decision and cleanup authority before source cleanup. Preserve existing operating
+mode and do not create a schedule as part of a task-status change.
+
 ~~~
 
 While an interactive settings menu is open, preserve its checkpoint and leave its unchanged question quiet. Do not open or answer it on the user's behalf. Its saved settings still use the existing eligibility, active-task and pending-cleanup rules.

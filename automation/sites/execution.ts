@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { ApplicationTask } from "../workflow/application-state.js";
+import { assertTaskActive } from "../workflow/task-control.js";
 import type { BrowserBackend } from "../browser/preferences.js";
 import { loadSites, matchesSite, type SiteRecord } from "./registry.js";
 import { checkSiteEvidence, siteEvidence, siteFile, type SiteEvidence } from "./files.js";
@@ -55,6 +56,7 @@ export function recordSiteAccess(root: string, task: ApplicationTask, evidence: 
 }
 /** Call with the just-inspected actual browser page immediately before each sensitive action. */
 export function assertSiteAction(root: string, task: ApplicationTask, page: SitePage, action: SiteAction) {
+  assertTaskActive(root, task);
   const { binding, site } = registered(root, task);
   if (!["working", "prepared"].includes(task.checkpoint) || action !== "credentials" && (!task.selectedRoleId?.trim() || !task.cvVersion?.trim() || !/^[a-f0-9]{64}$/i.test(task.cvSha256 ?? ""))) throw new Error("Preserve submission recovery; select the factual role/CV before upload or final submission.");
   if (task.browserExecution?.activeBrowser !== binding.browser || page.browser !== binding.browser || page.sessionReference !== binding.sessionReference || page.url !== binding.url || !matchesSite(site, page.url) ||

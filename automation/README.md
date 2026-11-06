@@ -122,7 +122,7 @@ The source layout is separate from private runtime storage:
 | `.local/email-host-connections.json` | Actual account metadata, tool references and observed authentication status |
 | `.local/email-onboarding.json` | Provider choice, explicit deferral and sign-in/resumption checkpoint |
 | `.local/email-capabilities*.json` | Actual interactive and separately verified scheduled-tool evidence |
-| `.local/inbox-state.json` | Schema-2 classifications, vacancy/task associations, retained-message markers and cleanup checkpoints |
+| `.local/inbox-state.json` | Versioned classifications (legacy schema 2; lifecycle schema 3), vacancy/task associations, retained-message markers and cleanup checkpoints |
 | `.local/onboarding-state.json` | Schema-3 steps, selected-board access/mapping, pending/deferred questions and resumption point |
 | `.local/browser-readiness.json` | Actual local CLI check and runtime fingerprint |
 | `.local/browser/cli.config.json` | Private CLI browser/output configuration |
@@ -136,7 +136,7 @@ Preserve these locations and existing values when updating the package. Reuse an
 
 When recurring operation is explicitly selected during onboarding or later, configure the selected agent environment's existing scheduler with [check-in-prompt.md](scheduling/check-in-prompt.md), the actual project root, requested interval and timezone. No schedule is configured by this package. A scheduler starts the agent's check-in; it does not install browser or inbox capabilities.
 
-Each check-in resumes eligible work, reads new intake, checks resolved blockers and retries eligible email cleanup. It resumes onboarding only for a relevant gap or actual answer, without repeating unchanged questions or introducing review gates. Read saved step/board progress, check changed references and runtime, and preserve partial preparation. An unrelated deferred board does not block eligible work on a prepared one. With no actionable work or changed dependency, leave files unchanged. Notify only meaningful applications, new blockers, failures or changes where the scheduler supports quiet results. Record the actual schedule identity and cadence privately.
+Each check-in resumes eligible work, reads new intake, picks up user-requeued tasks in To Do and retries eligible email cleanup. It resumes onboarding only for a relevant gap or actual answer, without repeating unchanged questions or introducing review gates. Read saved step/board progress, check changed references and runtime, and preserve partial preparation. An unrelated deferred board does not block eligible work on a prepared one. With no actionable work or changed dependency, leave files unchanged. Notify only meaningful applications, new blockers, failures or changes where the scheduler supports quiet results. Record the actual schedule identity and cadence privately.
 
 ## Browser choice and readiness components
 
@@ -157,3 +157,7 @@ For later configuration changes or interrupted setup, follow [settings and resum
 ## Settings menu
 
 [Interactive settings](settings/README.md) explicitly handles **Open settings**. `npm run settings` supplies the menu model; the agent presents it through native choices or numbered conversation, then uses existing save/verification helpers. Only navigation and pending-save references live in `.local/settings-menu.json`; actual values remain in their current private files.
+
+## Application task lifecycle
+
+Use [task lifecycle](workflow/task-lifecycle.md) and `npm run tasks -- help` for guarded cancellation, deferral, recovery and restoration of a selected ticket. Cancelled and Deferred are private inactive board folders; normal intake still reads only Email Alerts and To Do. Task cancellation is unrelated to cancelling an email-cleanup attempt.

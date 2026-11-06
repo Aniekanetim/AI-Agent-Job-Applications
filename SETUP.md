@@ -112,3 +112,14 @@ The agent reuses existing answers and asks only for missing choices. In-app stay
 The original CV remains unchanged. When its format is unsuitable for upload, the agent uses available document tools to prepare and inspect a factual rendition, recording its original/version/hash in the role's existing Documents index. A readable TXT file may populate a profile while PDF/DOCX preparation remains unfinished. Actual portal restrictions are checked when observed.
 
 Onboarding establishes application-email verification access, OTP/MFA resumption, limits and reporting. Explicitly choose the task-board check-in interval (for example hourly, daily or a custom supported interval), or on-demand use, under [schedule setup](automation/scheduling/README.md); recurring readiness needs actual scheduled-environment access, not only interactive success. Progress shows required preparation, explicit boundaries and the first-task action. Older state formats migrate without discarding supplied information or inventing the browser/schedule choice.
+
+## Task lifecycle updates
+
+The six board folders are Email Alerts, To Do, Blocked, Applied, Cancelled and
+Deferred. All real tickets remain ignored; only directory placeholders are public.
+Existing tickets need no bulk migration. [Lifecycle helpers](automation/workflow/task-lifecycle.md)
+preserve source identity and checkpoints when a selected task is cancelled,
+deferred or explicitly restored. The current operating cadence is independent of
+these statuses. Deploy a compatible reader before using new lifecycle records;
+do not run older code against the upgraded inbox format or restore a stale ledger
+over later applications/cleanup receipts.

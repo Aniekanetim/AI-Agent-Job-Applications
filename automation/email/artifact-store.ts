@@ -2,17 +2,20 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync, renam
 import { resolve, relative, isAbsolute, dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { acquireOwnership } from "../workflow/ownership.js";
+import { acquireOwnership, assertOperationOwnership, type Ownership } from "../workflow/ownership.js";
 import { loadInboxState, alertOwnershipKey } from "./state-store.js";
 import { messageKey, type EmailIdentity } from "./intake.js";
 import { digest, evidenceFile } from "./evidence.js";
+import { ticketFolder } from "../workflow/board.js";
 
 /** Commit staged alert artifacts through the same ownership boundary as progress. */
-export function saveAlertArtifact(root: string, identity: EmailIdentity, name: string, bytes: Buffer, expectedSha256: string | null) {
-  const key = messageKey(identity), task = /^Task Board\/(Email Alerts|To Do|Applied|Blocked)\/[^/\\]+\.md$/.test(name);
+export function saveAlertArtifact(root: string, identity: EmailIdentity, name: string, bytes: Buffer, expectedSha256: string | null, owned?: Ownership) {
+  const key = messageKey(identity), task = /^Task Board\/(Email Alerts|To Do|Applied|Blocked|Cancelled|Deferred)\/[^/\\]+\.md$/.test(name);
+  if (task) ticketFolder(name);
   if (isAbsolute(name) || name.split(/[\\/]/).includes("..") || !(name.startsWith(`.local/alerts/${key}/`) || task)) throw new Error("Use this exact alert's private evidence namespace or its associated task path.");
-  const owner = acquireOwnership(root, alertOwnershipKey(identity));
+  const owner = owned ?? acquireOwnership(root, alertOwnershipKey(identity));
   try {
+    assertOperationOwnership(root, alertOwnershipKey(identity), owner);
     const record = loadInboxState(root).state.messages.find(r => messageKey(r.identity) === messageKey(identity));
     if (!record || record.cleanupState === "cleanupPending") throw new Error("Keep pending cleanup evidence unchanged; preserve the proposed artifact separately until recovery.");
     if (task && !record.vacancies.some(v => v.taskPath === name || v.taskEvidence?.path === name)) throw new Error("Save this alert's task-path association before writing its ticket.");
@@ -31,5 +34,5 @@ export function saveAlertArtifact(root: string, identity: EmailIdentity, name: s
       if (process.platform !== "win32") { const fd = openSync(dirname(path), "r"); try { fsyncSync(fd); } finally { closeSync(fd); } }
     } finally { if (existsSync(temp)) unlinkSync(temp); }
     return evidenceFile(root, name);
-  } finally { owner.release(); }
+  } finally { if (!owned) owner.release(); }
 }

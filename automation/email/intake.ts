@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { messageReadyForDeletion, type MessageProgress } from "../workflow/application-state.js";
+import { validateDecision } from "../workflow/board.js";
 import { sourceKey, validateSource, validateCleanup, type EmailSource, type CleanupChoice } from "./connection.js";
 
 export interface EmailIdentity { source: EmailSource; messageId: string }
@@ -30,7 +31,7 @@ export interface EmailRecord extends Omit<MessageProgress, "cleanupState"> {
     native?: { ownerId: string; token: string; phase: "prepared" | "invoked" | "inspect"; round: number; lastObservation?: import("./evidence.js").FileEvidence } };
   [key: string]: unknown;
 }
-export interface InboxState { schemaVersion: 2; messages: EmailRecord[]; [key: string]: unknown }
+export interface InboxState { schemaVersion: 2 | 3; messages: EmailRecord[]; [key: string]: unknown }
 export const terminalCleanup = (record: EmailRecord) => ["deleted", "retained", "archived", "labeled"].includes(record.cleanupState);
 export function messageKey(identity: EmailIdentity): string {
   if (!identity?.messageId?.trim()) throw new Error("Use the provider's actual message ID.");
@@ -67,7 +68,11 @@ export function validateRecord(record: EmailRecord): void {
     !Number.isInteger(owner.round) || owner.round < 0 || !/^[a-f0-9]{64}$/.test(record.cleanupAttempt!.workDigest ?? ""))) throw new Error("Preserve the native owner and reconcile its incomplete checkpoint.");
   const keys = new Set<string>();
   for (const vacancy of record.vacancies) {
-    if (!vacancy.vacancyKey?.trim() || keys.has(vacancy.vacancyKey) || !["pending", "blocked", "applied", "notApplicable"].includes(vacancy.disposition)) throw new Error("Preserve distinct, identified vacancy checkpoints.");
+    if (!vacancy.vacancyKey?.trim() || keys.has(vacancy.vacancyKey) || !["pending", "blocked", "applied", "notApplicable", "cancelled", "deferred"].includes(vacancy.disposition)) throw new Error("Preserve distinct, identified vacancy checkpoints.");
+    if (["cancelled", "deferred"].includes(vacancy.disposition)) {
+      validateDecision(vacancy.decision!);
+      if (!vacancy.taskId || !vacancy.taskPath || vacancy.decision!.to !== (vacancy.disposition === "cancelled" ? "Cancelled" : "Deferred")) throw new Error("Bind the decision to its existing ticket.");
+    }
     keys.add(vacancy.vacancyKey);
   }
   if (c.kind !== "jobAlert" && record.vacancies.length) throw new Error("Unrelated correspondence is not an application assignment.");
@@ -81,7 +86,8 @@ export function validateRecord(record: EmailRecord): void {
 }
 export function validateInboxState(value: unknown): asserts value is InboxState {
   const state = value as InboxState;
-  if (!state || state.schemaVersion !== 2 || !Array.isArray(state.messages)) throw new Error("Unknown inbox progress format; preserve it for investigation.");
+  if (!state || ![2, 3].includes(state.schemaVersion) || !Array.isArray(state.messages)) throw new Error("Unknown inbox progress format; preserve it for investigation.");
+  if (state.schemaVersion === 2 && state.messages.some(r => r.vacancies?.some(v => ["cancelled", "deferred"].includes(v.disposition)))) throw new Error("New task dispositions require inbox schema 3; preserve legacy records unchanged.");
   const seen = new Set<string>();
   for (const record of state.messages) {
     validateRecord(record); const key = messageKey(record.identity);
@@ -100,5 +106,8 @@ export function intakeDecision(record: EmailRecord | undefined, header: MailHead
   if (terminalCleanup(record)) return changed ? "reviewChangedCompleted" as const : "skip" as const;
   if (record.classification.kind !== "jobAlert") return changed ? "classify" as const : "skip" as const;
   // Resume existing assignments even if intake filters changed; never create them twice.
-  return alertWorkComplete(record) ? "cleanupOnly" as const : "resume" as const;
+  if (record.vacancies.some(v => v.taskTransition)) return "waiting" as const;
+  if (alertWorkComplete(record)) return "cleanupOnly" as const;
+  if (record.enumerationComplete && !record.vacancies.some(v => v.disposition === "pending")) return "waiting" as const;
+  return "resume" as const;
 }

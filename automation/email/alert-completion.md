@@ -144,7 +144,7 @@ A confirmed cleanup saves its receipt and releases the claim. The claim and sing
 
 ## 5. Recover without applying again
 
-The schema-2 ledger keeps a protocol-2 cleanup attempt with a stable reference, sealed work/connection digests, phase, invocation round and append-only invocation/observation history. Pending cleanup never becomes ordinary editable work through a save. Its phases are prepared, invoked, inspection required and complete; they are internal checkpoints, not new board folders.
+The versioned ledger keeps a protocol-2 cleanup attempt with a stable reference, sealed work/connection digests, phase, invocation round and append-only invocation/observation history. Pending cleanup never becomes ordinary editable work through a save. Its phases are prepared, invoked, inspection required and complete; they are internal checkpoints, not new board folders.
 
 ```shell
 npm run email:work -- status --message-key MESSAGE_KEY
@@ -177,3 +177,26 @@ Claims coordinate workers sharing this working copy on one local filesystem. Two
 Schema-2 ledgers remain readable. Existing completed markers and receipts are retained, including legacy provenance. Active records without source inventories or file bindings need reconciliation before new cleanup. Legacy pending records retain their original identity, unknown fields and timestamps; protocol metadata is adopted under ownership and their previous outcome is inspected before any new invocation. Missing information stays unresolved. If an old record has conflicting attempt/state/action metadata, preserve it for investigation rather than treating it as a fresh operation. Attach evidence to their existing task IDs and outcomes; do not create replacement applications. Missing old source/evidence is a dependency, not permission to guess or delete.
 
 Full bodies and detailed evidence stay in ignored `.local/alerts/`; the compact inbox ledger holds references and hashes. Claims are ignored `.local/ownership/` files. Preserve these with unfinished work when relocating, stop the old worker and revalidate access on the destination. Keep candidate documents, credentials and browser sessions private and unchanged.
+
+## Cancelled and Deferred vacancy tasks
+
+Use [task lifecycle](../workflow/task-lifecycle.md) and the guarded task transition
+helper. Deferred is unresolved and prevents cleanup. Cancelled is distinct from
+Applied and from a lightweight preference exclusion. A cancellation outcome has
+schemaVersion 2, kind cancelled, the exact message/vacancy/task identity, actual
+decision and authority, preserved task state, immutable ticketSnapshot and explicit
+cleanupAuthority. The verifier checks its structured source-bound snapshot and
+actual hashes. No confirmation is invented. Existing applied/notApplicable
+schemaVersion-1 outcomes remain valid.
+
+The selected transition upgrades only the versioned container as needed and leaves
+unrelated messages/evidence intact. Ordinary record saves cannot undo Cancelled or
+Deferred decisions or erase an unfinished task-transition marker. Recover the
+selected journal first. Native email-cleanup cancellation and task cancellation
+are separate operations.
+
+If cleanup authority does not cover cancelled vacancies, retain the alert and
+record the specific policy dependency once. Never silently broaden deletion scope.
+After completed cleanup, an explicit task restoration preserves the original
+message's completed receipt and immutable outcome, records the reactivated cycle
+under the same task ID/control, and does not invoke cleanup again.

@@ -26,7 +26,9 @@ async function main() {
     round: record.cleanupAttempt?.round ?? null, nativeOwner: record.cleanupState === "cleanupPending" && record.cleanupAttempt?.native ? { ownerId: record.cleanupAttempt.native.ownerId, token: record.cleanupAttempt.native.token } : null,
     vacancies: { total: record.vacancies.length, applied: record.vacancies.filter(v => v.disposition === "applied").length,
       blocked: record.vacancies.filter(v => v.disposition === "blocked").length, pending: record.vacancies.filter(v => v.disposition === "pending").length,
-      excluded: record.vacancies.filter(v => v.disposition === "notApplicable").length },
+      excluded: record.vacancies.filter(v => v.disposition === "notApplicable").length,
+      cancelled: record.vacancies.filter(v => v.disposition === "cancelled").length,
+      deferred: record.vacancies.filter(v => v.disposition === "deferred").length },
     next: record.cleanupState === "cleanupPending" ? "Resume the owning cleanup attempt; preserve rejected work proposals." : "Resume eligible work under the application workflow." };
   if (command === "artifact") return saveAlertArtifact(root, record.identity, option("destination"), readEvidence(root, evidenceFile(root, option("file"))), option("expected-sha") === "absent" ? null : option("expected-sha"));
   if (command === "reconcile") {

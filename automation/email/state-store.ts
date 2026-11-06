@@ -19,7 +19,7 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 const controls = (r: EmailRecord) => [r.cleanupState, r.cleanupAction, r.cleanupAttempt, r.cleanupReceipt, r.cleanupHistory];
 export type CleanupTransition = "prepare" | "recover" | "inspect" | "invoke" | "complete" | "cancel";
 type WriteContext = { claims: Map<string, Ownership> } & (
-  { kind: "work" } | { kind: "cleanup"; key: string; transition: CleanupTransition } |
+  { kind: "work" } | { kind: "task"; key: string; transitionId: string } | { kind: "cleanup"; key: string; transition: CleanupTransition } |
   { kind: "migration"; source: EmailSource; policy: string; now: string });
 function claimChanges<T>(root: string, keys: string[], run: (claims: Map<string, Ownership>) => T): T {
   const claims = new Map<string, Ownership>();
@@ -43,13 +43,15 @@ const writeInbox = protectedJsonWriter<WriteContext>(".local/inbox-state.json", 
     return;
   }
   const before = raw ?? { schemaVersion: 2, messages: [] }; validateInboxState(before);
+  if (before.schemaVersion === 3 && value.schemaVersion !== 3) throw new Error("Do not downgrade lifecycle-aware inbox data.");
   for (const old of before.messages) {
     const next = value.messages.find(r => messageKey(r.identity) === messageKey(old.identity));
-    if (!next) throw new Error("Preserve existing message progress and completed markers."); preserveRecord(old, next);
+    if (!next) throw new Error("Preserve existing message progress and completed markers."); preserveRecord(old, next, context.kind === "task" && context.key === messageKey(old.identity) ? context.transitionId : undefined);
   }
   for (const next of value.messages) {
     const key = messageKey(next.identity), old = before.messages.find(r => messageKey(r.identity) === key);
     if (same(old, next)) continue;
+    if (!old && context.kind === "work" && next.vacancies.some(v => ["cancelled", "deferred"].includes(v.disposition))) throw new Error("Use a guarded task transition for inactive dispositions.");
     assertOperationOwnership(root, alertOwnershipKey(next.identity), context.claims.get(key)!);
     if (context.kind === "cleanup") {
       if (!old || key !== context.key) throw new Error("A cleanup transition may change only its owned alert.");
@@ -127,15 +129,18 @@ function validateCleanupTransition(old: EmailRecord, next: EmailRecord, transiti
 export function migrateStoredInbox(root: string, source: EmailSource, policy: string, now: string) {
   const loaded = readPrivateJson(root, ".local/inbox-state.json");
   if (loaded.data === null) return false;
-  if ((loaded.data as InboxState).schemaVersion === 2) { validateInboxState(loaded.data); return false; }
+  if ([2, 3].includes((loaded.data as InboxState).schemaVersion)) { validateInboxState(loaded.data); return false; }
   const migrated = migrateInboxState(loaded.data, source, policy, now);
   return claimChanges(root, migrated.messages.map(r => messageKey(r.identity)), claims => writeInbox(root, migrated, loaded.revision, { kind: "migration", claims, source, policy, now }));
 }
-function preserveRecord(old: EmailRecord, record: EmailRecord) {
+function preserveRecord(old: EmailRecord, record: EmailRecord, transitionId?: string) {
   if (["deleted", "retained", "archived", "labeled"].includes(old.cleanupState) &&
     (record.cleanupState !== old.cleanupState || JSON.stringify(record.cleanupReceipt) !== JSON.stringify(old.cleanupReceipt))) throw new Error("Preserve the completed message marker and cleanup history.");
   for (const previous of old.vacancies) {
     const next = record.vacancies.find(v => v.vacancyKey === previous.vacancyKey);
+    if (next && !same(previous, next) && [previous.disposition, next.disposition].some(d => ["cancelled", "deferred"].includes(d)) && !transitionId) throw new Error("Use the guarded task transition to change Cancelled or Deferred work.");
+    if (next && (previous.taskTransition || next.taskTransition) && !same(previous, next) &&
+      (!transitionId || [previous.taskTransition, next.taskTransition].some(id => id && id !== transitionId))) throw new Error("Recover the owned task transition before changing this vacancy.");
     if (!next || (previous.taskId && previous.taskId !== next.taskId) ||
       (previous.postingUrl && previous.postingUrl !== next.postingUrl) ||
       (previous.disposition === "applied" && (next.disposition !== "applied" || next.confirmationReference !== previous.confirmationReference))) throw new Error("Preserve existing vacancy, posting, task and confirmation identities.");
@@ -150,11 +155,23 @@ export function saveEmailRecord(root: string, record: EmailRecord, expectedRevis
     preserveRecord(old, record);
     loaded.state.messages[index] = { ...old, ...record };
   }
+  if (record.vacancies.some(v => ["cancelled", "deferred"].includes(v.disposition))) loaded.state.schemaVersion = 3;
   return saveInboxState(root, loaded.state, loaded.revision);
+}
+/** Task moves hold the same alert claim through ticket, evidence and pointer persistence. */
+export function saveTaskEmailRecord(root: string, record: EmailRecord, expectedRevision: string | null, owner: Ownership, transitionId: string) {
+  assertOperationOwnership(root, alertOwnershipKey(record.identity), owner);
+  const loaded = loadInboxState(root), key = messageKey(record.identity);
+  if (loaded.revision !== expectedRevision || !transitionId.trim()) throw new Error("Reload task transition progress before saving.");
+  const index = loaded.state.messages.findIndex(r => messageKey(r.identity) === key);
+  if (index < 0) throw new Error("Preserve the existing source assignment.");
+  loaded.state.messages[index] = record;
+  loaded.state.schemaVersion = 3;
+  return writeInbox(root, loaded.state, expectedRevision, { kind: "task", key, transitionId, claims: new Map([[key, owner]]) });
 }
 export function migrateInboxState(value: unknown, source: EmailSource, policyReference: string, now: string): InboxState {
   const old = value as { schemaVersion?: number; messages?: unknown[]; [key: string]: unknown };
-  if (old?.schemaVersion === 2) { validateInboxState(old); return structuredClone(old); }
+  if (old?.schemaVersion === 2 || old?.schemaVersion === 3) { validateInboxState(old); return structuredClone(old); }
   if (old?.schemaVersion !== 1 || !Array.isArray(old.messages) || !policyReference.trim() || source.provider !== "agentmail" || source.transport !== "agentmail") throw new Error("Legacy email progress needs its actual AgentMail source and existing cleanup instruction.");
   const action: CleanupChoice = { mode: "delete", effect: "permanentDelete", labelId: null, sourceReference: policyReference };
   const messages = old.messages.map(value => {

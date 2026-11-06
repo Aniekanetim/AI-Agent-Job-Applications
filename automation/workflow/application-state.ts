@@ -4,9 +4,11 @@ import type { AccessHandoff } from "../sites/access-handoff.js";
 import { assertSiteAction, type SiteExecution, type SitePage } from "../sites/execution.js";
 import { inventoryPostings, postingUrl, type AlertInventory } from "../email/inventory-shape.js";
 import type { FileEvidence } from "../email/evidence.js";
+import { ticketFolder, validateDecision, type TaskDecision } from "./board.js";
+import type { BoardFolder, IntakeFolder } from "./board.js";
+import { recordTaskCheckpoint } from "./task-control.js";
+export type { BoardFolder, IntakeFolder } from "./board.js";
 /** Local integrity checks; these do not establish that external evidence is true. */
-export type IntakeFolder = "Email Alerts" | "To Do";
-export type BoardFolder = IntakeFolder | "Blocked" | "Applied";
 
 export interface Blocker {
   kind?: "captcha" | "siteAccess";
@@ -33,11 +35,15 @@ export interface ApplicationTask {
   siteExecution?: SiteExecution;
   siteHistory?: SiteExecution[];
   accessHandoffs?: AccessHandoff[];
+  decisions?: TaskDecision[];
+  ticket?: FileEvidence;
+  /** An actual same-vacancy observation, never an inferred failure after a timeout. */
+  submissionResolution?: { state: "notSubmitted"; evidence: FileEvidence };
 }
 
 export interface VacancyProgress {
   vacancyKey: string;
-  disposition: "pending" | "blocked" | "applied" | "notApplicable";
+  disposition: "pending" | "blocked" | "applied" | "notApplicable" | "cancelled" | "deferred";
   taskId?: string | null;
   taskPath?: string | null;
   confirmationReference?: string | null;
@@ -47,6 +53,9 @@ export interface VacancyProgress {
   postingUrl?: string;
   taskEvidence?: FileEvidence;
   outcomeEvidence?: FileEvidence;
+  decision?: TaskDecision;
+  taskTransition?: string;
+  cancellationCleanupAuthority?: FileEvidence;
 }
 
 export interface MessageProgress {
@@ -76,9 +85,23 @@ export function canMarkApplied(task: ApplicationTask): boolean {
 }
 
 export function assertTaskMove(
-  task: ApplicationTask, from: BoardFolder, to: BoardFolder,
+  task: ApplicationTask, from: BoardFolder, to: BoardFolder, decision?: TaskDecision,
 ): void {
   if (from === "Applied") throw new Error("An Applied task is not active intake.");
+  if (!["Blocked", "To Do", "Cancelled", "Deferred"].includes(from) && from !== task.originalIntake) throw new Error("Preserve the original source; resumed work is queued in To Do.");
+  if (to === "Cancelled" || to === "Deferred" || from === "Cancelled" || from === "Deferred") {
+    if (!decision) throw new Error("An inactive-task transition requires an explicit saved decision.");
+    validateDecision(decision);
+    if (decision.from !== from || decision.to !== to || from === to ||
+      task.checkpoint === "confirmed" || task.confirmation ||
+      task.checkpoint === "submissionAttempted" && task.submissionResolution?.state !== "notSubmitted") {
+      throw new Error("Preserve confirmed or uncertain submissions; reconcile their outcome before changing this task.");
+    }
+    if (from === "Cancelled" && decision.action !== "restore" || from === "Deferred" && to === "To Do" && decision.action !== "resume") {
+      throw new Error("Explicitly restore or resume the existing task in To Do.");
+    }
+    return;
+  }
   if (from !== "Blocked" && from !== "To Do" && from !== task.originalIntake) {
     throw new Error("Preserve the original source; resumed work is queued in To Do.");
   }
@@ -114,7 +137,9 @@ export function markSubmissionAttempted(task: ApplicationTask, root?: string, cu
   }
   if (!root || !currentPage) throw new Error("Inspect the current page and validate its registered site context before a new submission attempt. Historical confirmed records remain intact.");
   assertSiteAction(root, task, currentPage, "submit");
-  return { ...structuredClone(task), checkpoint: "submissionAttempted" };
+  const next: ApplicationTask = { ...structuredClone(task), checkpoint: "submissionAttempted" };
+  recordTaskCheckpoint(root, next);
+  return next;
 }
 
 function isAppliedRecord(path: string | null | undefined): boolean {
@@ -134,6 +159,7 @@ export function messageReadyForDeletion(message: MessageProgress): boolean {
   if (!postings || postings.size !== keys.length || keys.some(key => !postings.has(key))) return false;
   const taskIds = new Set<string>(), taskPaths = new Set<string>(), outcomes = new Set<string>();
   return message.vacancies.every(v => {
+    if (v.taskTransition) return false;
     try { if (!v.postingUrl || postingUrl(v.postingUrl) !== postings.get(v.vacancyKey) || !v.outcomeEvidence) return false; } catch { return false; }
     if (outcomes.has(v.outcomeEvidence.path)) return false; outcomes.add(v.outcomeEvidence.path);
     if (v.disposition === "applied") {
@@ -144,6 +170,13 @@ export function messageReadyForDeletion(message: MessageProgress): boolean {
     }
     if (v.disposition === "notApplicable") {
       return supplied(v.nonapplicationReason) && supplied(v.instructionReference);
+    }
+    if (v.disposition === "cancelled") {
+      try { if (ticketFolder(v.taskPath ?? "") !== "Cancelled") return false; } catch { return false; }
+      if (v.taskId && taskIds.has(v.taskId) || v.taskPath && taskPaths.has(v.taskPath)) return false;
+      if (v.taskId) taskIds.add(v.taskId); if (v.taskPath) taskPaths.add(v.taskPath);
+      return !!v.taskId && !!v.taskPath && v.taskPath.startsWith("Task Board/Cancelled/") &&
+        !!v.taskEvidence && !!v.decision && v.decision.action === "cancel" && !!v.cancellationCleanupAuthority;
     }
     return false;
   });

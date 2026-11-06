@@ -158,3 +158,12 @@ Selected-site mapping covers observed routes and recorded boundaries. It does no
 ## License
 
 [MIT license](LICENSE).
+
+## Cancelled and Deferred applications
+
+The task board has six statuses: Email Alerts, To Do, Blocked, Applied, Cancelled
+and Deferred. Tell the agent to cancel an application to stop pursuing it, or defer
+it to set it aside. It preserves the same ticket and checkpoint. Return a Deferred
+ticket to To Do when ready; Cancelled requires an explicit restoration. Normal
+processing still uses only the two intake folders. See [task lifecycle](automation/workflow/task-lifecycle.md)
+for guarded transitions, interruption recovery and source-email safeguards.

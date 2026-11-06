@@ -10,8 +10,10 @@ The board says what to do. [The application workflow](../Application%20Workflow/
 | To Do | User-authored application tasks | Claim and execute/resume |
 | Blocked | A concrete dependency prevents completion | Wait; inspect only on an explicit user request. User requeues the existing ticket in To Do. |
 | Applied | Confirmed successful submissions | Retain outcome; do not routinely scan as an intake step |
+| Cancelled | Explicitly stopped applications | Preserve history; restore only under an explicit instruction |
+| Deferred | Applications set aside for later | Wait until the user requeues the existing ticket in To Do |
 
-Exactly four status folders. New work has two sources: the configured inbox and To Do. Blocked is interrupted work, not a third intake channel.
+Six status folders. New work has two sources: the configured inbox and To Do. Blocked is interrupted work, not a third intake channel.
 
 Move a confirmed submission from its intake to Applied. Move an unresolved dependency to Blocked. After resolving it, the user moves the same ticket to To Do; the agent resumes from that queue. Keep original intake/source as provenance, including email associations. The containing folder is status; do not maintain a conflicting second status field. A task can have a checkpoint/disposition without creating another folder.
 
@@ -50,9 +52,15 @@ On an explicit request, establish ownership and help the user complete the chall
 
 ## Nonapplications
 
-An email vacancy excluded under an explicit user preference, or an observed closed vacancy handled under supplied instructions, gets a compact reason and source-rule reference in that message's progress record. It does not get an Applied ticket. If it already has a ticket, preserve it in original intake with its concluded disposition and mark it nonactionable; no additional folder is introduced.
+An email vacancy excluded under an explicit user preference, or an observed closed vacancy handled under supplied instructions, gets a compact reason and source-rule reference in that message's progress record. It does not get an Applied ticket. If it already has a ticket, the scoped instruction may authorize a guarded move to Cancelled. Preserve the original assignment and evidence. Previously concluded legacy tickets are not automatically migrated.
 
-For a manual task, preserve the concluded nonapplication reason on the original ticket when user instructions permit it. If a decision is missing, move to Blocked. Do not repeatedly process a concluded task or claim it was submitted.
+For a manual task, save the actual decision and move the existing ticket to Cancelled when user instructions permit it. If a decision is missing, move to Blocked. Do not repeatedly process a concluded task or claim it was submitted.
+
+## Cancel, defer, resume and restore
+
+Follow [task lifecycle](../automation/workflow/task-lifecycle.md). Use the shared transition operation and preserve the same ticket ID, source, checkpoint and history. Cancelled is a concluded stop; Deferred is unfinished work. Neither is Applied or routine intake. A Deferred move to To Do signals inspection and resumption; Cancelled needs an explicit restore instruction. Dates, answers and context edits never reactivate either.
+
+Bind active tickets with bindTaskTicket before browser work. Stop requests for owned work are persisted rather than moving files behind a worker. Unknown submission outcomes stay unresolved and keep their allowance reserved. Completed cleanup markers are preserved if a cancelled task is later explicitly restored.
 
 ## Ticket template
 
@@ -73,6 +81,7 @@ Copy this inline format into a real To Do ticket, or create it from an alert's i
 | Designated CV / version / SHA-256 | <actual local reference> |
 | Checkpoint / next action | <actual progress> |
 | Disposition | Active / Confirmed submission / permitted nonapplication / Uncertain |
+| Lifecycle decision / authority | None, or actual cancellation/deferral/resumption decision and saved instruction reference |
 | Website knowledge / routine version | <actual map/code references> |
 
 ## Application details
@@ -102,7 +111,7 @@ reference, cleanup state/date. Do not delete while sibling vacancies are unresol
 
 Extend the existing ticket's private execution checkpoint with the saved default browser, active browser and whether upload is required. For a midway upload handoff, retain the same task ID, source/vacancy identity, selected role/CV versions, draft identity when visible, last completed step, checkpoint evidence, handoff time/state and actual resume checks. Keep signed URLs, credentials and OTPs out of the ticket.
 
-Follow [the handoff procedure](../automation/browser/upload-fallback.md): establish the authorized Playwright session and same draft before resuming. Keep that application in Playwright; a new task returns to the saved default. Never switch or retry while a prior submission is uncertain. Preserve handoff history through Blocked and Applied. The board still has exactly four status folders.
+Follow [the handoff procedure](../automation/browser/upload-fallback.md): establish the authorized Playwright session and same draft before resuming. Keep that application in Playwright; a new task returns to the saved default. Never switch or retry while a prior submission is uncertain. Preserve handoff history through Blocked and Applied. The board has six status folders.
 
 Use the selected role's verification-access reference when a challenge needs help, and preserve the same checkpoint while waiting. Apply saved operating limits and reporting preferences during each check-in. Neither a missing in-app capability nor a document-format issue creates a new intake source or routine approval gate.
 

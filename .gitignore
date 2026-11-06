@@ -24,6 +24,10 @@ mental_model/
 !/Task Board/Blocked/.gitkeep
 /Task Board/Applied/*
 !/Task Board/Applied/.gitkeep
+/Task Board/Cancelled/*
+!/Task Board/Cancelled/.gitkeep
+/Task Board/Deferred/*
+!/Task Board/Deferred/.gitkeep
 
 # Role document indexes are templates; actual documents must not be published.
 /Job Context/Candidate/Role Profiles/**/Documents/*
