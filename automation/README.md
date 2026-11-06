@@ -1,5 +1,7 @@
 # Automation components
 
+[Blocked-task attention](attention/README.md) adds a grouped reminder preview, ten-row browsing and one selected human action at a time. Automatic notifications default off, use their own opt-in verified native timer and never execute applications or scan inactive tasks. Use `npm run attention -- help` for agent-managed controls; all runtime records remain private.
+
 [Website preparation](sites/README.md) identifies encountered boards and employer tenants, creates missing private context, binds task/browser evidence and handles early access challenges. Its registry is separate from primary onboarding choices and protected email progress. Use `npm run sites -- help` for agent commands; native browser tools follow the same documented contract.
 
 A file- and browser-capable AI agent runs the [application workflow](../Application%20Workflow/application-workflow.md). This folder supplies utilities, state examples and a scheduled check-in prompt that support its work. Shared email intake uses the selected host connection or AgentMail; website navigation, candidate onboarding and task progress have separate responsibilities. This repository starts no background worker or schedule.

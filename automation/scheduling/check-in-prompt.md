@@ -151,3 +151,5 @@ mode and do not create a schedule as part of a task-status change.
 ~~~
 
 While an interactive settings menu is open, preserve its checkpoint and leave its unchanged question quiet. Do not open or answer it on the user's behalf. Its saved settings still use the existing eligibility, active-task and pending-cleanup rules.
+
+Blocked-task reminders use automation/attention/README.md and a separately opted-in notification-only schedule. Do not populate its index by scanning Blocked or execution mirrors during this check-in. Register only actual newly committed human-required blockers from the selected task workflow. Keep pending attention questions quiet and retain shared settings/onboarding focus. Replies do not requeue tasks; use the user's existing To Do move signal. A reminder projection failure never changes a confirmed outcome or authorizes another submission.

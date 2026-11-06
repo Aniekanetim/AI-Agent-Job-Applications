@@ -7,6 +7,7 @@ import { withWriteOwnership } from "../workflow/ownership.js";
 import { applyResponse, readConversationInput, reconcileStagedResponse, type ResponseBundle } from "../onboarding/conversation.js";
 import { readPrivateJson } from "../workflow/private-json.js";
 import { digest, inspectReadiness, loadProgress } from "../onboarding/state-store.js";
+import { hasAttentionFocus, suspendAttention } from "../attention/session-state.js";
 
 export interface MenuView {
   phase: MenuState["phase"]; title: string; question: string;
@@ -52,6 +53,7 @@ function hasSelectedAnswer(bundle: ResponseBundle, path: string, s: MenuState) {
 }
 export function openSettings(root: string, sourceReference = "settings-command") {
   if (!sourceReference.trim()) throw new Error("Reference the request to open settings.");
+  if (hasAttentionFocus(root)) suspendAttention(root, sourceReference);
   return update(root, s => {
     if (s.phase !== "closed") return;
     Object.assign(s, { phase: "root", area: null, settingId: null, roleId: null, board: null,

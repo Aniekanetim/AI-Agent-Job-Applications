@@ -6,6 +6,7 @@ import { validateBrowserPreferences } from "../browser/preferences.js";
 import { validateConnection } from "../email/connection.js";
 import { type Setting } from "./catalog.js";
 import { loadSites } from "../sites/registry.js";
+import { validateAttentionPreferences } from "../attention/preferences.js";
 
 export interface Role { id: string; path: string; label: string; enabled: boolean }
 export interface CurrentSetting { status: "saved" | "notConfigured" | "default"; text: string; path: string | null; sha256: string | null; fingerprint: string }
@@ -55,6 +56,7 @@ export function currentSetting(root: string, setting: Setting, roleId: string | 
   const path = targetPath(root, setting, roleId, board);
   const value = (status: CurrentSetting["status"], text: string, sha256: string | null = null): CurrentSetting =>
     ({ status, text: clean(text), path, sha256, fingerprint: digest(JSON.stringify([path, text])) });
+  if (setting.id === "blocked-reminders" && path && !existsSync(containedFile(root, path))) return value("default", "Review only when asked; automatic reminders are off");
   if (!path || !existsSync(containedFile(root, path))) return value(setting.id === "visibility" ? "default" : "notConfigured",
     setting.id === "visibility" ? "Visible window (headed, package default)" : "Not configured");
   const bytes = readFileSync(containedFile(root, path)), sha = digest(bytes);
@@ -77,6 +79,9 @@ export function currentSetting(root: string, setting: Setting, roleId: string | 
   else if (setting.id === "visibility") {
     if (raw.schemaVersion !== 1 || !["headed", "headless"].includes(raw.mode) || !raw.sourceReference?.trim()) throw new Error("Reconcile the saved visibility setting; preserve the original file.");
     selected = raw.mode === "headed" ? "Visible window (headed)" : "Headless";
+  } else if (setting.id === "blocked-reminders") {
+    validateAttentionPreferences(raw);
+    selected = `${raw.mode === "manual" ? "Review only when asked" : `Grouped reminder every ${raw.everyMinutes} minutes; ${raw.timezone}`}\nReminders ${raw.paused ? "paused" : "not paused"}${raw.snoozedUntil ? `; snoozed until ${raw.snoozedUntil}` : ""}`;
   } else {
     validateOperatingPreferences(raw);
     selected = setting.id === "check-in" ? raw.mode === "onDemand" ? "Only when asked" : `${raw.cadence}; ${raw.timezone}; schedule ${raw.scheduleReference ? "configured" : "not yet configured"}` :

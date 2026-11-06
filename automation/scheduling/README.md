@@ -36,4 +36,6 @@ Respect an explicit email deferral in `.local/email-onboarding.json`: pause emai
 
 ## Change an existing choice
 
+Application check-ins and [Blocked-task reminders](../attention/README.md) have separate preferences and native schedule references. Reminders default off and require an actual user cadence/timezone choice plus a synthetic notification-only rehearsal in the scheduled environment. A reminder callback never applies, polls email or reads Blocked/context/task-control mirrors. Queue snooze/pause and conversational focus suppress it. Preserve on-demand application settings when enabling a notification-only timer; reconcile native timers using the host's supported automation tools.
+
 Follow [settings and resumption](../onboarding/settings.md). A reporting or limit update preserves omitted preferences and the current schedule reference. An interval or on-demand change must reconcile the actual scheduler first when a schedule exists. Recheck the affected execution environment afterward. Scheduled Playwright also uses headed mode by default: an inaccessible desktop is a capability dependency, not permission to switch to headless.

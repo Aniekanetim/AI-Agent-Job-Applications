@@ -32,6 +32,7 @@ export const settings: Setting[] = [
   { id: "per-run", area: "operating", label: "Applications per check", scope: "global", path: ".local/operation-preferences.json", field: "perRunLimit", procedure: "onboarding:operation", prompt: "What application limit should apply to each check, or should there be no fixed limit?" },
   { id: "per-day", area: "operating", label: "Applications per day", scope: "global", path: ".local/operation-preferences.json", field: "perDayLimit", procedure: "onboarding:operation", prompt: "What daily application limit should apply, or should there be no fixed limit?" },
   { id: "reporting", area: "operating", label: "Results reporting", scope: "global", path: ".local/operation-preferences.json", field: "reporting", procedure: "onboarding:operation", prompt: "How would you like application results reported?" },
+  { id: "blocked-reminders", area: "operating", label: "Blocked-task reminders", scope: "global", path: ".local/attention-preferences.json", field: "mode", procedure: "attention preferences / verified native notification-only schedule", prompt: "Would you like to review waiting tasks only when asked, or receive a grouped reminder at an interval you choose?" },
 ];
 export function settingById(id: string) {
   const setting = settings.find(s => s.id === id);

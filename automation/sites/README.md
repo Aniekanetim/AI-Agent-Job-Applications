@@ -56,6 +56,8 @@ When verification prevents reading a listing before role/CV selection, [pauseFor
 
 ## Existing copies and Settings
 
+Pending human access handoffs can enter [Blocked-task attention](../attention/README.md) using their actual handoff ID after the selected ticket/core move commits. Pure access-pause helpers do not register/deliver reminders. A summary never marks every handoff reported, and a human reply never establishes site clearance. Explicit selected review must inspect the actual current same-task session; routine reminders do not open it or read its access context.
+
 Backfill from active tasks and actual observations using existing context paths. `reconcile` never changes task IDs, inbox associations, claims, receipts, sessions or selected primary boards. Legacy active tasks acquire a binding before the next sensitive action. Preserve legacy custom handoffs and evidence until a deliberate protected migration is needed. A formerly missing access file becoming present is not resolution of the existing challenge. Do not scan Applied history or crawl unrelated boards.
 
 Users edit access through **Open settings → Job boards and email → Encountered websites and employer access**. Focused replies save to the registered canonical path. Recheck affected access; a saved answer itself does not clear a challenge or restart onboarding.

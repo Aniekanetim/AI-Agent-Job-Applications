@@ -7,10 +7,12 @@ import type { FileEvidence } from "../email/evidence.js";
 import { ticketFolder, validateDecision, type TaskDecision } from "./board.js";
 import type { BoardFolder, IntakeFolder } from "./board.js";
 import { recordTaskCheckpoint } from "./task-control.js";
+import type { HumanAttention } from "../attention/types.js";
 export type { BoardFolder, IntakeFolder } from "./board.js";
 /** Local integrity checks; these do not establish that external evidence is true. */
 
 export interface Blocker {
+  attention?: HumanAttention;
   kind?: "captcha" | "siteAccess";
   reason: string;
   lastCompletedStep: string;

@@ -7,6 +7,7 @@ import { loadEmailConnection, emailCapabilityIssues, validateEmailReport, valida
 import { validateInboxState, terminalCleanup, type InboxState, type EmailRecord, type EmailIdentity, messageKey } from "./intake.js";
 import { loadEmailOnboarding } from "./onboarding.js";
 import { providerId } from "./discovery.js";
+import { stageAttentionChange, commitAttentionChange } from "../attention/events.js";
 
 export function loadInboxState(root: string) {
   const found = readPrivateJson(root, ".local/inbox-state.json");
@@ -71,7 +72,23 @@ export function saveInboxState(root: string, state: InboxState, revision: string
   validateInboxState(state); const loaded = loadInboxState(root);
   if (loaded.revision !== revision) throw new Error("Private configuration changed in another session; reload it before saving.");
   const keys = state.messages.filter(r => !same(r, loaded.state.messages.find(old => messageKey(old.identity) === messageKey(r.identity)))).map(r => messageKey(r.identity));
-  return claimChanges(root, keys, claims => writeInbox(root, state, revision, { kind: "work", claims }));
+  return claimChanges(root, keys, claims => {
+    // Only compact source pointers are inspected here. New human blockers register through the selected task workflow.
+    const events: { id: string | null; receipt: string }[] = [];
+    for (const record of state.messages) {
+      const old = loaded.state.messages.find(r => messageKey(r.identity) === messageKey(record.identity));
+      for (const vacancy of record.vacancies) {
+        const previous = old?.vacancies.find(v => v.vacancyKey === vacancy.vacancyKey);
+        if (previous?.taskId && previous.taskPath?.startsWith("Task Board/Blocked/") &&
+          (previous.taskPath !== vacancy.taskPath || vacancy.disposition !== "blocked")) {
+          const receipt = createHash("sha256").update(JSON.stringify([messageKey(record.identity), vacancy])).digest("hex");
+          events.push({ id: stageAttentionChange(root, previous.taskId, `source-${receipt}`, null), receipt });
+        }
+      }
+    }
+    const result = writeInbox(root, state, revision, { kind: "work", claims });
+    events.forEach(e => commitAttentionChange(root, e.id, e.receipt)); return result;
+  });
 }
 /** Internal cleanup boundary. The claim is genuine, correctly scoped and rechecked inside the commit lock. */
 export function changeCleanupRecord(root: string, identity: EmailIdentity, owner: Ownership, transition: CleanupTransition, apply: (record: EmailRecord) => void) {

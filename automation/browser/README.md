@@ -53,6 +53,8 @@ npm run browser -- -s=job-discovery close
 
 Inspect a fresh snapshot before using its element references. Refresh after navigation or a significant page change. Temporary snapshot IDs are not permanent selectors. Save observed locators and checks in the site's Playwright methods; use [discovery](../../Application%20Workflow/discovery-workflow.md) for unfamiliar branches.
 
+[Blocked-task attention](../attention/README.md) uses an existing pending CAPTCHA handoff ID only after the selected Blocked ticket/core move commits. Pure `pauseForCaptcha` returns do not register or send reminders. A digest cannot mark every CAPTCHA request reported. Only an actual selected-task presentation supplies that request reference; a reply or reminder expiry is never CAPTCHA clearance, session recovery or submission evidence. The existing inspector and exact-session recovery checks remain required.
+
 Private `.local/browser/cli.config.json` controls output. Keep authentication in `.auth/` or a secure store. Load credentials privately through [board access](../../Job%20Context/Job%20Boards/README.md); never put passwords in CLI arguments, snapshots or code. Do not close unrelated sessions or copy a person's main browser profile.
 
 The CLI and library can require different Chromium revisions. Setup reuses matching revisions in the working copy or standard cache, downloads missing revisions to `.local/browsers`, and respects `PLAYWRIGHT_BROWSERS_PATH`. Linux may also need permitted system-library installation. Reverify after relocation or runtime changes. See the upstream [Playwright CLI guide](https://github.com/microsoft/playwright-cli#readme) and the installed `--help` for commands.

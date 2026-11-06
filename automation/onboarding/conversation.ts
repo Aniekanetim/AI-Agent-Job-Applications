@@ -11,10 +11,11 @@ import { emptyConversation, validateDecision, sameDecision, supplied, validTime,
 import { workCheckpoint, type WorkCheckpoint } from "./continuation.js";
 import { loadMenu } from "../settings/state.js";
 import { registeredAccessPath } from "../sites/registry.js";
+import { hasAttentionFocus, suspendAttention } from "../attention/session-state.js";
 
 const journal = ".local/onboarding-pending-response.json";
 const globalTargets = new Set(["Job Context/Candidate/role-routing.local.md", ".local/browser-preferences.json", ".local/browser/visibility.json",
-  ".local/operation-preferences.json", ".local/email-onboarding.json", ".local/email-connection.json"]);
+  ".local/operation-preferences.json", ".local/attention-preferences.json", ".local/email-onboarding.json", ".local/email-connection.json"]);
 const conversation = (s: OnboardingProgress): ConversationState => s.conversation ?? emptyConversation();
 const fieldKey = (d: Decision) => JSON.stringify([d.roleId, d.contextPath, d.field]);
 
@@ -76,7 +77,7 @@ export function queueQuestions(root: string, questions: Omit<FocusedQuestion, "s
   });
 }
 
-export type NextQuestion = WorkCheckpoint | { action: "paused" | "wait" | "verifyPresentation" | "recoverResponse" | "settings" } |
+export type NextQuestion = WorkCheckpoint | { action: "paused" | "wait" | "verifyPresentation" | "recoverResponse" | "settings" | "attention" } |
   { action: "present" | "repeatOnRequest"; question: FocusedQuestion };
 export function nextQuestion(root: string, requestedRepeat = false): { state: OnboardingProgress; next: NextQuestion } {
   let next: NextQuestion = { action: "wait" };
@@ -85,6 +86,7 @@ export function nextQuestion(root: string, requestedRepeat = false): { state: On
     if (c.mode === "paused") { next = { action: "paused" }; return; }
     if (readPrivateJson(root, journal).data !== null) { next = { action: "recoverResponse" }; return; }
     if (loadMenu(root).state.phase !== "closed") { next = { action: "settings" }; return; }
+    if (hasAttentionFocus(root)) { next = { action: "attention" }; return; }
     let q = c.questions.find(q => q.id === c.activeQuestionId);
     if (!q) {
       q = c.questions.find(q => q.status === "pending");
@@ -100,6 +102,7 @@ export function nextQuestion(root: string, requestedRepeat = false): { state: On
   return { state, next };
 }
 export function resumeOnboarding(root: string, sourceReference: string, now: string) {
+  if (hasAttentionFocus(root)) suspendAttention(root, sourceReference);
   setConversationMode(root, "active", sourceReference, now);
   return nextQuestion(root, true);
 }

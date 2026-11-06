@@ -1,5 +1,7 @@
 # Application task lifecycle
 
+[Blocked-task attention](../attention/README.md) is private notification metadata alongside this lifecycle. Commit new human-required blocks with the bound `refreshTaskTicket` boundary after saving the actual ticket. Move/requeue/completion helpers suppress or retire its row; interrupted projection work stays pending/quarantined. Repair one explicitly selected committed task with `attention repair-selected`; never retry an application to repair reminders. Answer recording does not move a task, release uncertain ownership, clear a CAPTCHA or change cleanup authority.
+
 The board has six status folders: Email Alerts, To Do, Blocked, Applied, Cancelled and Deferred. The containing folder is the task's status. Only Email Alerts and To Do are execution queues. Low priority is not a status.
 
 Cancelled means stop pursuing the application. Deferred means set it aside until the user requeues the same ticket in To Do. Blocked still means an actual dependency prevents otherwise desired work. Applied still requires a confirmed submission. Do not automatically move legacy concluded tasks or migrate inactive ticket folders.

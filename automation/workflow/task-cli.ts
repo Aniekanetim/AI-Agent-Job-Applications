@@ -1,6 +1,7 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readPrivateJson } from "./private-json.js";
+import { attentionHealthy } from "../attention/state.js";
 import { bindTaskTicket, saveTaskTicket, transitionTask, recoverTaskTransition, loadTaskControl, recordTaskCheckpoint, refreshTaskTicket,
   resumeMovedDeferredTask, authorizeTaskAction, assertAuthorizedTaskAction, observeTaskAction } from "./task-control.js";
 
@@ -22,7 +23,7 @@ try {
     else if (command === "bind") result = bindTaskTicket(root, proposal.task, proposal.path);
     else if (command === "transition") result = transitionTask({ ...proposal, root });
     else if (command === "checkpoint") { if (!recordTaskCheckpoint(root, proposal.task)) throw new Error("Bind this selected task before saving its execution checkpoint."); result = { saved: true }; }
-    else if (command === "refresh") result = refreshTaskTicket(root, proposal.task, proposal.expectedHash, proposal.path);
+    else if (command === "refresh") result = { ...refreshTaskTicket(root, proposal.task, proposal.expectedHash, proposal.path), attentionProjection: attentionHealthy(root) ? "healthy" : "needsRepair" };
     else if (command === "pickup") result = resumeMovedDeferredTask(root, proposal.task, proposal.path, proposal.observedAt);
     else if (command === "action-authorize") result = authorizeTaskAction(root, proposal.task, proposal.kind, proposal.ownerId, proposal.page);
     else if (command === "action-observe") result = observeTaskAction(root, proposal.taskId, proposal.token, proposal.result, proposal.evidence, proposal.confirmed);

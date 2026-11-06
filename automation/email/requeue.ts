@@ -4,6 +4,7 @@ import { loadInboxState, saveEmailRecord } from "./state-store.js";
 import { digest, evidenceFile, type FileEvidence } from "./evidence.js";
 import { messageKey, terminalCleanup } from "./intake.js";
 import { loadTaskControl, resumeMovedDeferredTask } from "../workflow/task-control.js";
+import { stageAttentionChange, commitAttentionChange, lifecycleEventId } from "../attention/events.js";
 
 /** Called for a selected To Do file, never by scanning Blocked for changes. */
 export function requeueMovedEmailTicket(root: string, path: string, observedAt: string) {
@@ -43,6 +44,7 @@ export function requeueMovedEmailTicket(root: string, path: string, observedAt: 
   }
   const previousPath = vacancy.taskPath!;
   const previousEvidence: FileEvidence = vacancy.taskEvidence;
+  const attention = stageAttentionChange(root, vacancy.taskId, lifecycleEventId(vacancy.taskId, path, ticket.sha256), null);
   // Keep the same message, vacancy, task, state, original source and uncertainty.
   // The agent reads only this queued task's saved state/context before resuming.
   vacancy.taskPath = path;
@@ -52,6 +54,7 @@ export function requeueMovedEmailTicket(root: string, path: string, observedAt: 
   history.requeueHistory = [...(history.requeueHistory ?? []), { previousPath, previousEvidence, path, observedAt,
     reason: "Existing ticket moved to To Do by the user; dependency clearance still requires verification." }];
   saveEmailRecord(root, record, loaded.revision);
+  commitAttentionChange(root, attention, `${ticket.path}:${ticket.sha256}`);
   return { kind: "requeued" as const, messageKey: messageKey(record.identity), vacancyKey: vacancy.vacancyKey,
     taskId: vacancy.taskId, path, dependencyVerified: false };
 }

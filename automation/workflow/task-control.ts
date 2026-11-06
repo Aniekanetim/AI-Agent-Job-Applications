@@ -11,6 +11,7 @@ import { loadInboxState, alertOwnershipKey, saveTaskEmailRecord } from "../email
 import { messageKey, terminalCleanup, type EmailIdentity } from "../email/intake.js";
 import { saveAlertArtifact } from "../email/artifact-store.js";
 import { assertSiteAction, type SitePage } from "../sites/execution.js";
+import { stageTaskAttention, stageAttentionChange, commitAttentionChange } from "../attention/events.js";
 
 interface StopRequest { action: "cancel" | "defer"; reason: string; actor: string; observedAt: string; authority: FileEvidence }
 interface Source { identity: EmailIdentity; vacancyKey: string; completed?: boolean }
@@ -164,8 +165,9 @@ export function refreshTaskTicket(root: string, task: ApplicationTask, expectedH
     if (data.task.checkpoint === "submissionAttempted" && task.checkpoint !== "submissionAttempted" && !canMarkApplied(task) && task.submissionResolution?.state !== "notSubmitted" || data.task.checkpoint === "confirmed" && !canMarkApplied(task)) throw new Error("Preserve submission recovery.");
     if (task.submissionResolution) authority(root, task.submissionResolution.evidence);
     privateTicket(root, destination); data.path = destination; data.ticket = evidenceFile(root, destination);
+    const attention = stageTaskAttention(root, task, data.ticket);
     data.task = { ...structuredClone(task), ticket: data.ticket, decisions: data.task.decisions ?? task.decisions };
-    save(root, data, found.revision); return data.task;
+    save(root, data, found.revision); commitAttentionChange(root, attention, `${data.ticket.path}:${data.ticket.sha256}`); return data.task;
   } finally { owner.release(); }
 }
 /** Pickup of a selected user-moved Deferred ticket; never read or enumerate its old directory. */
@@ -244,6 +246,7 @@ export function transitionTask(o: TransitionOptions) {
     const bytes = Buffer.concat([original, Buffer.from(`\n\n## Task decision ${d.id}\n${d.observedAt}: ${d.actor} — ${d.action}. ${d.reason}\nAuthority: ${d.authority.path}\n\n${taskDecisionBlock({ taskId: task.taskId, messageKey: source && messageKey(source.identity), vacancyKey: source?.vacancyKey, decision: d, task })}\n`)]);
     data.source = source;
     data.transition = { decision: d, inputPath: o.path, sourceHash: digest(original), destination, original: original.toString("base64"), bytes: bytes.toString("base64"), task, source, cleanupAuthority: o.cleanupAuthority };
+    stageAttentionChange(o.root, data.taskId, d.id, null);
     save(o.root, data, found.revision);
     return recoverOwned(o.root, data, owner, alertOwner);
   } finally { alertOwner?.release(); owner.release(); }
@@ -251,6 +254,7 @@ export function transitionTask(o: TransitionOptions) {
 function recoverOwned(root: string, data: TaskControl, owner: Ownership, ownedAlert?: Ownership) {
   owner.assertOwned(); const j = data.transition!;
   validateDecision(j.decision); authority(root, j.decision.authority);
+  const attention = stageAttentionChange(root, data.taskId, j.decision.id, null);
   if (j.cleanupAuthority) authority(root, j.cleanupAuthority);
   const source = j.source;
   const alertOwner = ownedAlert ?? (source ? acquireOwnership(root, alertOwnershipKey(source.identity)) : undefined);
@@ -304,7 +308,8 @@ function recoverOwned(root: string, data: TaskControl, owner: Ownership, ownedAl
     data = latest.data; data.path = j.destination; data.ticket = ticket; data.task = { ...j.task, ticket };
     data.history.push(j.decision); delete data.transition; delete data.request;
     save(root, data, latest.revision);
-    return { kind: "moved" as const, taskId: data.taskId, path: data.path, decision: j.decision, dependencyVerified: false };
+    const projection = commitAttentionChange(root, attention, `${ticket.path}:${ticket.sha256}`);
+    return { kind: "moved" as const, taskId: data.taskId, path: data.path, decision: j.decision, dependencyVerified: false, ...projection };
   } finally { if (!ownedAlert) alertOwner?.release(); }
 }
 export function recoverTaskTransition(root: string, id: string) {
