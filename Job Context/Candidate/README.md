@@ -1,6 +1,6 @@
 # Candidate role profiles
 
-Each role profile is a complete application context: identity, experience, preferences, answers, instructions and a designated CV. There is no Shared candidate folder. Website navigation is independent of the candidate role.
+Each role profile supplies identity, experience, preferences, role-specific answers, instructions and a designated CV. The optional private `reusable-answers.local.md` supplies [answers applicable across tasks and roles](../../automation/answers/README.md) under each answer's saved conditions. Website navigation is independent of the candidate role.
 
 Tell the agent which roles you want. [Conversational onboarding](../../Application%20Workflow/onboarding-workflow.md) asks for each role's PDF, DOCX or TXT CV, saves an unchanged private copy in its Documents folder, checks extraction and fills these files. It asks one focused missing decision at a time and saves every clear extra answer you volunteer. The [conversation checkpoint](../../automation/onboarding/focused-conversation.md) preserves pause/resume, clarification and corrections without repeating supplied information. You can correct an answer in conversation later; direct file editing is optional. Existing CVs and profiles are reused when setup resumes. Profile-only setup finishes after its scoped readiness handoff. Application setup also prepares browser tooling, connects and maps one to three selected job boards, and verifies readiness under [the full roadmap](../../Application%20Workflow/onboarding-workflow.md#1-agree-the-scope-and-show-the-roadmap).
 
@@ -30,4 +30,4 @@ Each task records the chosen role ID, paths and versions, CV hash and selection 
 
 ## Verification and upload readiness
 
-Each role also has `verification-access.md`, with actual private access references and OTP/MFA resumption in `verification-access.local.md`. It points to the contact-email source without copying candidate identity. Reuse the selected email connection when it also receives verification messages; another address or challenge may need its own access or human handoff. Keep original and designated upload CV versions in the existing Documents index, with hashes and inspection references; no separate Shared candidate baseline is introduced.
+Each role also has `verification-access.md`, with actual private access references and OTP/MFA resumption in `verification-access.local.md`. It points to the contact-email source without copying candidate identity. Reuse the selected email connection when it also receives verification messages; another address or challenge may need its own access or human handoff. Keep original and designated upload CV versions in the existing role's Documents index with hashes and inspection references.

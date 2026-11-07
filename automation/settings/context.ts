@@ -7,6 +7,7 @@ import { validateConnection } from "../email/connection.js";
 import { type Setting } from "./catalog.js";
 import { loadSites } from "../sites/registry.js";
 import { validateAttentionPreferences } from "../attention/preferences.js";
+import { loadReusableAnswers, scopeKeys } from "../answers/context.js";
 
 export interface Role { id: string; path: string; label: string; enabled: boolean }
 export interface CurrentSetting { status: "saved" | "notConfigured" | "default"; text: string; path: string | null; sha256: string | null; fingerprint: string }
@@ -56,6 +57,16 @@ export function currentSetting(root: string, setting: Setting, roleId: string | 
   const path = targetPath(root, setting, roleId, board);
   const value = (status: CurrentSetting["status"], text: string, sha256: string | null = null): CurrentSetting =>
     ({ status, text: clean(text), path, sha256, fingerprint: digest(JSON.stringify([path, text])) });
+  if (setting.id === "reusable-answers") {
+    const { answers, sha256 } = loadReusableAnswers(root);
+    const active = answers.filter(answer => answer.value !== null);
+    const lines = active.map(answer => {
+      const scope = scopeKeys.filter(key => answer.scope[key]).map(key => `${key} ${answer.scope[key]}`).join(", ");
+      const validity = answer.validThrough ? `, valid through ${answer.validThrough}` : "";
+      return `${answer.fieldId.replaceAll("_", " ")} — ${String(answer.value)} (${scope || "all roles"}${validity})`;
+    });
+    return value(sha256 ? "saved" : "notConfigured", lines.join("\n") || "No reusable answers saved", sha256);
+  }
   if (setting.id === "blocked-reminders" && path && !existsSync(containedFile(root, path))) return value("default", "Review only when asked; automatic reminders are off");
   if (!path || !existsSync(containedFile(root, path))) return value(setting.id === "visibility" ? "default" : "notConfigured",
     setting.id === "visibility" ? "Visible window (headed, package default)" : "Not configured");

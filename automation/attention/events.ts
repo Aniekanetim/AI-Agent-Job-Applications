@@ -4,6 +4,7 @@ import { digest } from "../email/evidence.js";
 import { readPrivateJson } from "../workflow/private-json.js";
 import { loadAttention, updateAttention, quarantineAttention, clearAttentionQuarantine } from "./state.js";
 import { itemKey, validateItem, validateHumanAttention, time, type AttentionItem } from "./types.js";
+import { assertTaskAnswerBinding, reusableAnswerPath } from "../answers/context.js";
 
 /** The caller is already operating on this selected task. This function performs no task/context reads. */
 export function attentionForTask(task: ApplicationTask, ticket: FileEvidence, observedAt: string): AttentionItem | null {
@@ -14,7 +15,12 @@ export function attentionForTask(task: ApplicationTask, ticket: FileEvidence, ob
     access ? { humanRequired: true as const, generation: access.id, kind: "access" as const, label: "Restore access for this application" } : null);
   if (!meta) return null;
   validateHumanAttention(meta);
-  if (meta.binding && (meta.binding.roleId !== (task.selectedRoleId ?? null) || meta.binding.contextPath !== task.blocker.contextPath)) throw new Error("Bind this human question to the existing selected role and blocker context.");
+  if (meta.binding?.contextPath === reusableAnswerPath) {
+    if (meta.kind !== "answer") throw new Error("Bind reusable context to a factual answer blocker.");
+    assertTaskAnswerBinding(meta.binding, task.selectedRoleId, task.taskId);
+  } else if (meta.binding && (meta.binding.roleId !== (task.selectedRoleId ?? null) || meta.binding.contextPath !== task.blocker.contextPath)) {
+    throw new Error("Bind this human question to the existing selected role and blocker context.");
+  }
   // Whitelist metadata; never spread a whole blocker/task into the notification index.
   const item: AttentionItem = { humanRequired: true, generation: meta.generation, kind: meta.kind, label: meta.label,
     ...(meta.priority !== undefined ? { priority: meta.priority } : {}), ...(meta.deadline ? { deadline: meta.deadline } : {}),

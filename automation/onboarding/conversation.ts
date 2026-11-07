@@ -10,8 +10,11 @@ import { emptyConversation, validateDecision, sameDecision, supplied, validTime,
   type Decision, type FocusedQuestion, type ConversationState } from "./conversation-types.js";
 import { workCheckpoint, type WorkCheckpoint } from "./continuation.js";
 import { loadMenu } from "../settings/state.js";
+import { readAttentionMetadata } from "../attention/metadata.js";
 import { registeredAccessPath } from "../sites/registry.js";
-import { hasAttentionFocus, suspendAttention } from "../attention/session-state.js";
+import { hasAttentionFocus, loadAttentionSession, suspendAttention } from "../attention/session-state.js";
+import { candidateFile, loadReusableAnswers, mostSpecific, reusableAnswerPath, reusableBinding, scopeMatches, usableAnswer, type ReusableAnswer } from "../answers/context.js";
+import { validateReusableWrite } from "../answers/workflow.js";
 
 const journal = ".local/onboarding-pending-response.json";
 const globalTargets = new Set(["Job Context/Candidate/role-routing.local.md", ".local/browser-preferences.json", ".local/browser/visibility.json",
@@ -19,7 +22,18 @@ const globalTargets = new Set(["Job Context/Candidate/role-routing.local.md", ".
 const conversation = (s: OnboardingProgress): ConversationState => s.conversation ?? emptyConversation();
 const fieldKey = (d: Decision) => JSON.stringify([d.roleId, d.contextPath, d.field]);
 
+function reusableQuestionSatisfied(root: string, q: Decision, rows: ReusableAnswer[]) {
+  const { fieldId, scope } = reusableBinding(q);
+  const candidates = rows.filter(row => row.fieldId === fieldId && row.value !== null && scopeMatches(row.scope, scope));
+  const best = mostSpecific(candidates.map(answer => ({ answer })));
+  if (!best.length) return false;
+  const preferences = readAttentionMetadata(root, ".local/operation-preferences.json").data as { timezone?: string | null } | null;
+  const date = new Intl.DateTimeFormat("sv-SE", { timeZone: preferences?.timezone ?? undefined, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  return best.every(({ answer }) => usableAnswer(answer, date) && answer.value === best[0].answer.value);
+}
+
 function privatePath(root: string, name: string): string {
+  if (name === reusableAnswerPath) candidateFile(root, name);
   if (name.includes("\\") || isAbsolute(name) || name.split("/").some(p => !p || p === ".." || p === ".")) throw new Error("Use a contained private relative path.");
   const path = resolve(root, name);
   let ancestor = path;
@@ -33,6 +47,7 @@ function privatePath(root: string, name: string): string {
 }
 function validateTarget(root: string, d: Decision, routing?: string) {
   validateDecision(d); privatePath(root, d.contextPath);
+  if (d.contextPath === reusableAnswerPath) { reusableBinding(d); return; }
   if (d.roleId !== null) {
     const path = resolve(root, "Job Context/Candidate/role-routing.local.md");
     const contents = routing ?? (existsSync(path) ? readFileSync(path, "utf8") : "");
@@ -61,17 +76,25 @@ export function queueQuestions(root: string, questions: Omit<FocusedQuestion, "s
     for (const input of questions) {
       validateTarget(root, input);
       if (!supplied(input.prompt) || input.prompt.length > 500 || typeof input.required !== "boolean") throw new Error("Write one concise question about the bound decision.");
-      if (state.scope === "profileSetup" && (input.roleId === null && input.contextPath !== "Job Context/Candidate/role-routing.local.md" ||
+      if (state.scope === "profileSetup" && (input.roleId === null && ![reusableAnswerPath, "Job Context/Candidate/role-routing.local.md"].includes(input.contextPath) ||
         ["browserTools", "connections", "siteMapping"].includes(input.step))) throw new Error("Ask only questions relevant to profile-only setup.");
-      const old = c.questions.find(q => q.id === input.id), answer = c.answers.filter(a => fieldKey(a) === fieldKey(input)).at(-1);
+      const old = c.questions.find(q => q.id === input.id);
       if (old) {
+        if (input.contextPath === reusableAnswerPath && sameDecision(old, input)) continue;
         if (!sameDecision(old, input) || old.prompt !== input.prompt || old.required !== input.required) throw new Error("Preserve question identity; clarify or revise it explicitly instead of replacing history.");
         continue;
       }
       if (c.questions.some(q => fieldKey(q) === fieldKey(input))) throw new Error("Reuse the existing question for this field instead of asking it twice.");
+      if (input.contextPath === reusableAnswerPath) {
+        const session = loadAttentionSession(root).session;
+        if (session.decision && !session.lastResponse && ["awaitingInput", "suspended"].includes(session.phase) && sameDecision(session.decision, input)) continue;
+      }
+      const answered = input.contextPath === reusableAnswerPath
+        ? !input.scopeClarification && reusableQuestionSatisfied(root, input, loadReusableAnswers(root).answers)
+        : c.answers.some(a => fieldKey(a) === fieldKey(input));
       const legacy = state.pendingQuestions.find(q => !!q && typeof q === "object" && (q as { id?: unknown }).id === input.id);
       const askedAt = (legacy as { askedAt?: unknown })?.askedAt;
-      c.questions.push({ ...input, status: answer ? "answered" : "pending", askedAt: validTime(askedAt) ? askedAt : null,
+      c.questions.push({ ...input, status: answered ? "answered" : "pending", askedAt: validTime(askedAt) ? askedAt : null,
         ...(legacy ? { legacy: structuredClone(legacy) } : {}) });
     }
   });
@@ -206,6 +229,7 @@ function validateBundle(root: string, state: OnboardingProgress, value: unknown)
     privatePath(root, r.path); paths.add(r.path);
   }
   if (b.answers.some(a => !paths.has(a.decision.contextPath))) throw new Error("Every answer must bind to an actual canonical save before it can be resolved.");
+  validateReusableWrite(b);
 }
 /** Rebase only actual file conflicts; preserve the original reply and decision identities. */
 export function reconcileStagedResponse(root: string, proposed: ResponseBundle, reviewReference: string) {
@@ -267,6 +291,9 @@ export function applyResponse(root: string, input?: ResponseBundle): OnboardingP
       if (hash !== w.expectedSha256 && hash !== digest(w.content)) throw new Error("Canonical context changed; preserve and reconcile the staged response instead of overwriting it.");
     }
     for (const ref of bundle.references) if (fileHash(root, ref.path) !== ref.sha256) throw new Error("A referenced answer was not saved or changed; keep the question unresolved.");
+    if (bundle.answers.some(a => a.decision.contextPath === reusableAnswerPath)) {
+      validateReusableWrite(bundle, loadReusableAnswers(root).answers);
+    }
     if (!stored.data) savePrivateJson(root, journal, bundle, null);
     for (const w of bundle.writes) {
       const hash = fileHash(root, w.path), expected = digest(w.content);
@@ -294,6 +321,20 @@ export function applyResponse(root: string, input?: ResponseBundle): OnboardingP
         c.legacyResolutions.push({ decisionId: d.id, responseId: bundle.id, question: structuredClone(old) });
       }
       state.pendingQuestions = state.pendingQuestions.filter(old => (old as { id?: unknown })?.id !== d.id);
+    }
+    if (canonical.has(reusableAnswerPath)) {
+      const savedScopes = bundle.answers.filter(a => a.decision.contextPath === reusableAnswerPath).map(a => reusableBinding(a.decision));
+      const rows = loadReusableAnswers(root).answers;
+      for (const q of c.questions) {
+        if (q.status !== "pending" || q.contextPath !== reusableAnswerPath || q.scopeClarification ||
+          c.revisions?.some(r => r.question.id === q.id)) continue;
+        const binding = reusableBinding(q);
+        if (!savedScopes.some(saved => saved.fieldId === binding.fieldId && scopeMatches(saved.scope, binding.scope)) ||
+          !reusableQuestionSatisfied(root, q, rows)) continue;
+        q.status = "answered";
+        q.presentationPending = false;
+        if (c.activeQuestionId === q.id) c.activeQuestionId = null;
+      }
     }
     c.responses.push({ id: bundle.id, sourceReference: bundle.sourceReference, savedAt: bundle.observedAt,
       decisionIds: bundle.answers.map(a => a.decision.id), proposalSha256: digest(JSON.stringify(bundle)) });

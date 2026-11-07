@@ -40,7 +40,7 @@ Profile-only setup skips browser tools, accounts, inbox and site mapping. Progre
 
 The agent reads supplied CVs and any existing [candidate context](Job%20Context/Candidate/README.md). It configures one independent profile per selected role and asks one to three relevant missing questions at a time about facts, job preferences, screening answers and application instructions. Answers are saved as they arrive. It does not ask you to retype CV facts or edit files for each answer.
 
-The QA and support folders are blank examples, not enabled roles. There is no Shared candidate folder. Additional roles follow the same structure. CV receipt, extraction and suitability for an actual portal's upload requirements are distinct checks.
+The QA and support folders are blank examples. Enable only the roles you configure. Additional roles follow the same structure and can use [reusable answers](automation/answers/README.md) when their scope applies. CV receipt, extraction and suitability for an actual portal's upload requirements are distinct checks.
 
 Optional preferences can remain unspecified or deferred until relevant. Scope-required missing information remains a concrete dependency. [Progress helpers](automation/onboarding/README.md) retain questions and checkpoints without copying the answers. Existing populated profiles are reused; onboarding introduces no routine approval gate.
 

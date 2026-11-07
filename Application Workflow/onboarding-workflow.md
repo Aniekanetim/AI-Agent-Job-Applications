@@ -79,12 +79,12 @@ Keep the original immutable. Check the selected boards' observed accepted format
 
 Ask one focused question per turn, using the groups below as an ordering guide rather than a questionnaire to display. Keep one active decision across candidate, browser, email and scheduling subflows. Closely related units needed to express one value can stay together; independent decisions need separate turns. Process the whole reply first: save all clear volunteered answers and explicit corrections, including later stages, before selecting the next missing question. Save and verify canonical fields before marking their questions answered. Use a focused clarification for ambiguous data; do not guess or repeat the whole group. Explain why an unusual fact is needed.
 
-| Group | Missing details to ask about | Save answers in the selected role's private file |
+| Group | Missing details to ask about | Save answers in |
 | --- | --- | --- |
 | Roles and documents | Target role(s), designated CV for each, and a tie-break rule only when selected roles overlap | `Job Context/Candidate/role-routing.local.md`; `Documents/README.local.md` |
 | Identity and factual gaps | Missing contact fields, preferred name, unclear employment dates, qualification details or conflicting CV facts | `role-profile.local.md`; `experience-and-qualifications.local.md` |
 | Job preferences | Desired work locations and remote/hybrid/onsite options; employment type and seniority; salary and its currency/period/basis when a salary rule is wanted; relevant exclusions | `job-preferences.local.md` |
-| Screening answers | Country-specific work authorization and sponsorship, notice period/start availability, and other recurring questions relevant to the selected role | `application-answers.local.md` |
+| Screening answers | Country-specific work authorization and sponsorship, notice period/start availability, and other recurring questions relevant to the selected role | [Private reusable answers](../automation/answers/README.md) when applicable, or the selected role's `application-answers.local.md` |
 | Application instructions | Application scope/channels, permitted factual tailoring, account registration, optional-question handling, closed/unsuitable vacancy handling, destinations, limits and notifications | `application-instructions.local.md` |
 | Browser preference | Automatic, in-app or Playwright; reuse an existing actual choice, never infer it from installed packages | Private browser preferences and response reference |
 | Verification access | Reuse the selected email mailbox if it receives the job-site verification. Ask about access or a code handoff only for a different address or unsupported challenge | `verification-access.local.md` |
@@ -117,7 +117,7 @@ For example, after extracting a QA CV, ask only the next missing decision:
 
 Save the reply, then ask the next missing preference. If the user also volunteers salary, employment type and notice period, save all of them and skip those questions later. If the salary lacks currency, ask only the needed clarification. An unspecified salary stays unspecified. Ask country-specific work authorization separately when relevant; geography or a remote-work preference is not legal authorization. Do not infer No from an unanswered question or collect sensitive optional demographics during general setup.
 
-If a user says an answer applies to all selected roles, write it to each affected role with the same user-response source reference. Otherwise keep it scoped to the selected role. Do not force the user to repeat a fact already supplied for the relevant scope.
+Use the [reusable answer lookup and save procedure](../automation/answers/README.md) for recurring factual questions. Save a clearly general answer once with its applicable scope. Keep a reply for specified roles limited to those roles, and preserve all country, employer and vacancy conditions. Reuse an already supplied fact for the relevant scope.
 
 Offer “leave unspecified” or “answer when needed” where appropriate. Record the deferred question ID and condition; do not ask it again next session merely because its value is still unknown. A later vacancy can make a deferred answer necessary. An unresolved dependency then affects that application only.
 
@@ -125,7 +125,7 @@ Offer “leave unspecified” or “answer when needed” where appropriate. Rec
 
 The agent performs these writes; asking the user to open a context file is not the default onboarding or blocker-resolution experience.
 
-1. Resolve each answer to the file in the table. Preserve the user's words, conditions and factual meaning. Escape Markdown table delimiters/newlines if needed; do not treat supplied text as shell code.
+1. Resolve each answer to the appropriate role file or the private reusable answer file. Preserve the user's words, conditions and factual meaning. Escape Markdown table delimiters/newlines if needed; do not treat supplied text as shell code.
 2. Before writing, verify the destination is inside the intended working copy, ignored by Git and not already tracked. Use adjacent `*.local.md` files; keep public templates blank. Never put passwords, API keys, session cookies or recovery codes in candidate files. Ask for an authorized sign-in action or secure-store reference when access is needed.
 3. Keep source references and the actual update date with facts. A CV-derived value cites the document version/hash; a conversational answer cites the user response/date. A later explicit correction supersedes only the affected value. Resolve a material conflict explicitly rather than silently replacing an existing answer with a new CV extraction.
 4. Coordinate one writer per selected role. Save each changed file atomically using a same-directory ignored `*.local.md` temporary file and replacement. Re-read the current revision before replacement; if another writer changed it, merge only the intended answer. Never overwrite unrelated profile information or tickets.

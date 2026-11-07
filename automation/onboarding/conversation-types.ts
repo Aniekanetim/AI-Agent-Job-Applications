@@ -11,6 +11,7 @@ export interface Decision {
 export interface FocusedQuestion extends Decision {
   prompt: string;
   required: boolean;
+  scopeClarification?: true;
   status: "pending" | "answered" | "deferred";
   askedAt: string | null;
   sourceReference?: string;
@@ -66,6 +67,7 @@ export function validateConversation(value: unknown): asserts value is Conversat
   for (const q of c.questions) {
     validateDecision(q);
     if (ids.has(q.id) || !supplied(q.prompt) || typeof q.required !== "boolean" || !["pending", "answered", "deferred"].includes(q.status) ||
+      (q.scopeClarification !== undefined && q.scopeClarification !== true) ||
       !(q.askedAt === null || validTime(q.askedAt))) throw new Error("Preserve distinct focused questions and their actual state.");
     ids.add(q.id);
     if (q.presentationPending !== undefined && typeof q.presentationPending !== "boolean") throw new Error("Preserve the prompt presentation checkpoint.");

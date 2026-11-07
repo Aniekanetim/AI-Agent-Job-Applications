@@ -1,5 +1,7 @@
 # Interactive settings
 
+Under **Job preferences and application answers**, choose **Reusable answers** to view a saved value and where it applies. Prepare corrections through the [reusable answer procedure](../answers/README.md) and commit the proposal with `settings save`. Use **Application answers** for the selected role's original answer file.
+
 **Blocked-task reminders** appears within **Application limits and reporting**. It uses [attention preferences](../attention/README.md), with automatic reminders off by default and manual review available. Preserve the six root areas plus Close and all application schedule/limit/reporting choices. Save through the dedicated preference helper, then bind the existing settings response to its actual canonical hash. An explicit Open settings suspends an attention review; recover any retained answer save before changing focus. Closing settings does not automatically reopen a paused review.
 
 Under **Job boards and email**, **Primary job boards** retains the onboarding selection. **Encountered websites and employer access** lists registered task-discovered sites by label and exact origin/tenant. Selecting one opens its canonical private access instructions, including nested destinations. Save through the same focused-response procedure. Do not load passwords or reset onboarding. A changed instruction invalidates bound task access until rechecked; it does not itself resolve a CAPTCHA. See [website preparation](../sites/README.md).

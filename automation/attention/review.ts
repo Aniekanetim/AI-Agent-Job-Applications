@@ -12,6 +12,8 @@ import { itemKey, safeText, time } from "./types.js";
 import { attentionQueue, queuedNames } from "./queue.js";
 import { loadAttentionSession, updateAttentionSession, otherConversationFocus } from "./session-state.js";
 import { selectedTicketEvidence } from "./selected-ticket.js";
+import { reusableAnswerPath } from "../answers/context.js";
+import { lookupApplicationAnswer, type AnswerRequest } from "../answers/workflow.js";
 
 function selected(root: string, key: string) {
   const item = loadAttention(root).state.items.find(i => itemKey(i) === key && i.state !== "retired");
@@ -47,6 +49,7 @@ export function beginAttentionReview(root: string, key: string, sourceReference:
 export interface ReviewObservation {
   task: ApplicationTask; ticketHash: string; observedAt: string; reference: string; context: FileEvidence[];
   outcome: "needsInput" | "alreadySupplied"; prompt?: string; decision?: Decision;
+  answerLookup?: AnswerRequest;
 }
 /** Agent interprets current evidence; helpers enforce scope, revisions and one selected question. */
 export function verifyAttentionReview(root: string, input: ReviewObservation) {
@@ -63,20 +66,46 @@ export function verifyAttentionReview(root: string, input: ReviewObservation) {
     if (!observed || itemKey(observed) !== s.key) throw new Error("Review the actual current blocker generation before asking anything.");
     if (!Array.isArray(input.context) || !input.context.some(e => e.path === task.blocker?.contextPath)) throw new Error("Verify this selected blocker's required current context before repeating a missing-fact question.");
     input.context.forEach(e => readEvidence(root, e));
-    if (input.outcome === "alreadySupplied") {
+    const sharedBinding = item.binding?.contextPath === reusableAnswerPath ? item.binding : undefined;
+    if (sharedBinding && !input.answerLookup) throw new Error("Check the current reusable field before presenting this question.");
+    if (input.answerLookup && (item.kind !== "answer" || task.checkpoint === "submissionAttempted" ||
+      input.answerLookup.context.roleId !== task.selectedRoleId || input.answerLookup.context.taskId !== task.taskId)) {
+      throw new Error("Look up a factual answer for this selected role and task after submission recovery.");
+    }
+    const answer = input.answerLookup && lookupApplicationAnswer(root, input.answerLookup);
+    const checkedDecision = answer && "decision" in answer ? answer.decision : undefined;
+    if (sharedBinding && checkedDecision && !sameDecision(sharedBinding, checkedDecision)) {
+      throw new Error("Check the selected blocker's recorded answer field and scope.");
+    }
+    if (answer?.action === "recoverResponse") throw new Error("Recover the retained answer before reviewing this question.");
+    if (answer?.action === "pending") {
+      return updateAttentionSession(root, session => {
+        session.phase = "awaitingContinue";
+        return { action: "awaitingExistingAnswer" as const, decisionId: answer.decision.id, choices: ["Continue", "Stop for now"], requeued: false };
+      });
+    }
+    if (input.outcome === "alreadySupplied" && answer && answer.action !== "match") {
+      throw new Error("Verify the applicable saved answer or resolve its scope before recording input.");
+    }
+    if (input.outcome === "alreadySupplied" || answer?.action === "match") {
       markInputRecorded(root, s.key);
       return updateAttentionSession(root, session => { session.phase = "awaitingContinue"; session.reviewReference = input.reference; return { action: "awaitingContinue" as const, choices: ["Continue", "Stop for now"], requeued: false }; });
     }
     if (input.outcome !== "needsInput" || !safeText(input.prompt, 500)) throw new Error("Present one verified missing action or factual question.");
-    if (task.checkpoint === "submissionAttempted" && input.decision) throw new Error("Investigate this same application's uncertain submission before asking new form answers.");
-    if (input.decision) {
-      validateDecision(input.decision);
-      if (!item.binding || !sameDecision(item.binding, input.decision) || input.decision.roleId !== (task.selectedRoleId ?? null) || input.decision.contextPath !== task.blocker?.contextPath) throw new Error("Use the exact recorded canonical field and selected role; do not generalize vacancy answers.");
-      const answered = loadProgress(root).state.conversation?.answers.some(a => a.contextPath === input.decision!.contextPath && a.roleId === input.decision!.roleId && a.field === input.decision!.field);
+    const decision = checkedDecision ?? input.decision;
+    if (task.checkpoint === "submissionAttempted" && decision) throw new Error("Investigate this same application's uncertain submission before asking new form answers.");
+    if (sharedBinding && (!decision || !sameDecision(sharedBinding, decision))) throw new Error("Preserve the selected reusable field.");
+    if (decision?.contextPath === reusableAnswerPath && (!checkedDecision || !sameDecision(checkedDecision, decision))) {
+      throw new Error("Check this reusable field and its applicability before asking.");
+    }
+    if (decision && decision.contextPath !== reusableAnswerPath) {
+      validateDecision(decision);
+      if (!item.binding || !sameDecision(item.binding, decision) || decision.roleId !== (task.selectedRoleId ?? null) || decision.contextPath !== task.blocker?.contextPath) throw new Error("Use the exact recorded canonical field and selected role; do not generalize vacancy answers.");
+      const answered = loadProgress(root).state.conversation?.answers.some(a => a.contextPath === decision.contextPath && a.roleId === decision.roleId && a.field === decision.field);
       if (answered) throw new Error("Reconcile the already saved canonical answer; do not ask it again.");
     }
     return updateAttentionSession(root, session => {
-      Object.assign(session, { phase: "awaitingInput", prompt: input.prompt, decision: input.decision, reviewEvidence: input.context, reviewReference: input.reference, reviewedAt: input.observedAt, presentationPending: true });
+      Object.assign(session, { phase: "awaitingInput", prompt: input.prompt, decision, reviewEvidence: input.context, reviewReference: input.reference, reviewedAt: input.observedAt, presentationPending: true });
       delete session.presentation; return { action: "presentOne" as const, prompt: input.prompt, taskId: task.taskId, requeued: false };
     });
   } finally { owner.release(); }

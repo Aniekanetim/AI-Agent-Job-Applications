@@ -1,3 +1,5 @@
+import { reusableAnswerPath } from "../answers/context.js";
+
 export const areas = [
   { id: "profiles", label: "Role profiles and CVs" },
   { id: "preferences", label: "Job preferences and application answers" },
@@ -18,6 +20,7 @@ export const settings: Setting[] = [
   { id: "cv", area: "profiles", label: "CV and application documents", scope: "role", path: "Documents/README.local.md", procedure: "onboarding document import and focused response", prompt: "Which CV or application document would you like to add or replace?" },
   { id: "job-preferences", area: "preferences", label: "Job preferences", scope: "role", path: "job-preferences.local.md", procedure: "focused response", prompt: "Which job preference would you like to change?" },
   { id: "answers", area: "preferences", label: "Application answers", scope: "role", path: "application-answers.local.md", procedure: "focused response", prompt: "Which application answer would you like to update?" },
+  { id: "reusable-answers", area: "preferences", label: "Reusable answers", scope: "global", path: reusableAnswerPath, procedure: "reusable answer proposal and focused response", prompt: "Which saved answer or scope would you like to change?" },
   { id: "instructions", area: "preferences", label: "Application instructions", scope: "role", path: "application-instructions.local.md", procedure: "focused response", prompt: "What application instruction would you like to change?" },
   { id: "verification", area: "preferences", label: "Verification-email and MFA access", scope: "role", path: "verification-access.local.md", procedure: "email verification setup and focused response", prompt: "How should the agent receive verification messages for this profile?" },
   { id: "boards", area: "connections", label: "Primary job boards", scope: "global", path: ".local/onboarding-state.json", field: "boards", procedure: "onboarding:start", prompt: "Which one to three primary job boards should I prepare?" },
