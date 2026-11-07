@@ -13,7 +13,8 @@ import { loadMenu } from "../settings/state.js";
 import { readAttentionMetadata } from "../attention/metadata.js";
 import { registeredAccessPath } from "../sites/registry.js";
 import { hasAttentionFocus, loadAttentionSession, suspendAttention } from "../attention/session-state.js";
-import { candidateFile, loadReusableAnswers, mostSpecific, reusableAnswerPath, reusableBinding, scopeMatches, usableAnswer, type ReusableAnswer } from "../answers/context.js";
+import { candidateFile, loadReusableAnswers, mostSpecific, normalizeScope, reusableAnswerPath, reusableBinding, scopeKeys, scopeMatches,
+  scopeOverrides, usableAnswer, type ReusableAnswer } from "../answers/context.js";
 import { validateReusableWrite } from "../answers/workflow.js";
 
 const journal = ".local/onboarding-pending-response.json";
@@ -22,14 +23,42 @@ const globalTargets = new Set(["Job Context/Candidate/role-routing.local.md", ".
 const conversation = (s: OnboardingProgress): ConversationState => s.conversation ?? emptyConversation();
 const fieldKey = (d: Decision) => JSON.stringify([d.roleId, d.contextPath, d.field]);
 
-function reusableQuestionSatisfied(root: string, q: Decision, rows: ReusableAnswer[]) {
-  const { fieldId, scope } = reusableBinding(q);
-  const candidates = rows.filter(row => row.fieldId === fieldId && row.value !== null && scopeMatches(row.scope, scope));
-  const best = mostSpecific(candidates.map(answer => ({ answer })));
+function reusableDate(root: string, at: Date) {
+  try {
+    const preferences = readAttentionMetadata(root, ".local/operation-preferences.json").data as { timezone?: string | null } | null;
+    return new Intl.DateTimeFormat("sv-SE", {
+      timeZone: preferences?.timezone ?? undefined, year: "numeric", month: "2-digit", day: "2-digit",
+    }).format(at);
+  } catch {
+    // An optional schedule setting cannot prevent a canonical reply from committing.
+    return null;
+  }
+}
+
+function reusableQuestionContext(q: Pick<FocusedQuestion, keyof Decision | "answerContext">) {
+  const binding = reusableBinding(q);
+  const context = q.answerContext === undefined ? binding.scope : normalizeScope(q.answerContext);
+  if (!scopeMatches(binding.scope, context)) throw new Error("Keep the focused answer scope applicable to the observed application.");
+  return { ...binding, context };
+}
+
+function reusableQuestionSatisfied(root: string, q: Pick<FocusedQuestion, keyof Decision | "answerContext">, rows: ReusableAnswer[], at: Date) {
+  const { fieldId, context } = reusableQuestionContext(q);
+  const candidates = rows.filter(row => row.fieldId === fieldId && row.value !== null);
+  const best = mostSpecific(candidates.filter(row => scopeMatches(row.scope, context)).map(answer => ({ answer })));
   if (!best.length) return false;
-  const preferences = readAttentionMetadata(root, ".local/operation-preferences.json").data as { timezone?: string | null } | null;
-  const date = new Intl.DateTimeFormat("sv-SE", { timeZone: preferences?.timezone ?? undefined, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-  return best.every(({ answer }) => usableAnswer(answer, date) && answer.value === best[0].answer.value);
+  let date: string | null | undefined;
+  function agrees(row: ReusableAnswer) {
+    if (row.value !== best[0].answer.value) return false;
+    if (row.fieldId !== "available_start_date" && !row.validThrough) return true;
+    if (date === undefined) date = reusableDate(root, at);
+    return date !== null && usableAnswer(row, date);
+  }
+  if (!best.every(({ answer }) => agrees(answer))) return false;
+  // Older queued questions may lack application qualifiers. Do not infer a match if another scope could change it.
+  return q.answerContext !== undefined || !candidates.some(row =>
+    scopeKeys.every(key => context[key] === undefined || row.scope[key] === undefined || row.scope[key] === context[key]) &&
+    !best.some(({ answer }) => scopeOverrides(answer.scope, row.scope)) && !agrees(row));
 }
 
 function privatePath(root: string, name: string): string {
@@ -76,6 +105,7 @@ export function queueQuestions(root: string, questions: Omit<FocusedQuestion, "s
     for (const input of questions) {
       validateTarget(root, input);
       if (!supplied(input.prompt) || input.prompt.length > 500 || typeof input.required !== "boolean") throw new Error("Write one concise question about the bound decision.");
+      if (input.answerContext !== undefined) reusableQuestionContext(input);
       if (state.scope === "profileSetup" && (input.roleId === null && ![reusableAnswerPath, "Job Context/Candidate/role-routing.local.md"].includes(input.contextPath) ||
         ["browserTools", "connections", "siteMapping"].includes(input.step))) throw new Error("Ask only questions relevant to profile-only setup.");
       const old = c.questions.find(q => q.id === input.id);
@@ -90,7 +120,7 @@ export function queueQuestions(root: string, questions: Omit<FocusedQuestion, "s
         if (session.decision && !session.lastResponse && ["awaitingInput", "suspended"].includes(session.phase) && sameDecision(session.decision, input)) continue;
       }
       const answered = input.contextPath === reusableAnswerPath
-        ? !input.scopeClarification && reusableQuestionSatisfied(root, input, loadReusableAnswers(root).answers)
+        ? !input.scopeClarification && reusableQuestionSatisfied(root, input, loadReusableAnswers(root).answers, new Date())
         : c.answers.some(a => fieldKey(a) === fieldKey(input));
       const legacy = state.pendingQuestions.find(q => !!q && typeof q === "object" && (q as { id?: unknown }).id === input.id);
       const askedAt = (legacy as { askedAt?: unknown })?.askedAt;
@@ -328,9 +358,9 @@ export function applyResponse(root: string, input?: ResponseBundle): OnboardingP
       for (const q of c.questions) {
         if (q.status !== "pending" || q.contextPath !== reusableAnswerPath || q.scopeClarification ||
           c.revisions?.some(r => r.question.id === q.id)) continue;
-        const binding = reusableBinding(q);
-        if (!savedScopes.some(saved => saved.fieldId === binding.fieldId && scopeMatches(saved.scope, binding.scope)) ||
-          !reusableQuestionSatisfied(root, q, rows)) continue;
+        const { fieldId, context } = reusableQuestionContext(q);
+        if (!savedScopes.some(saved => saved.fieldId === fieldId && scopeMatches(saved.scope, context)) ||
+          !reusableQuestionSatisfied(root, q, rows, new Date(bundle.observedAt))) continue;
         q.status = "answered";
         q.presentationPending = false;
         if (c.activeQuestionId === q.id) c.activeQuestionId = null;

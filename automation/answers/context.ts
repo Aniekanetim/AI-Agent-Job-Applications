@@ -77,11 +77,13 @@ export function scopeMatches(scope: AnswerScope, context: AnswerScope) {
   return scopeKeys.every(key => scope[key] === undefined || scope[key] === context[key]);
 }
 
+export function scopeOverrides(scope: AnswerScope, other: AnswerScope) {
+  if (Boolean(scope.taskId) !== Boolean(other.taskId)) return Boolean(scope.taskId);
+  return scopeMatches(other, scope) && !scopeMatches(scope, other);
+}
+
 export function mostSpecific<T extends { answer: ReusableAnswer }>(matches: T[]) {
-  const taskMatches = matches.filter(({ answer }) => answer.scope.taskId);
-  const applicable = taskMatches.length ? taskMatches : matches;
-  return applicable.filter(({ answer }) => !applicable.some(({ answer: other }) =>
-    scopeMatches(answer.scope, other.scope) && !scopeMatches(other.scope, answer.scope)));
+  return matches.filter(({ answer }) => !matches.some(({ answer: other }) => scopeOverrides(other.scope, answer.scope)));
 }
 
 export function validateAnswerValue(fieldId: string, value: unknown): asserts value is AnswerValue {

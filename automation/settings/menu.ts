@@ -80,6 +80,7 @@ export function settingsView(root: string, s = loadMenu(root).state): MenuView {
     const setting = settingById(s.settingId!), current = currentSetting(root, setting, s.roleId, s.board);
     view = { ...view, title: `${areaLabel(s)} / ${setting.label}`, question: s.clarification?.prompt ?? setting.prompt, input: "answer", current,
       procedure: setting.procedure, field: setting.field, roleId: setting.scope === "role" ? s.roleId : null };
+    if (current.status === "unavailable") view = { ...view, question: "This setting needs repair before it can be edited.", input: "choice" };
     if (current.path === null) view = setting.scope === "site" ? { ...view, question: "No encountered website is registered yet. The agent prepares one when an assigned task reaches it.", input: "none", options: [] } : { ...view, question: setting.scope === "role" ? "Configure a role profile before changing this setting." : "Choose your primary job boards before changing account access.",
       input: "choice", options: [{ id: "configure", label: setting.scope === "role" ? "Configure role profiles" : "Choose primary job boards" }] };
     view.options.push({ id: "cancel", label: "Cancel this edit" });
@@ -133,6 +134,7 @@ function finishSave(root: string, s: MenuState) {
   const bundle = readConversationInput(root, pending.proposalPath) as ResponseBundle;
   if (bundle.id !== pending.responseId) throw new Error("Recover the same settings response.");
   const setting = settingById(s.settingId!), before = currentSetting(root, setting, s.roleId, s.board);
+  if (before.status === "unavailable") throw new Error(before.text);
   if (!before.path || before.path === ".local/onboarding-state.json" || !hasSelectedAnswer(bundle, before.path, s)) throw new Error("Bind this response to the selected setting and role. Scope/board changes use their existing setup procedure.");
   applyResponse(root, bundle);
   const after = currentSetting(root, setting, s.roleId, s.board);
@@ -148,6 +150,7 @@ export function saveSettingsReply(root: string, proposalPath: string) {
     const bundle = readConversationInput(root, proposalPath) as ResponseBundle;
     if (!bundle?.id || !bundle.sourceReference) throw new Error("Use the actual focused-response proposal and source.");
     const setting = settingById(s.settingId!), target = currentSetting(root, setting, s.roleId, s.board);
+    if (target.status === "unavailable") throw new Error(target.text);
     if (!target.path || target.path === ".local/onboarding-state.json" || !hasSelectedAnswer(bundle, target.path, s)) throw new Error("Save the selected setting in its canonical file, field and role, or use complete for scope/board changes.");
     const sha256 = digest(readFileSync(containedFile(root, proposalPath)));
     if (s.pendingSave && (s.pendingSave.proposalPath !== proposalPath || s.pendingSave.sha256 !== sha256)) throw new Error("Recover the existing settings response before accepting another.");

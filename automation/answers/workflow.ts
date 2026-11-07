@@ -1,13 +1,13 @@
 import { readEvidence, type FileEvidence } from "../email/evidence.js";
 import { loadProgress } from "../onboarding/state-store.js";
 import type { ResponseBundle } from "../onboarding/conversation.js";
-import { sameDecision } from "../onboarding/conversation-types.js";
+import type { Decision } from "../onboarding/conversation-types.js";
 import { roles } from "../settings/context.js";
 import { loadAttentionSession } from "../attention/session-state.js";
 import { attentionMetadataExists } from "../attention/metadata.js";
 import { withWriteOwnership } from "../workflow/ownership.js";
 import { answerDecision, answerField, candidateFile, formatReusableAnswers, loadReusableAnswers, mostSpecific, normalizeScope, parseReusableAnswers,
-  reusableAnswerPath, scopeMatches, usableAnswer, validDate, validateAnswerValue, validateFieldId,
+  reusableAnswerPath, reusableBinding, scopeMatches, scopeOverrides, usableAnswer, validDate, validateAnswerValue, validateFieldId,
   type AnswerScope, type AnswerValue, type ReusableAnswer } from "./context.js";
 
 const aliases = new Map([
@@ -17,6 +17,12 @@ const aliases = new Map([
   ["what date can you start", "available_start_date"],
   ["earliest start date", "available_start_date"],
 ]);
+
+export function matchesLegacyAnswerField(field: string, decision: Decision) {
+  const normalized = field.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const fieldId = normalized === "notice" ? "notice_period" : normalized;
+  return fieldId === reusableBinding(decision).fieldId;
+}
 
 export interface AnswerRequest {
   fieldId?: string;
@@ -76,18 +82,29 @@ function resolveCurrentAnswer(root: string, request: AnswerRequest, target: NonN
     candidates.push({ answer: { fieldId, scope, value, sourceReference: evidence.path, updatedAt: request.onDate }, evidence });
   }
   const best = mostSpecific(candidates);
+  function pendingApplies(candidate: Decision) {
+    if (candidate.contextPath !== reusableAnswerPath) return false;
+    const binding = reusableBinding(candidate);
+    return binding.fieldId === fieldId && scopeMatches(binding.scope, context) &&
+      !best.some(({ answer }) => scopeOverrides(answer.scope, binding.scope));
+  }
+  attentionMetadataExists(root, ".local/onboarding-state.json");
+  const pending = loadProgress(root).state.conversation?.questions.find(q => q.status === "pending" && pendingApplies(q));
+  const attentionPending = session.decision && !session.lastResponse && ["awaitingInput", "suspended"].includes(session.phase) &&
+    pendingApplies(session.decision) ? session.decision : undefined;
+  const existingDecision = pending ?? attentionPending;
+  if (existingDecision) return { action: "pending" as const, decision: answerDecision(fieldId, reusableBinding(existingDecision).scope), requestedDecision: decision,
+    owner: pending ? "conversation" as const : "attention" as const };
   const stale = best.some(({ answer }) => !usableAnswer(answer, request.onDate));
   const conflict = best.some(({ answer }) => answer.value !== best[0].answer.value);
   if (best.length && !stale && !conflict) {
     return { action: "match" as const, decision, ...best[0] };
   }
-  attentionMetadataExists(root, ".local/onboarding-state.json");
-  const pending = loadProgress(root).state.conversation?.questions.find(q => q.status === "pending" && sameDecision(q, decision));
-  const attentionPending = session.decision && !session.lastResponse && ["awaitingInput", "suspended"].includes(session.phase) && sameDecision(session.decision, decision);
-  if (pending || attentionPending) return { action: "pending" as const, decision, owner: pending ? "conversation" as const : "attention" as const };
-  if (stale) return { action: "stale" as const, decision };
-  if (conflict) return { action: "conflict" as const, decision, scopes: best.map(({ answer }) => answer.scope) };
-  return { action: "missing" as const, decision };
+  const question = { ...decision, answerContext: context };
+  if (stale) return { action: "stale" as const, decision, question: { ...question, scopeClarification: true as const } };
+  if (conflict) return { action: "conflict" as const, decision, question: { ...question, scopeClarification: true as const },
+    scopes: best.map(({ answer }) => answer.scope) };
+  return { action: "missing" as const, decision, question };
 }
 
 export interface ReusableChange {

@@ -12,8 +12,9 @@ import { itemKey, safeText, time } from "./types.js";
 import { attentionQueue, queuedNames } from "./queue.js";
 import { loadAttentionSession, updateAttentionSession, otherConversationFocus } from "./session-state.js";
 import { selectedTicketEvidence } from "./selected-ticket.js";
-import { reusableAnswerPath } from "../answers/context.js";
-import { lookupApplicationAnswer, type AnswerRequest } from "../answers/workflow.js";
+import { answerField, loadReusableAnswers, normalizeScope, parseReusableAnswers, reusableAnswerPath, reusableBinding, scopeMatches,
+  type AnswerScope } from "../answers/context.js";
+import { lookupApplicationAnswer, matchesLegacyAnswerField, type AnswerRequest } from "../answers/workflow.js";
 
 function selected(root: string, key: string) {
   const item = loadAttention(root).state.items.find(i => itemKey(i) === key && i.state !== "retired");
@@ -24,6 +25,9 @@ function selected(root: string, key: string) {
 function assertFocus(root: string, recovering = false) { const focus = otherConversationFocus(root); if (focus && !(recovering && focus === "recoverResponse" && loadAttentionSession(root).session.response)) throw new Error(`Finish or explicitly pause the existing ${focus} focus before reviewing a task.`); }
 /** An actual user Review request authorizes exactly this selected ticket, never a background backlog read. */
 export function beginAttentionReview(root: string, key: string, sourceReference: string, now: string) {
+  return startReview(root, key, sourceReference, now, []);
+}
+function startReview(root: string, key: string, sourceReference: string, now: string, waitingForAnswer: string[]) {
   if (!safeText(sourceReference, 300) || !time(now)) throw new Error("Reference the actual selected-task review request.");
   assertFocus(root);
   const item = selected(root, key), owner = acquireOwnership(root, taskOwnershipKey(item.taskId));
@@ -40,7 +44,7 @@ export function beginAttentionReview(root: string, key: string, sourceReference:
     const ticket = selectedTicketEvidence(root, item.path), contents = readEvidence(root, ticket).toString("utf8");
     updateAttentionSession(root, s => {
       Object.keys(s).forEach(k => { if (!["schemaVersion"].includes(k)) delete (s as unknown as Record<string, unknown>)[k]; });
-      Object.assign(s, { phase: "reviewing", key, taskId: item.taskId, path: item.path, ticketHash: ticket.sha256, sourceReference });
+      Object.assign(s, { phase: "reviewing", key, taskId: item.taskId, path: item.path, ticketHash: ticket.sha256, sourceReference, waitingForAnswer });
     });
     return { action: "inspectSelectedTask" as const, ticket, contents, checkpoint: control?.task.checkpoint,
       next: "Inspect only this task and its required current context. Verify the missing action before presenting one question. A response does not requeue it." };
@@ -73,9 +77,12 @@ export function verifyAttentionReview(root: string, input: ReviewObservation) {
       throw new Error("Look up a factual answer for this selected role and task after submission recovery.");
     }
     const answer = input.answerLookup && lookupApplicationAnswer(root, input.answerLookup);
-    const checkedDecision = answer && "decision" in answer ? answer.decision : undefined;
+    const checkedDecision = answer?.action === "pending" ? answer.requestedDecision : answer && "decision" in answer ? answer.decision : undefined;
     if (sharedBinding && checkedDecision && !sameDecision(sharedBinding, checkedDecision)) {
       throw new Error("Check the selected blocker's recorded answer field and scope.");
+    }
+    if (item.binding && !sharedBinding && checkedDecision && !matchesLegacyAnswerField(item.binding.field, checkedDecision)) {
+      throw new Error("Check the reusable equivalent of the selected blocker's recorded field.");
     }
     if (answer?.action === "recoverResponse") throw new Error("Recover the retained answer before reviewing this question.");
     if (answer?.action === "pending") {
@@ -106,6 +113,7 @@ export function verifyAttentionReview(root: string, input: ReviewObservation) {
     }
     return updateAttentionSession(root, session => {
       Object.assign(session, { phase: "awaitingInput", prompt: input.prompt, decision, reviewEvidence: input.context, reviewReference: input.reference, reviewedAt: input.observedAt, presentationPending: true });
+      if (checkedDecision && input.answerLookup) session.answerContext = normalizeScope(input.answerLookup.context);
       delete session.presentation; return { action: "presentOne" as const, prompt: input.prompt, taskId: task.taskId, requeued: false };
     });
   } finally { owner.release(); }
@@ -118,6 +126,21 @@ export function recordAttentionPresentation(root: string, reference: string, now
     s.presentation = { reference, at: now }; s.presentationPending = false;
   });
 }
+function answersSelectedQuestion(root: string, bundle: ResponseBundle, decision: Decision, context: AnswerScope) {
+  if (!Array.isArray(bundle?.answers)) return false;
+  if (decision.contextPath !== reusableAnswerPath) return bundle.answers.some(a => sameDecision(a.decision, decision));
+  const selected = reusableBinding(decision);
+  const applicable = bundle.answers.filter(a => {
+    if (a.decision.contextPath !== reusableAnswerPath) return false;
+    const reply = reusableBinding(a.decision);
+    return reply.fieldId === selected.fieldId && scopeMatches(selected.scope, reply.scope) && scopeMatches(reply.scope, context);
+  });
+  if (!applicable.length) return false;
+  const write = bundle.writes?.find(w => w.path === reusableAnswerPath);
+  const rows = write ? parseReusableAnswers(write.content) : loadReusableAnswers(root).answers;
+  return rows.some(row => row.value !== null && applicable.some(a => a.decision.field === answerField(row.fieldId, row.scope)));
+}
+
 export function saveAttentionAnswer(root: string, proposalPath?: string) {
   assertFocus(root, true);
   const current = loadAttentionSession(root).session, path = proposalPath ?? current.response?.path;
@@ -126,7 +149,10 @@ export function saveAttentionAnswer(root: string, proposalPath?: string) {
   const journal = readPrivateJson(root, ".local/onboarding-pending-response.json").data as ResponseBundle | null;
   if (current.response && journal?.reconciliation?.previousProposalSha256 === digest(JSON.stringify(bundle)) && journal.id === bundle.id &&
     journal.sourceReference === bundle.sourceReference && JSON.stringify(journal.answers) === JSON.stringify(bundle.answers)) bundle = journal;
-  if (!bundle?.answers?.some(a => sameDecision(a.decision, current.decision!))) throw new Error("Preserve this task's canonical field and any clear additional answers in the same reply.");
+  const context = current.decision.contextPath === reusableAnswerPath
+    ? normalizeScope({ ...reusableBinding(current.decision).scope, ...current.answerContext, taskId: current.taskId })
+    : {};
+  if (!answersSelectedQuestion(root, bundle, current.decision, context)) throw new Error("Preserve this task's canonical field and any clear additional answers in the same reply.");
   const hash = digest(readEvidence(root, evidenceFile(root, path)));
   updateAttentionSession(root, s => {
     if (s.response && (s.response.path !== path || s.response.sha256 !== hash)) throw new Error("Recover the same retained response before replacing it.");
@@ -174,9 +200,15 @@ export function continueAttentionReview(root: string, sourceReference: string, n
   if (!safeText(sourceReference, 300) || !time(now)) throw new Error("Reference the actual Continue choice.");
   const s = loadAttentionSession(root).session;
   if (s.phase !== "awaitingContinue") throw new Error("Finish the current interaction before Continue.");
-  const next = attentionQueue(root, now, { explicit: true }).items[0];
-  if (!next) return updateAttentionSession(root, session => { session.phase = "closed"; return { action: "noRecordedItems" as const, coverage: "partial" as const }; });
-  return beginAttentionReview(root, itemKey(next), sourceReference, now);
+  const waiting = new Set(s.waitingForAnswer);
+  const { items } = attentionQueue(root, now, { explicit: true });
+  if (s.key && items.some(item => itemKey(item) === s.key)) waiting.add(s.key);
+  const next = items.find(item => !waiting.has(itemKey(item)));
+  if (!next) return updateAttentionSession(root, session => {
+    session.phase = "closed";
+    return items.length ? { action: "awaitingLinkedAnswers" as const, waiting: items.length } : { action: "noRecordedItems" as const, coverage: "partial" as const };
+  });
+  return startReview(root, itemKey(next), sourceReference, now, [...waiting]);
 }
 /** Explicit bounded legacy registration: caller supplies the single selected task, never a directory scan. */
 export function registerSelectedAttention(root: string, task: ApplicationTask, path: string, requestReference: string, now: string) {

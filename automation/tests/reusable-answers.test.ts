@@ -6,10 +6,10 @@ import { join, resolve, dirname, relative, isAbsolute } from "node:path";
 import { execFileSync } from "node:child_process";
 import { syncBuiltinESMExports } from "node:module";
 import { evidenceFile } from "../email/evidence.js";
-import { applyResponse, nextQuestion, queueQuestions, type ResponseBundle } from "../onboarding/conversation.js";
+import { applyResponse, nextQuestion, queueQuestions, reviseQuestion, setConversationMode, type ResponseBundle } from "../onboarding/conversation.js";
 import { loadProgress } from "../onboarding/state-store.js";
 import { chooseSetting, openSettings, saveSettingsReply } from "../settings/menu.js";
-import { beginAttentionReview, registerSelectedAttention, verifyAttentionReview, recordAttentionPresentation, saveAttentionAnswer } from "../attention/review.js";
+import { beginAttentionReview, continueAttentionReview, registerSelectedAttention, verifyAttentionReview, recordAttentionPresentation, saveAttentionAnswer } from "../attention/review.js";
 import { itemKey } from "../attention/types.js";
 import { loadAttention } from "../attention/state.js";
 import type { ApplicationTask } from "../workflow/application-state.js";
@@ -51,24 +51,30 @@ function reply(root: string, id: string, ...changes: ReusableChange[]) {
 
 const notice = { fieldId: "notice_period", value: "Two weeks", scope: {}, kind: "answer" } as const;
 
-function blocked(f: ReturnType<typeof fixture>, shared: boolean) {
+function registeredBlocker(f: ReturnType<typeof fixture>, shared: boolean, taskId = "APP-synthetic-qa") {
   const binding = shared ? answerDecision("notice_period", {}) :
     { id: "old-notice", step: "applicationInstructions" as const, substep: "notice", roleId: "qa", contextPath: qaContext, field: "notice" };
   const task: ApplicationTask = {
-    taskId: "APP-synthetic-qa", originalIntake: "To Do", selectedRoleId: "qa", checkpoint: "working",
+    taskId, originalIntake: "To Do", selectedRoleId: "qa", checkpoint: "working",
     blocker: { reason: "A notice period is required", lastCompletedStep: "Form opened", contextPath: qaContext, nextAction: "Confirm notice period",
       resumeCheckpoint: "Notice field", attention: { humanRequired: true, generation: "notice-1", kind: "answer", label: "Notice period", binding } },
   };
-  const path = "Task Board/Blocked/APP-synthetic-qa.md";
+  const path = `Task Board/Blocked/${taskId}.md`;
   const ticket = f.write(path, "# Synthetic blocked ticket\n");
   registerSelectedAttention(f.root, task, path, "synthetic-explicit-review", now);
-  const item = loadAttention(f.root).state.items[0];
-  beginAttentionReview(f.root, itemKey(item), "synthetic-review-choice", now);
-  return verifyAttentionReview(f.root, {
+  const item = loadAttention(f.root).state.items.find(item => item.taskId === taskId)!;
+  const observation = {
     task, ticketHash: ticket.sha256, observedAt: now, reference: "synthetic-current-form",
-    context: [f.context], outcome: "needsInput", prompt: "How much notice do you need to give?",
+    context: [f.context], outcome: "needsInput" as const, prompt: "How much notice do you need to give?",
     answerLookup: { question: "How much notice do you need to give?", context: { roleId: "qa", taskId: task.taskId }, questionScope: {}, onDate: today },
-  });
+  };
+  return { item, observation };
+}
+
+function blocked(f: ReturnType<typeof fixture>, shared: boolean) {
+  const { item, observation } = registeredBlocker(f, shared);
+  beginAttentionReview(f.root, itemKey(item), "synthetic-review-choice", now);
+  return verifyAttentionReview(f.root, observation);
 }
 
 test("a blocked review saves one general answer that another role reuses under different wording", t => {
@@ -177,4 +183,120 @@ test("a partially saved reply recovers before a later application can reuse it",
   applyResponse(root);
   assert.equal(lookupApplicationAnswer(root, request("notice_period")).action, "match");
   assert.equal(loadProgress(root).state.conversation!.answers.length, 1);
+});
+
+test("an applicable pending correction suppresses the old answer and preserves a distinct role exception", t => {
+  const { root } = fixture(t);
+  const general = answerDecision("notice_period", {});
+  queueQuestions(root, [{ ...general, prompt: "What is your notice period?", required: true }]);
+  applyResponse(root, reply(root, "old-notice", notice, { ...notice, scope: { roleId: "qa" }, value: "One week" }));
+  reviseQuestion(root, general.id, "What is your updated notice period?", "synthetic-request-to-correct", now);
+  const waiting = lookupApplicationAnswer(root, request("notice_period", { roleId: "support" }, { roleId: "support" }));
+  assert.equal(waiting.action, "pending");
+  if (waiting.action === "pending") assert.deepEqual(waiting.decision, general);
+  assert.equal(lookupApplicationAnswer(root, request("notice_period", { roleId: "qa" })).action, "match");
+  applyResponse(root, reply(root, "corrected-notice", { ...notice, value: "Four weeks", kind: "correction" }));
+  const updated = lookupApplicationAnswer(root, request("notice_period", { roleId: "support" }));
+  assert.equal(updated.action, "match");
+  if (updated.action === "match") assert.equal(updated.answer.value, "Four weeks");
+});
+
+test("an expired scoped answer remains pending despite a current general answer", t => {
+  const { root } = fixture(t);
+  applyResponse(root, reply(root, "start-dates",
+    { fieldId: "available_start_date", scope: {}, value: "2099-12-01", kind: "answer" },
+    { fieldId: "available_start_date", scope: { roleId: "qa" }, value: "2026-11-06", kind: "answer" }));
+  const stale = lookupApplicationAnswer(root, request("available_start_date", { roleId: "qa" }));
+  assert.equal(stale.action, "stale");
+  if (stale.action !== "stale") return;
+  const question = { prompt: "What date can you start?", required: true };
+  // Older callers supplied the decision alone, without the application's qualifiers.
+  const state = queueQuestions(root, [{ ...stale.decision, ...question }]);
+  assert.equal(state.conversation!.questions[0].status, "pending");
+  assert.equal(nextQuestion(root).next.action, "present");
+  const other = lookupApplicationAnswer(root, request("available_start_date", { roleId: "support" }));
+  assert.equal(other.action, "pending");
+});
+
+test("a reusable answer for an unrelated field cannot satisfy a recorded legacy blocker", t => {
+  const f = fixture(t);
+  applyResponse(f.root, reply(f.root, "start-date",
+    { fieldId: "available_start_date", scope: {}, value: "2099-12-01", kind: "answer" }));
+  const { item, observation } = registeredBlocker(f, false);
+  beginAttentionReview(f.root, itemKey(item), "synthetic-review-choice", now);
+  const answerLookup = request("available_start_date", observation.answerLookup.context);
+  assert.throws(() => verifyAttentionReview(f.root, { ...observation, answerLookup }), /recorded field/);
+  assert.equal(loadAttention(f.root).state.items[0].state, "waiting");
+  assert.equal(verifyAttentionReview(f.root, observation).action, "presentOne");
+});
+
+test("Continue skips each ticket waiting on a linked answer during the current review", t => {
+  const f = fixture(t);
+  queueQuestions(f.root, [{ ...answerDecision("notice_period", {}), prompt: "What is your notice period?", required: true }]);
+  setConversationMode(f.root, "paused", "synthetic-pause", now);
+  const first = registeredBlocker(f, true, "APP-a");
+  const second = registeredBlocker(f, true, "APP-b");
+  beginAttentionReview(f.root, itemKey(first.item), "synthetic-review-first", now);
+  assert.equal(verifyAttentionReview(f.root, first.observation).action, "awaitingExistingAnswer");
+  const next = continueAttentionReview(f.root, "synthetic-continue-second", now);
+  assert.equal(next.action, "inspectSelectedTask");
+  if (next.action === "inspectSelectedTask") assert.equal(next.ticket.path, second.item.path);
+  assert.equal(verifyAttentionReview(f.root, second.observation).action, "awaitingExistingAnswer");
+  assert.deepEqual(continueAttentionReview(f.root, "synthetic-continue-done", now), { action: "awaitingLinkedAnswers", waiting: 2 });
+  assert.deepEqual(loadAttention(f.root).state.items.map(item => item.state), ["waiting", "waiting"]);
+  assert.equal(beginAttentionReview(f.root, itemKey(first.item), "synthetic-new-review", now).action, "inspectSelectedTask");
+});
+
+test("a vacancy-only reply satisfies the selected review and stays private to that vacancy", t => {
+  const f = fixture(t);
+  assert.equal(blocked(f, true).action, "presentOne");
+  recordAttentionPresentation(f.root, "synthetic-vacancy-prompt", now);
+  const proposal = ".local/vacancy-only.json";
+  f.write(proposal, reply(f.root, "wrong-vacancy", { ...notice, scope: { taskId: "APP-other" } }));
+  assert.throws(() => saveAttentionAnswer(f.root, proposal), /canonical field/);
+  assert.equal(fs.existsSync(resolve(f.root, reusableAnswerPath)), false);
+  f.write(proposal, reply(f.root, "selected-vacancy", { ...notice, scope: { taskId: "APP-synthetic-qa" } }));
+  assert.equal(saveAttentionAnswer(f.root, proposal).requeued, false);
+  assert.equal(loadAttention(f.root).state.items[0].state, "inputRecorded");
+  assert.equal(lookupApplicationAnswer(f.root, request("notice_period", { taskId: "APP-synthetic-qa" })).action, "match");
+  assert.equal(lookupApplicationAnswer(f.root, request("notice_period", { taskId: "APP-other" })).action, "missing");
+  assert.equal(fs.existsSync(resolve(f.root, "Task Board/Blocked/APP-synthetic-qa.md")), true);
+});
+
+test("a malformed reusable answer file leaves Preferences and its navigation usable", t => {
+  const f = fixture(t);
+  const proposal = ".local/repair-proposal.json";
+  f.write(proposal, reply(f.root, "cannot-overwrite", notice));
+  const malformed = "# Incomplete private answer edit";
+  f.write(reusableAnswerPath, malformed);
+  openSettings(f.root, "synthetic-open-settings");
+  assert.equal(chooseSetting(f.root, "preferences").phase, "area");
+  const unavailable = chooseSetting(f.root, "reusable-answers");
+  assert.equal(unavailable.current?.status, "unavailable");
+  assert.equal(unavailable.input, "choice");
+  assert.throws(() => saveSettingsReply(f.root, proposal), /Reconcile the private reusable answer file/);
+  assert.equal(chooseSetting(f.root, "back").phase, "area");
+  assert.equal(chooseSetting(f.root, "back").phase, "root");
+  assert.equal(chooseSetting(f.root, "preferences").phase, "area");
+  assert.equal(chooseSetting(f.root, "close").phase, "closed");
+  assert.equal(fs.readFileSync(resolve(f.root, reusableAnswerPath), "utf8"), malformed);
+});
+
+test("an invalid optional timezone cannot strand a retained reusable reply or block later replies", t => {
+  const f = fixture(t);
+  f.write(".local/operation-preferences.json", { timezone: "Synthetic/Unknown-Timezone" });
+  const scope = { roleId: "qa" };
+  queueQuestions(f.root, [
+    { ...answerDecision("available_start_date", scope), prompt: "What date can you start?", required: true },
+    { ...answerDecision("notice_period", scope), prompt: "What is your notice period?", required: true },
+  ]);
+  const bundle = reply(f.root, "retained", notice,
+    { fieldId: "available_start_date", scope: {}, value: "2099-12-01", kind: "answer" });
+  const journal = ".local/onboarding-pending-response.json";
+  f.write(journal, bundle);
+  f.write(reusableAnswerPath, bundle.writes[0].content);
+  const state = applyResponse(f.root);
+  assert.deepEqual(state.conversation!.questions.map(question => question.status), ["pending", "answered"]);
+  assert.equal(fs.existsSync(resolve(f.root, journal)), false);
+  assert.equal(applyResponse(f.root, reply(f.root, "later", { ...notice, scope })).conversation!.responses.length, 2);
 });

@@ -3,6 +3,7 @@ import { readAttentionMetadata as readPrivateJson, attentionMetadataExists } fro
 import { withWriteOwnership } from "../workflow/ownership.js";
 import type { Decision } from "../onboarding/conversation-types.js";
 import type { FileEvidence } from "../email/evidence.js";
+import type { AnswerScope } from "../answers/context.js";
 import { time, safeText } from "./types.js";
 
 export const sessionFile = ".local/attention-session.json";
@@ -14,13 +15,16 @@ export interface AttentionSession {
   response?: { path: string; sha256: string; id: string }; lastResponse?: string;
   responseHistory?: { path: string; sha256: string; id: string; reference: string }[];
   reviewEvidence?: FileEvidence[]; reviewReference?: string; reviewedAt?: string;
+  answerContext?: AnswerScope;
+  waitingForAnswer?: string[];
 }
 export const emptySession = (): AttentionSession => ({ schemaVersion: 1, phase: "closed", key: null, taskId: null, path: null, ticketHash: null, sourceReference: null });
 export function loadAttentionSession(root: string) {
   const loaded = readPrivateJson(root, sessionFile), session = (loaded.data ?? emptySession()) as AttentionSession;
   if (session.schemaVersion !== 1 || !["closed", "reviewing", "awaitingInput", "awaitingContinue", "suspended"].includes(session.phase) ||
     session.phase !== "closed" && (!session.key || !session.taskId || !session.path || !session.ticketHash || !session.sourceReference) ||
-    session.prompt !== undefined && !safeText(session.prompt, 500) || session.presentation && (!safeText(session.presentation.reference, 300) || !time(session.presentation.at))) throw new Error("Preserve the interrupted attention review checkpoint.");
+    session.prompt !== undefined && !safeText(session.prompt, 500) || session.presentation && (!safeText(session.presentation.reference, 300) || !time(session.presentation.at)) ||
+    session.waitingForAnswer !== undefined && (!Array.isArray(session.waitingForAnswer) || session.waitingForAnswer.some(key => typeof key !== "string" || !key))) throw new Error("Preserve the interrupted attention review checkpoint.");
   return { session, revision: loaded.revision };
 }
 export function updateAttentionSession<T>(root: string, run: (s: AttentionSession) => T) {

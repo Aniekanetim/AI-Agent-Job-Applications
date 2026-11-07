@@ -1,4 +1,5 @@
 import type { StepId, EvidenceReference } from "./progress.js";
+import type { AnswerScope } from "../answers/context.js";
 
 export interface Decision {
   id: string;
@@ -11,6 +12,7 @@ export interface Decision {
 export interface FocusedQuestion extends Decision {
   prompt: string;
   required: boolean;
+  answerContext?: AnswerScope;
   scopeClarification?: true;
   status: "pending" | "answered" | "deferred";
   askedAt: string | null;

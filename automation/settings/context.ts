@@ -10,7 +10,7 @@ import { validateAttentionPreferences } from "../attention/preferences.js";
 import { loadReusableAnswers, scopeKeys } from "../answers/context.js";
 
 export interface Role { id: string; path: string; label: string; enabled: boolean }
-export interface CurrentSetting { status: "saved" | "notConfigured" | "default"; text: string; path: string | null; sha256: string | null; fingerprint: string }
+export interface CurrentSetting { status: "saved" | "notConfigured" | "default" | "unavailable"; text: string; path: string | null; sha256: string | null; fingerprint: string }
 export function containedFile(root: string, path: string) {
   if (isAbsolute(path) || path.includes("\\") || path.split("/").some(p => !p || p === "." || p === "..")) throw new Error("Use a contained settings context path.");
   const absolute = resolve(root, path);
@@ -58,7 +58,10 @@ export function currentSetting(root: string, setting: Setting, roleId: string | 
   const value = (status: CurrentSetting["status"], text: string, sha256: string | null = null): CurrentSetting =>
     ({ status, text: clean(text), path, sha256, fingerprint: digest(JSON.stringify([path, text])) });
   if (setting.id === "reusable-answers") {
-    const { answers, sha256 } = loadReusableAnswers(root);
+    let stored: ReturnType<typeof loadReusableAnswers>;
+    try { stored = loadReusableAnswers(root); }
+    catch { return value("unavailable", "Reconcile the private reusable answer file before editing this setting."); }
+    const { answers, sha256 } = stored;
     const active = answers.filter(answer => answer.value !== null);
     const lines = active.map(answer => {
       const scope = scopeKeys.filter(key => answer.scope[key]).map(key => `${key} ${answer.scope[key]}`).join(", ");
