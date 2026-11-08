@@ -76,6 +76,7 @@ export function currentSetting(root: string, setting: Setting, roleId: string | 
     try {
       const board = readBoardConfig(root);
       if (board.data) {
+        if (!board.data.adopted) return value("saved", "Off. Resume the unfinished publishing cutover.", board.revision);
         const mode = board.data.mode === "autonomous" ? "Autonomous" : board.data.mode === "onDemand" ? "On demand" : "Off";
         return value("saved", `${mode}. Uses the shared task-board check-in.`, board.revision);
       }

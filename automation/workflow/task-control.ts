@@ -12,7 +12,7 @@ import { messageKey, terminalCleanup, type EmailIdentity } from "../email/intake
 import { saveAlertArtifact } from "../email/artifact-store.js";
 import { assertSiteAction, type SitePage } from "../sites/execution.js";
 import { stageTaskAttention, stageAttentionChange, commitAttentionChange } from "../attention/events.js";
-import { isContentTicketName } from "./intake.js";
+import { registeredContentTicketId } from "./intake.js";
 
 interface StopRequest { action: "cancel" | "defer"; reason: string; actor: string; observedAt: string; authority: FileEvidence }
 interface Source { identity: EmailIdentity; vacancyKey: string; completed?: boolean }
@@ -87,7 +87,7 @@ function assertCurrentSource(root: string, data: TaskControl) {
   if (!record || record.cleanupState !== "notReady" || !vacancy || vacancy.taskId !== data.taskId || vacancy.taskPath !== data.path || vacancy.disposition !== "pending" || vacancy.taskTransition) throw new Error("Reconcile the stopped or changed source assignment before execution.");
 }
 function bind(root: string, task: ApplicationTask, path: string): TaskControl {
-  if (isContentTicketName(basename(path)) || ticketFolder(path) === "Content Creation") throw new Error("Select a job application ticket.");
+  if (ticketFolder(path) === "Content Creation" || registeredContentTicketId(root, basename(path))) throw new Error("Select a job application ticket.");
   privateTicket(root, path);
   const found = loadTaskControl(root, task.taskId);
   if (found.data) {

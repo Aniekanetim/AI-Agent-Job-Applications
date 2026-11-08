@@ -5,14 +5,14 @@ import { resolve } from "node:path";
 import { alertFixture, fixtureNow, writeFixture } from "./email-fixture.js";
 import { digest, evidenceFile } from "../email/evidence.js";
 import { boardWork } from "../workflow/dispatch.js";
-import { transitionTask, loadTaskControl } from "../workflow/task-control.js";
+import { bindTaskTicket, transitionTask, loadTaskControl } from "../workflow/task-control.js";
 import type { ApplicationTask } from "../workflow/application-state.js";
 import { adoptPublishingBoard, authorizeContentTool, chooseContentTool, configureBoardMode, createContentTask, observeContentOutcome,
-  runBoardPost, stageBoardDraft, transitionContent } from "../publishing/board-flow.js";
+  previewPublishingCutover, runBoardPost, stageBoardDraft, transitionContent } from "../publishing/board-flow.js";
 import { contentPath, readContentTicket } from "../publishing/board-tickets.js";
-import { saveSharedPublishingCheck } from "../publishing/board-config.js";
+import { boardConfigFile, readBoardConfig, saveSharedPublishingCheck } from "../publishing/board-config.js";
 import { historyMatch } from "../publishing/history.js";
-import { readBoardPost, saveDraft, savePublishingPreferences } from "../publishing/store.js";
+import { queuePost, readBoardPost, saveDraft, savePublishingPreferences, skipPost } from "../publishing/store.js";
 import { publish } from "../publishing/worker.js";
 
 const account = { profileUrl: "https://www.linkedin.com/in/synthetic/", audience: "Anyone" as const,
@@ -26,25 +26,38 @@ const receipt = { reference: "synthetic-confirmation", observedAt: now,
   url: "https://www.linkedin.com/feed/update/urn:li:activity:12345/" };
 const prepared = () => ({ recheck: async () => {}, click: async () => {}, confirm: async () => receipt, close: async () => {} });
 
+function setContentProfile(root: string) {
+  fs.appendFileSync(resolve(root, ".gitignore"), "\n**/*.local.md\n");
+  writeFixture(root, "Content Creation Context/profile.local.md", `# Synthetic\n\x60\x60\x60json\n${JSON.stringify(profile)}\n\x60\x60\x60\n`);
+}
+
 function setup(t: Parameters<typeof alertFixture>[0]) {
-  const f = alertFixture(t, 1);
-  fs.appendFileSync(resolve(f.root, ".gitignore"), "\n**/*.local.md\n");
-  writeFixture(f.root, "Content Creation Context/profile.local.md", `# Synthetic\n\x60\x60\x60json\n${JSON.stringify(profile)}\n\x60\x60\x60\n`);
-  configureBoardMode(f.root, "autonomous", "synthetic-autonomy", account);
-  return f.root;
+  const { root } = alertFixture(t, 1);
+  setContentProfile(root);
+  configureBoardMode(root, "autonomous", "synthetic-autonomy", account);
+  return root;
+}
+
+function legacyDraft(root: string) {
+  savePublishingPreferences(root, { account, profile: { voice: profile.voice, topics: profile.topics, facts: profile.facts }, sourceReference: "synthetic-legacy" });
+  return saveDraft(root, draft, now);
 }
 
 test("one board routes applications and prepared content while leaving parked tickets alone", async t => {
   const root = setup(t);
   writeFixture(root, "Task Board/To Do/APP-synthetic.md", "Synthetic application");
-  writeFixture(root, "Task Board/To Do/CONTENT-wrong.md", "Misfiled content");
+  const application = writeFixture(root, "Task Board/To Do/Content-Moderator.md", "Synthetic application for a content moderator");
+  const misfiled = createContentTask(root, { ...content, topic: draft.topic, sourceReference: "synthetic-misfiled" });
+  fs.renameSync(resolve(root, misfiled.path), resolve(root, "Task Board/To Do", misfiled.path.split("/").at(-1)!));
   writeFixture(root, "Task Board/Blocked/CONTENT-parked.md", "Private parked content");
   const entry = createContentTask(root, { ...content, topic: draft.topic });
   const id = readContentTicket(root, entry.path).ticket.id;
   assert.equal(boardWork(root).content[0].ready, false);
   stageBoardDraft(root, { ...content, id }, now);
   const plan = boardWork(root);
-  assert.deepEqual(plan.applications.map(item => item.name), ["APP-synthetic.md"]);
+  assert.deepEqual(plan.applications.map(item => item.name), ["APP-synthetic.md", "Content-Moderator.md"]);
+  const bound = bindTaskTicket(root, { taskId: "CONTENT-Moderator", originalIntake: "To Do", checkpoint: "working" }, application.path);
+  assert.deepEqual(bound.ticket, application);
   assert.equal(plan.content.length, 1);
   assert.equal(plan.content[0].ready, true);
   assert.equal((await runBoardPost(root, id, undefined, async () => prepared(), () => now)).action, "published");
@@ -102,20 +115,72 @@ test("the fallback tool claims the same draft once and records a confirmed outco
   ], "publish"), { action: "useTool", tool: "host-browser" });
   const attempt = authorizeContentTool(root, { id, tool: "host-browser", evidence }, now);
   assert.throws(() => authorizeContentTool(root, { id, tool: "host-browser", evidence }, now), /saved outcome/);
-  const result = observeContentOutcome(root, { path: staged.path, attemptId: attempt.attemptId, status: "published", receipt, evidence });
+  const outcome = { path: staged.path, attemptId: attempt.attemptId, status: "published" as const, receipt };
+  assert.throws(() => observeContentOutcome(root, { ...outcome, evidence }), /separate LinkedIn outcome/);
+  const report = { attemptId: attempt.attemptId, profileUrl: account.profileUrl, draftSha256: digest(JSON.stringify(draft)), status: "published", receipt };
+  const wrappedPreparation = writeFixture(root, ".local/publishing/evidence/wrapped-preparation.json",
+    { ...report, observation: { kind: "linkedinConfirmation", evidence } });
+  assert.throws(() => observeContentOutcome(root, { ...outcome, evidence: wrappedPreparation }), /separate LinkedIn outcome/);
+  const observation = writeFixture(root, ".local/publishing/evidence/confirmed.txt", "Synthetic observed LinkedIn confirmation");
+  const mismatched = writeFixture(root, ".local/publishing/evidence/mismatch.json",
+    { ...report, draftSha256: "a".repeat(64), observation: { kind: "linkedinConfirmation", evidence: observation } });
+  assert.throws(() => observeContentOutcome(root, { ...outcome, evidence: mismatched }), /separate LinkedIn outcome/);
+  assert.equal(readBoardPost(root, id)?.status, "attempted");
+  const confirmed = writeFixture(root, ".local/publishing/evidence/outcome.json",
+    { ...report, observation: { kind: "matchingPublishedPost", evidence: observation } });
+  const result = observeContentOutcome(root, { ...outcome, evidence: confirmed });
   assert.equal(result.action, "published");
 });
 
 test("legacy cutover imports unfinished posts as Deferred and fences the old publishing callback", async t => {
   const { root } = alertFixture(t, 1);
-  savePublishingPreferences(root, { account, profile: { voice: profile.voice, topics: profile.topics, facts: profile.facts }, sourceReference: "synthetic-legacy" });
-  const legacy = saveDraft(root, draft, now);
+  const legacy = legacyDraft(root);
   assert.equal(adoptPublishingBoard(root, "synthetic-cutover").imported, 1);
   assert.ok(fs.existsSync(resolve(root, `Task Board/Deferred/CONTENT-${legacy.id}.md`)));
   assert.equal(readBoardPost(root, legacy.id)?.id, legacy.id);
   assert.equal((await publish(root, { kind: "scheduled", scheduleReference: "old-timer" })).action, "idle");
   assert.equal(adoptPublishingBoard(root, "synthetic-cutover").imported, 1);
   assert.equal(evidenceFile(root, `Task Board/Deferred/CONTENT-${legacy.id}.md`).path.endsWith(legacy.id + ".md"), true);
+});
+
+test("interrupted cutover stays off and resumes even from an older premature adoption marker", async t => {
+  const { root } = alertFixture(t, 1), legacy = legacyDraft(root);
+  setContentProfile(root);
+  const deferred = resolve(root, "Task Board/Deferred");
+  fs.writeFileSync(deferred, "Synthetic conflicting destination");
+  assert.throws(() => adoptPublishingBoard(root, "synthetic-cutover"));
+  assert.equal(previewPublishingCutover(root).adopted, false);
+  assert.equal(boardWork(root).contentMode, "off");
+  assert.throws(() => configureBoardMode(root, "autonomous", "synthetic-enable"), /adopt the old publishing queue/);
+  assert.equal((await publish(root, { kind: "manual", postId: legacy.id, sourceReference: "synthetic-legacy" })).action, "idle");
+  const { legacyRevision: _revision, ...partial } = readBoardConfig(root).data!;
+  writeFixture(root, boardConfigFile, { ...partial, adopted: true });
+  assert.equal(previewPublishingCutover(root).adopted, false);
+  assert.throws(() => configureBoardMode(root, "autonomous", "synthetic-enable"), /adopt the old publishing queue/);
+  fs.unlinkSync(deferred);
+  assert.equal(adoptPublishingBoard(root, "synthetic-cutover").imported, 1);
+  assert.equal(previewPublishingCutover(root).adopted, true);
+  assert.equal(readBoardPost(root, legacy.id)?.status, "draft");
+  assert.equal(configureBoardMode(root, "autonomous", "synthetic-enable").mode, "autonomous");
+});
+
+test("a legacy skipped post can be prepared again after explicitly resuming its ticket", t => {
+  const { root } = alertFixture(t, 1), legacy = legacyDraft(root);
+  setContentProfile(root);
+  queuePost(root, legacy.id, "2026-11-09T12:00:00.000Z", false, now);
+  skipPost(root, legacy.id);
+  adoptPublishingBoard(root, "synthetic-cutover");
+  configureBoardMode(root, "autonomous", "synthetic-enable");
+  const path = `Task Board/Deferred/CONTENT-${legacy.id}.md`, { file } = readContentTicket(root, path);
+  const authority = writeFixture(root, ".local/resume-legacy.txt", "Synthetic explicit request to resume the post");
+  assert.throws(() => stageBoardDraft(root, { ...content, id: legacy.id }, now), /Return this existing ticket/);
+  const resumed = transitionContent(root, { path, expected: file.sha256, action: "resume", authority });
+  const prepared = stageBoardDraft(root, { ...content, id: legacy.id }, now);
+  assert.equal(prepared.path, resumed.path);
+  assert.equal(readContentTicket(root, prepared.path).ticket.source, "legacy");
+  assert.equal(readContentTicket(root, prepared.path).ticket.ready, true);
+  assert.equal(readBoardPost(root, legacy.id)?.status, "draft");
+  assert.equal(readBoardPost(root, legacy.id)?.slot, null);
 });
 
 test("a prepared content ticket uses the verified shared check-in without a publishing slot", async t => {

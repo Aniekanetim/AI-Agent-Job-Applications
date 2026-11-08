@@ -12,7 +12,8 @@ export const profilePath = "Content Creation Context/profile.local.md";
 export type ContentMode = "off" | "autonomous" | "onDemand";
 export type ContentProfile = PublicProfile & { audience: string; rules: string; mediaPreferences: string };
 type BoardConfig = {
-  schemaVersion: 1; mode: ContentMode; sourceReference: string; adopted: true;
+  schemaVersion: 1; mode: ContentMode; sourceReference: string; adopted: boolean;
+  legacyRevision?: string | null;
   account: Preferences["account"];
   scheduledCheck?: FileEvidence;
 };
@@ -22,7 +23,8 @@ export const contentReference = (value: unknown): value is string => typeof valu
 export function readBoardConfig(root: string) {
   const loaded = readPrivateJson(root, boardConfigFile);
   const data = loaded.data as BoardConfig | null;
-  if (data && (data.schemaVersion !== 1 || data.adopted !== true || !["off", "autonomous", "onDemand"].includes(data.mode) ||
+  if (data && (data.schemaVersion !== 1 || typeof data.adopted !== "boolean" || !["off", "autonomous", "onDemand"].includes(data.mode) ||
+    (!data.adopted && data.mode !== "off") || (data.legacyRevision != null && !/^[a-f0-9]{64}$/.test(data.legacyRevision)) ||
     !contentReference(data.sourceReference))) throw new Error("Preserve unreadable content settings for investigation.");
   return { data, revision: loaded.revision };
 }
@@ -49,12 +51,14 @@ export function readContentProfile(root: string) {
   return { profile, sha256: digest(bytes) };
 }
 
-export function saveBoardConfig(root: string, mode: ContentMode, sourceReference: string, account?: Preferences["account"]) {
+export function saveBoardConfig(root: string, mode: ContentMode, sourceReference: string, account?: Preferences["account"],
+  cutover?: Pick<BoardConfig, "adopted" | "legacyRevision">) {
   if (!["off", "autonomous", "onDemand"].includes(mode) || !contentReference(sourceReference)) throw new Error("Use the user's actual content mode choice.");
   if (mode !== "off") readContentProfile(root);
   const previous = readBoardConfig(root);
-  const next: BoardConfig = { ...previous.data, schemaVersion: 1, adopted: true, mode, sourceReference,
+  const next: BoardConfig = { adopted: true, ...previous.data, ...cutover, schemaVersion: 1, mode, sourceReference,
     account: account === undefined ? previous.data?.account ?? null : account };
+  if (!next.adopted && next.mode !== "off") throw new Error("Finish importing the old publishing queue before enabling content work.");
   if (JSON.stringify(previous.data?.account) !== JSON.stringify(next.account)) delete next.scheduledCheck;
   savePrivateJson(root, boardConfigFile, next, previous.revision);
   return next;
@@ -83,7 +87,7 @@ export function verifySharedPublishing(root: string, ref: FileEvidence, schedule
 export function saveSharedPublishingCheck(root: string, evidence: FileEvidence, scheduleReference: string, account: NonNullable<Preferences["account"]>) {
   verifySharedPublishing(root, evidence, scheduleReference, account);
   const previous = readBoardConfig(root);
-  if (!previous.data || JSON.stringify(previous.data.account) !== JSON.stringify(account)) {
+  if (!previous.data?.adopted || JSON.stringify(previous.data.account) !== JSON.stringify(account)) {
     throw new Error("Verify the current publishing account and completed board cutover.");
   }
   savePrivateJson(root, boardConfigFile, { ...previous.data, scheduledCheck: evidence }, previous.revision);

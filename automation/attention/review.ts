@@ -12,6 +12,7 @@ import { itemKey, safeText, time } from "./types.js";
 import { attentionQueue, queuedNames } from "./queue.js";
 import { loadAttentionSession, updateAttentionSession, otherConversationFocus } from "./session-state.js";
 import { selectedTicketEvidence } from "./selected-ticket.js";
+import { registeredContentTicketId } from "../workflow/intake.js";
 import { answerField, loadReusableAnswers, normalizeScope, parseReusableAnswers, reusableAnswerPath, reusableBinding, scopeMatches,
   type AnswerScope } from "../answers/context.js";
 import { lookupApplicationAnswer, matchesLegacyAnswerField, type AnswerRequest } from "../answers/workflow.js";
@@ -35,7 +36,7 @@ function startReview(root: string, key: string, sourceReference: string, now: st
     const current = loadAttentionSession(root).session;
     if (current.response) throw new Error("Recover the retained attention answer first.");
     if (!["closed", "suspended", "awaitingContinue"].includes(current.phase) && current.key !== key) throw new Error("Finish or stop the current task review first.");
-    if (item.taskId.startsWith("CONTENT-")) {
+    if (registeredContentTicketId(root, item.path.split("/").at(-1)!) === item.taskId) {
       const ticket = selectedTicketEvidence(root, item.path);
       return { action: "inspectSelectedContent" as const, ticket, contents: readEvidence(root, ticket).toString("utf8"),
         next: "Use the selected content ticket's dependency checklist and verified board transition." };

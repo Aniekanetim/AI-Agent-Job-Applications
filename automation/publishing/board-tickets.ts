@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { digest, readEvidence, type FileEvidence } from "../email/evidence.js";
 import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
 import { ticketFolder, pickupFolder, type BoardFolder } from "../workflow/board.js";
+import { contentIdentityPath } from "../workflow/intake.js";
 import { acquireOwnership } from "../workflow/ownership.js";
 import { privateTicket, taskOwnershipKey, writeTicket } from "../workflow/task-control.js";
 import { commitAttentionChange, stageAttentionChange } from "../attention/events.js";
@@ -20,11 +21,9 @@ const marker = "<!-- content-task -->";
 const pathOf = (id: string, folder: BoardFolder) => `Task Board/${folder}/CONTENT-${id}.md`;
 const hash = (value: unknown) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 const movePath = (id: string) => `.local/publishing/moves/${digest(id)}.json`;
-const identityPath = (id: string) => `.local/publishing/ticket-ids/${digest(id)}.json`;
 export const contentPath = (id: string) => pathOf(id, pickupFolder("content"));
 const validId = (id: unknown): id is string => typeof id === "string" && /^[a-zA-Z0-9_-]{1,100}$/.test(id);
 const taskKey = (id: string) => taskOwnershipKey(`CONTENT-${id}`);
-export const contentIdentityExists = (root: string, id: string) => readPrivateJson(root, identityPath(id)).data !== null;
 
 function render(ticket: ContentTicket) {
   return Buffer.from(`# Content creation — ${ticket.topic}\n\nTask ID: CONTENT-${ticket.id}\n\n${ticket.receipt ?
@@ -53,10 +52,10 @@ export function saveContentTicket(root: string, ticket: ContentTicket, expected:
   const owner = acquireOwnership(root, taskKey(ticket.id));
   try {
     if (readPrivateJson(root, movePath(ticket.id)).data) throw new Error("Recover the selected content move before editing.");
-    const identity = readPrivateJson(root, identityPath(ticket.id));
+    const identity = readPrivateJson(root, contentIdentityPath(ticket.id));
     if (identity.data && expected === null) throw new Error("Resume the original content ticket through its lifecycle.");
     const saved = writeTicket(root, pathOf(ticket.id, folder), render(ticket), expected);
-    if (!identity.data) savePrivateJson(root, identityPath(ticket.id), { id: ticket.id }, identity.revision);
+    if (!identity.data) savePrivateJson(root, contentIdentityPath(ticket.id), { id: ticket.id }, identity.revision);
     return saved;
   } finally { owner.release(); }
 }

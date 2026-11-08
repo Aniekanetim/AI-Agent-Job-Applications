@@ -3,9 +3,10 @@ import { resolve } from "node:path";
 import { digest, evidenceFile, readEvidence, type FileEvidence } from "../email/evidence.js";
 import { acquireOwnership } from "../workflow/ownership.js";
 import { ticketFolder, type BoardFolder } from "../workflow/board.js";
-import { listContentTickets } from "../workflow/intake.js";
+import { contentIdentityExists, contentIdentityPath, listContentTickets } from "../workflow/intake.js";
+import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
 import { contentReference, readBoardConfig, readContentProfile, saveBoardConfig, type ContentMode } from "./board-config.js";
-import { contentIdentityExists, contentPath, moveContentTicket, readContentTicket, recoverContentMove, saveContentTicket, type ContentTicket } from "./board-tickets.js";
+import { contentPath, moveContentTicket, readContentTicket, recoverContentMove, saveContentTicket, type ContentTicket } from "./board-tickets.js";
 import { historyMatch, postFingerprint, recentContent, recordPublishedHistory, releasePublication } from "./history.js";
 import { dispatchKey, importBoardPost, inspectRun, loadPublishing, prepareMedia, publishingPath, publishingWorker, recordAttempt,
   readBoardPost, reconcilePost, releaseConfirmedBoardDraft, saveDraft, validatePublishingAccount,
@@ -24,10 +25,10 @@ export function configureBoardMode(root: string, mode: ContentMode, sourceRefere
   const owner = acquireOwnership(root, dispatchKey);
   try {
     const current = readBoardConfig(root).data;
-    if (!current) {
-      const legacy = loadPublishing(root).state;
-      if (legacy.posts.length || legacy.preferences?.scheduleReference) throw new Error("Preview and adopt the old publishing queue first.");
-      account ??= legacy.preferences?.account ?? null;
+    if (mode !== "off" || !current) {
+      const legacy = loadPublishing(root);
+      if (cutoverIncomplete(root, current, legacy)) throw new Error("Preview and adopt the old publishing queue first.");
+      if (!current) account ??= legacy.state.preferences?.account ?? null;
     }
     if (mode !== "off" && !(account === undefined ? current?.account : account)) throw new Error("Bind the selected LinkedIn account before enabling content work.");
     return saveBoardConfig(root, mode, sourceReference, account);
@@ -201,6 +202,7 @@ export function transitionContent(root: string, input: { path: string; expected:
   authority: FileEvidence; dependencies?: string[] }) {
   const owner = acquireOwnership(root, dispatchKey);
   try {
+    if (readBoardConfig(root).data?.adopted === false) throw new Error("Finish importing the old publishing queue before moving its tickets.");
     const { ticket, file } = readContentTicket(root, input.path), from = ticketFolder(input.path);
     const post = readBoardPost(root, ticket.id);
     if (file.sha256 !== input.expected || post?.status === "published" || post?.status === "attempted" && input.action !== "block") {
@@ -234,9 +236,25 @@ export function transitionContent(root: string, input: { path: string; expected:
   } finally { owner.release(); }
 }
 
+function cutoverIncomplete(root: string, config: ReturnType<typeof readBoardConfig>["data"], legacy: ReturnType<typeof loadPublishing>) {
+  if (!config) return !!(legacy.state.posts.length || legacy.state.preferences?.scheduleReference);
+  if (!config.adopted) return true;
+  if (config.legacyRevision === legacy.revision) return false;
+  // Older board settings could record adoption before copying every post.
+  return legacy.state.posts.some(post => {
+    if (!contentIdentityExists(root, post.id)) return true;
+    const applied = `Task Board/Applied/CONTENT-${post.id}.md`;
+    if (!fs.existsSync(resolve(root, applied))) return !readBoardPost(root, post.id);
+    const ticket = readContentTicket(root, applied).ticket;
+    if (!ticket.receipt) return true;
+    const attempt = post.attempts.at(-1);
+    return post.status === "published" && (!attempt || !historyMatch(root, attempt.profileUrl, post.draft.text, ticket.topic, ticket.angle).exact);
+  });
+}
+
 export function previewPublishingCutover(root: string) {
-  const { state } = loadPublishing(root);
-  return { adopted: !!readBoardConfig(root).data, legacyTimer: state.preferences?.scheduleReference ?? null,
+  const legacy = loadPublishing(root), { state } = legacy, config = readBoardConfig(root).data;
+  return { adopted: !!config && !cutoverIncomplete(root, config, legacy), legacyTimer: state.preferences?.scheduleReference ?? null,
     posts: state.posts.map(post => ({ id: post.id, status: post.status, destination: post.status === "published" ? "Applied" :
       post.status === "attempted" ? "Blocked" : "Deferred" })) };
 }
@@ -245,19 +263,22 @@ export function adoptPublishingBoard(root: string, sourceReference: string, stop
   const worker = acquireOwnership(root, publishingWorker);
   try {
     const dispatch = acquireOwnership(root, dispatchKey);
-    let posts: Post[];
+    let legacy: ReturnType<typeof loadPublishing>;
     try {
-      const { state } = loadPublishing(root), existing = readBoardConfig(root).data;
+      legacy = loadPublishing(root);
+      const { state } = legacy, existing = readBoardConfig(root).data;
       if (existing && existing.mode !== "off") throw new Error("Preserve the already enabled shared publishing workflow.");
       if (state.preferences?.scheduleReference) {
         if (!stoppedTimer?.path.startsWith(".local/publishing/evidence/")) throw new Error("Record the verified stop of the old publishing timer.");
         const report = JSON.parse(readEvidence(root, stoppedTimer).toString("utf8")) as { scheduleReference: string; status: string };
         if (report.scheduleReference !== state.preferences.scheduleReference || report.status !== "stopped") throw new Error("Verify the exact old timer is stopped.");
       }
-      if (!existing) saveBoardConfig(root, "off", sourceReference, state.preferences?.account);
-      posts = state.posts;
+      if (existing?.adopted && !cutoverIncomplete(root, existing, legacy)) {
+        return { adopted: true, imported: state.posts.length };
+      }
+      saveBoardConfig(root, "off", sourceReference, existing?.account ?? state.preferences?.account, { adopted: false, legacyRevision: null });
     } finally { dispatch.release(); }
-    for (const post of posts) {
+    for (const post of legacy.state.posts) {
       const known = legacyFolders.filter(folder => fs.existsSync(resolve(root, `Task Board/${folder}/CONTENT-${post.id}.md`)));
       if (known.length > 1) throw new Error("Reconcile the duplicate legacy content ticket paths.");
       const folder = post.status === "published" ? "Applied" : post.status === "attempted" ? "Blocked" : "Deferred";
@@ -267,11 +288,22 @@ export function adoptPublishingBoard(root: string, sourceReference: string, stop
         profileSha256: post.profileRevision, draftSha256: digest(JSON.stringify(post.draft)), ready: false,
         ...(receipt ? { receipt, attempts: post.attempts } : {}), ...(folder === "Blocked" ? { dependencies: ["publicationOutcome"] } : {}) };
       if (!known.length) saveContentTicket(root, ticket, null, folder);
-      else if (receipt && known[0] !== "Applied") throw new Error("Recover the selected legacy publication before migration.");
+      else {
+        const selected = readContentTicket(root, `Task Board/${known[0]}/CONTENT-${post.id}.md`);
+        if (selected.ticket.source !== "legacy" || receipt && known[0] !== "Applied" ||
+          known[0] === "Applied" && !selected.ticket.receipt) throw new Error("Reconcile the existing ticket for this legacy post before migration.");
+        const identity = contentIdentityPath(post.id), saved = readPrivateJson(root, identity);
+        if (!saved.data) savePrivateJson(root, identity, { id: post.id }, saved.revision);
+      }
       if (receipt) archive(root, `Task Board/Applied/CONTENT-${post.id}.md`, post);
-      else importBoardPost(root, post);
+      else if (known[0] !== "Applied") importBoardPost(root, post);
     }
-    return { adopted: true, imported: posts.length };
+    const finalize = acquireOwnership(root, dispatchKey);
+    try {
+      if (loadPublishing(root).revision !== legacy.revision) throw new Error("The old publishing queue changed. Reconcile the cutover before enabling content work.");
+      saveBoardConfig(root, "off", sourceReference, undefined, { adopted: true, legacyRevision: legacy.revision });
+    } finally { finalize.release(); }
+    return { adopted: true, imported: legacy.state.posts.length };
   } finally { worker.release(); }
 }
 

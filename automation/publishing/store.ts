@@ -203,8 +203,8 @@ export function saveDraft(root: string, draft: Draft, now: string, postId?: stri
   if (board) {
     if (draft.facts.some(fact => !board.profile.facts.some(saved => saved.id === fact))) throw new Error("Use only saved public-profile fact references.");
     return editBoardPost(root, board.id, previous => {
-      if (previous && !["draft", "queued"].includes(previous.status)) throw new Error("Resolve the saved outcome before editing the content draft.");
-      return previous ? { ...previous, draft, profileRevision: board.sha256 } :
+      if (previous && !["draft", "queued", "skipped"].includes(previous.status)) throw new Error("Resolve the saved outcome before editing the content draft.");
+      return previous ? { ...previous, draft, profileRevision: board.sha256, status: "draft", slot: null } :
         { id: board.id, draft, profileRevision: board.sha256, createdAt: now, slot: null, status: "draft", attempts: [] };
     })!;
   }
@@ -485,14 +485,38 @@ export function confirmPost(root: string, owner: Ownership, postId: string, atte
   return finish(root, postId, attemptId, { status: "published", receipt }, board);
 }
 
+function verifyBoardOutcome(root: string, attempt: Attempt, status: "published" | "notPublished", receipt: Receipt, evidence: FileEvidence) {
+  const report = JSON.parse(checkEvidence(root, evidence).toString("utf8")) as {
+    attemptId?: string; profileUrl?: string; draftSha256?: string; status?: string; receipt?: Receipt;
+    observation?: { kind: string; evidence: FileEvidence };
+  } | null;
+  const observation = report?.observation;
+  const expectedObservation = status === "published"
+    ? observation?.kind === "linkedinConfirmation" || (observation?.kind === "matchingPublishedPost" && !!receipt.url)
+    : observation?.kind === "verifiedNotPublished";
+  if (report?.attemptId !== attempt.id || report.profileUrl !== attempt.profileUrl || report.draftSha256 !== attempt.draftRevision ||
+    report.status !== status || report.receipt?.reference !== receipt.reference || report.receipt.observedAt !== receipt.observedAt ||
+    report.receipt.url !== receipt.url || !expectedObservation || !observation?.evidence ||
+    [evidence.sha256, attempt.preparationEvidence?.sha256].includes(observation.evidence.sha256)) {
+    throw new Error("Record separate LinkedIn outcome evidence for the exact attempt, profile and draft.");
+  }
+  checkEvidence(root, observation.evidence);
+}
+
 export function reconcilePost(root: string, postId: string, attemptId: string, status: "published" | "notPublished", receipt: Receipt, evidence: FileEvidence, board = false) {
   if (!["published", "notPublished"].includes(status) || !validReceipt(receipt) || status === "notPublished" && receipt.url) {
     throw new Error("Keep uncertain publication unresolved until there is evidence.");
   }
-  checkEvidence(root, evidence);
+  if (!board) checkEvidence(root, evidence);
   const owner = acquireOwnership(root, publishingWorker);
-  try { return finish(root, postId, attemptId, { status, receipt, evidence }, board); }
-  finally { owner.release(); }
+  try {
+    if (board) {
+      const post = readBoardPost(root, postId), attempt = post?.attempts.at(-1);
+      if (post?.status !== "attempted" || attempt?.id !== attemptId) throw new Error("Reconcile the same unresolved publishing attempt.");
+      verifyBoardOutcome(root, attempt, status, receipt, evidence);
+    }
+    return finish(root, postId, attemptId, { status, receipt, evidence }, board);
+  } finally { owner.release(); }
 }
 
 export function accountProbe(root: string) {
