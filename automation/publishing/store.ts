@@ -5,6 +5,9 @@ import { digest, readEvidence, type FileEvidence } from "../email/evidence.js";
 import { readPrivateJson, savePrivateJson } from "../workflow/private-json.js";
 import { acquireOwnership, assertOperationOwnership, type Ownership } from "../workflow/ownership.js";
 import { isSlot, nextSlots, slotMs, validInstant, validateSchedule, type Schedule } from "./schedule.js";
+import { readBoardConfig, readContentProfile, verifySharedPublishing } from "./board-config.js";
+import { contentPath, readContentTicket } from "./board-tickets.js";
+import { historyMatch, pendingPublication, postFingerprint, reservePublication, releasePublication } from "./history.js";
 
 export const publishingFile = ".local/publishing/state.json";
 export const dispatchKey = "linkedin-publishing-dispatch";
@@ -12,7 +15,7 @@ export const publishingWorker = "linkedin-publishing-worker";
 const evidenceDirectory = ".local/publishing/evidence/";
 export type Format = "text" | "image" | "video";
 type Account = { profileUrl: string; storageState: string; audience: "Anyone" | "Connections only"; routeReference: string };
-type PublicProfile = { voice: string; topics: string[]; facts: { id: string; text: string }[] };
+export type PublicProfile = { voice: string; topics: string[]; facts: { id: string; text: string }[] };
 type Access = { sourceReference: string; accountRevision: string; formats: Format[]; scheduled: boolean };
 export type Preferences = {
   timezone: string; schedule: Schedule; scheduleReference: string | null; paused: boolean;
@@ -24,6 +27,7 @@ type Slot = { at: string; recurring: boolean; scheduleRevision: string | null };
 export type Receipt = { reference: string; observedAt: string; url?: string };
 type Attempt = {
   id: string; at: string; accountRevision: string; profileUrl: string; draftRevision: string; format: Format;
+  tool?: string; preparationEvidence?: FileEvidence;
   pilot: boolean; sourceReference: string; result?: { status: "published" | "notPublished"; receipt: Receipt; evidence?: FileEvidence };
 };
 export type Post = {
@@ -78,9 +82,13 @@ function validatePreferences(p: Preferences) {
     !Array.isArray(p.profile.facts) || p.profile.facts.some(fact => !fact || !only(fact, ["id", "text"]) || !id(fact.id) || !text(fact.text, 2000)) ||
     new Set(p.profile.facts.map(fact => fact.id)).size !== p.profile.facts.length) throw new Error("Save the user's public content profile and scheduling choices.");
   validateSchedule(p.schedule, p.timezone);
-  if (p.account !== null && (!p.account || !only(p.account, ["profileUrl", "storageState", "audience", "routeReference"]) ||
-    !profileUrl(p.account.profileUrl) || !/^\.auth\/[a-z0-9_.-]+\.json$/i.test(p.account.storageState) ||
-    !["Anyone", "Connections only"].includes(p.account.audience) || !text(p.account.routeReference))) {
+  if (p.account !== null) validatePublishingAccount(p.account);
+}
+
+export function validatePublishingAccount(account: Account) {
+  if (!account || !only(account, ["profileUrl", "storageState", "audience", "routeReference"]) ||
+    !profileUrl(account.profileUrl) || !/^\.auth\/[a-z0-9_.-]+\.json$/i.test(account.storageState) ||
+    !["Anyone", "Connections only"].includes(account.audience) || !text(account.routeReference)) {
     throw new Error("Bind the exact LinkedIn member profile, authorized browser state, audience and route reference.");
   }
 }
@@ -188,10 +196,18 @@ function verifyMedia(root: string, media: Media | undefined) {
   return { name: media.path.split("/").at(-1)!, bytes, kind: media.kind };
 }
 
-export function saveDraft(root: string, draft: Draft, now: string, postId?: string) {
+export function saveDraft(root: string, draft: Draft, now: string, postId?: string, board?: { id: string; profile: PublicProfile; sha256: string }) {
   validateDraft(draft);
   if (!validInstant(now)) throw new Error("Use the current draft time.");
   verifyMedia(root, draft.media);
+  if (board) {
+    if (draft.facts.some(fact => !board.profile.facts.some(saved => saved.id === fact))) throw new Error("Use only saved public-profile fact references.");
+    return editBoardPost(root, board.id, previous => {
+      if (previous && !["draft", "queued"].includes(previous.status)) throw new Error("Resolve the saved outcome before editing the content draft.");
+      return previous ? { ...previous, draft, profileRevision: board.sha256 } :
+        { id: board.id, draft, profileRevision: board.sha256, createdAt: now, slot: null, status: "draft", attempts: [] };
+    })!;
+  }
   return change(root, state => {
     const p = requirePreferences(state);
     if (draft.facts.some(fact => !p.profile.facts.some(saved => saved.id === fact))) throw new Error("Use only saved public-profile fact references.");
@@ -202,11 +218,46 @@ export function saveDraft(root: string, draft: Draft, now: string, postId?: stri
       Object.assign(post, { draft, profileRevision });
       return post;
     }
-    const next: Post = { id: randomUUID(), draft, profileRevision, createdAt: now, slot: null, status: "draft", attempts: [] };
+    const newId = randomUUID();
+    if (!id(newId) || state.posts.some(entry => entry.id === newId)) throw new Error("Resume the existing content draft with this ID.");
+    const next: Post = { id: newId, draft, profileRevision, createdAt: now, slot: null, status: "draft", attempts: [] };
     state.posts.push(next);
     return next;
   });
 }
+
+function boardPostPath(postId: string) {
+  if (!id(postId)) throw new Error("Select one existing content ticket.");
+  return `.local/publishing/active/${digest(postId)}.json`;
+}
+
+function boardPost(root: string, postId: string) {
+  const path = boardPostPath(postId);
+  publishingPath(root, path);
+  const { data, revision } = readPrivateJson(root, path), post = data as Post | null;
+  if (post) {
+    if (post.id !== postId || !statusValues.includes(post.status) || !Array.isArray(post.attempts) || !sha(post.profileRevision)) throw new Error("Preserve the selected content checkpoint.");
+    validateDraft(post.draft);
+    const last = post.attempts.at(-1);
+    if (post.status === "attempted" && (!last || last.result) || post.status === "published" && last?.result?.status !== "published") {
+      throw new Error("Preserve the selected content attempt.");
+    }
+  }
+  return { path, revision, post };
+}
+
+export const readBoardPost = (root: string, postId: string) => boardPost(root, postId).post;
+
+function editBoardPost(root: string, postId: string, update: (post: Post | null) => Post | null, lock = true) {
+  const owner = lock ? acquireOwnership(root, dispatchKey, { waitMs: 1000 }) : null;
+  try {
+    const found = boardPost(root, postId), next = update(structuredClone(found.post));
+    if (JSON.stringify(next) !== JSON.stringify(found.post)) savePrivateJson(root, found.path, next, found.revision);
+    return next;
+  } finally { owner?.release(); }
+}
+
+export function importBoardPost(root: string, post: Post) { return editBoardPost(root, post.id, previous => previous ?? post); }
 
 export function queuePost(root: string, postId: string, at: string, recurring: boolean, now: string) {
   if (!validInstant(at) || !validInstant(now) || at <= now || typeof recurring !== "boolean") throw new Error("Choose an actual future publishing time.");
@@ -317,10 +368,35 @@ export function disablePublishing(root: string, sourceReference: string) {
   });
 }
 
-export type RunRequest = { kind: "scheduled"; scheduleReference: string } | { kind: "manual"; postId: string; sourceReference: string; pilot?: true };
+export type RunRequest = { kind: "scheduled"; scheduleReference: string } | { kind: "manual"; postId: string; sourceReference: string; pilot?: true } |
+  { kind: "board"; postId: string; scheduleReference?: string };
 
 export function inspectRun(root: string, request: RunRequest, now: string) {
   if (!validInstant(now)) throw new Error("Use the current publishing time.");
+  const board = readBoardConfig(root).data;
+  if (board && request.kind !== "board" || !board && request.kind === "board") return null;
+  if (request.kind === "board") {
+    if (!board || board.mode === "off") return null;
+    const account = board.account;
+    if (!account) throw new Error("Verify the selected LinkedIn account before publishing.");
+    const selected = readContentTicket(root, contentPath(request.postId)), t = selected.ticket;
+    if (!t.ready || t.dependencies?.length || t.receipt || (board.mode === "onDemand" && (t.preparedBy ?? t.source) !== "user")) return null;
+    const content = readContentProfile(root), post = readBoardPost(root, t.id);
+    if (!post) throw new Error("Recover the selected content draft before publishing.");
+    if (post.status !== "draft" && post.status !== "queued") throw new Error("Resolve this content ticket's saved outcome before a new post.");
+    if (t.profileSha256 !== content.sha256 || t.draftSha256 !== hash(post.draft)) throw new Error("Recheck the prepared ticket against the current content context and draft.");
+    if (request.scheduleReference !== undefined) {
+      if (!board.scheduledCheck) throw new Error("Verify content publishing from the actual shared schedule.");
+      verifySharedPublishing(root, board.scheduledCheck, request.scheduleReference, account);
+    }
+    const duplicate = historyMatch(root, account.profileUrl, post.draft.text, t.topic, t.angle);
+    if (duplicate.exact || duplicate.sameAngle) throw new Error("The selected LinkedIn account already published this text or angle.");
+    const pending = pendingPublication(root, account.profileUrl, t.fingerprint);
+    if (pending && pending.id !== t.id) throw new Error("Verify the earlier attempt for this content before publishing it.");
+    return { post, account, accountKey: hash(account), pilot: false,
+      sourceReference: board.mode === "autonomous" ? board.sourceReference : t.sourceReference,
+      revision: hash([selected.file.sha256, board, content.sha256, request.scheduleReference]) };
+  }
   const { state } = loadPublishing(root);
   const p = state.preferences;
   if (!p?.account || p.paused) return null;
@@ -346,15 +422,36 @@ export function inspectRun(root: string, request: RunRequest, now: string) {
   return { post, account, accountKey, pilot, sourceReference, revision: hash([post.draft, post.slot, post.profileRevision, p.scheduleReference, sourceReference]) };
 }
 
+export function releaseConfirmedBoardDraft(root: string, postId: string, receipt: Receipt) {
+  return editBoardPost(root, postId, post => {
+    if (!post) return null;
+    if (post.status !== "published" || JSON.stringify(post.attempts.at(-1)?.result?.receipt) !== JSON.stringify(receipt)) {
+      throw new Error("Keep the original draft until its matching confirmation is archived.");
+    }
+    return null;
+  });
+}
+
 export function prepareMedia(root: string, draft: Draft) { return verifyMedia(root, draft.media); }
 
 /** The dispatch owner serializes schedule edits with this revision check and the actual click. */
-export function recordAttempt(root: string, owner: Ownership, request: RunRequest, expected: NonNullable<ReturnType<typeof inspectRun>>, now: string) {
+export function recordAttempt(root: string, owner: Ownership, request: RunRequest, expected: NonNullable<ReturnType<typeof inspectRun>>, now: string,
+  preparation?: { tool: string; evidence: FileEvidence }) {
   assertOperationOwnership(root, dispatchKey, owner);
   const current = inspectRun(root, request, now);
   if (!current || current.post.id !== expected.post.id || current.revision !== expected.revision || current.accountKey !== expected.accountKey) return null;
   const attempt: Attempt = { id: randomUUID(), at: now, accountRevision: current.accountKey, profileUrl: current.account.profileUrl,
     draftRevision: hash(current.post.draft), format: format(current.post), pilot: current.pilot, sourceReference: current.sourceReference };
+  if (request.kind === "board") {
+    attempt.tool = preparation?.tool ?? "playwright";
+    if (preparation) attempt.preparationEvidence = preparation.evidence;
+    reservePublication(root, current.account.profileUrl, postFingerprint(current.post.draft.text), current.post.id);
+    editBoardPost(root, current.post.id, post => {
+      if (!post || !["draft", "queued"].includes(post.status)) throw new Error("Keep the current content attempt.");
+      return { ...post, attempts: [...post.attempts, attempt], status: "attempted" };
+    }, false);
+    return attempt;
+  }
   return change(root, state => {
     const post = selected(state, current.post.id);
     post.attempts.push(attempt);
@@ -367,30 +464,34 @@ function validReceipt(receipt: Receipt) {
   return receipt && text(receipt.reference) && validInstant(receipt.observedAt) && (receipt.url === undefined || postUrl(receipt.url));
 }
 
-function finish(root: string, postId: string, attemptId: string, result: NonNullable<Attempt["result"]>) {
+function finish(root: string, postId: string, attemptId: string, result: NonNullable<Attempt["result"]>, board = false) {
   if (!validReceipt(result.receipt)) throw new Error("Record the actual outcome and exact LinkedIn post link when available.");
-  return change(root, state => {
-    const post = selected(state, postId), attempt = post.attempts.at(-1);
-    if (post.status !== "attempted" || attempt?.id !== attemptId || result.receipt.observedAt < attempt.at) throw new Error("Reconcile the same unresolved publishing attempt.");
+  const apply = (post: Post | null) => {
+    const attempt = post?.attempts.at(-1);
+    if (!post || post.status !== "attempted" || attempt?.id !== attemptId || result.receipt.observedAt < attempt.at) throw new Error("Reconcile the same unresolved publishing attempt.");
     attempt.result = result;
     post.status = result.status === "published" ? "published" : "draft";
     if (result.status === "notPublished") post.slot = null;
     return post;
-  });
+  };
+  if (!board) return change(root, state => apply(selected(state, postId)));
+  const next = editBoardPost(root, postId, apply)!;
+  if (result.status === "notPublished") releasePublication(root, next.attempts.at(-1)!.profileUrl, postFingerprint(next.draft.text), postId);
+  return next;
 }
 
-export function confirmPost(root: string, owner: Ownership, postId: string, attemptId: string, receipt: Receipt) {
+export function confirmPost(root: string, owner: Ownership, postId: string, attemptId: string, receipt: Receipt, board = false) {
   assertOperationOwnership(root, publishingWorker, owner);
-  return finish(root, postId, attemptId, { status: "published", receipt });
+  return finish(root, postId, attemptId, { status: "published", receipt }, board);
 }
 
-export function reconcilePost(root: string, postId: string, attemptId: string, status: "published" | "notPublished", receipt: Receipt, evidence: FileEvidence) {
+export function reconcilePost(root: string, postId: string, attemptId: string, status: "published" | "notPublished", receipt: Receipt, evidence: FileEvidence, board = false) {
   if (!["published", "notPublished"].includes(status) || !validReceipt(receipt) || status === "notPublished" && receipt.url) {
     throw new Error("Keep uncertain publication unresolved until there is evidence.");
   }
   checkEvidence(root, evidence);
   const owner = acquireOwnership(root, publishingWorker);
-  try { return finish(root, postId, attemptId, { status, receipt, evidence }); }
+  try { return finish(root, postId, attemptId, { status, receipt, evidence }, board); }
   finally { owner.release(); }
 }
 

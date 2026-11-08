@@ -1,6 +1,6 @@
 # Agent check-in prompt
 
-Replace WORKING_ROOT with the actual private copy location when configuring a scheduler. The user-selected task-board check-in interval and timezone are configured in the native scheduler. Each default run covers Email Alerts and To Do only, including existing tickets the user requeued in To Do. This prompt alone activates nothing.
+Replace WORKING_ROOT with the actual private copy location when configuring a scheduler. The user-selected task-board check-in interval and timezone are configured in the native scheduler. The existing native check-in dispatches application work from Email Alerts and To Do and prepared content from Content Creation. This prompt alone activates nothing.
 
 ~~~text
 Work in WORKING_ROOT.
@@ -63,11 +63,9 @@ If email is explicitly deferred, do not read alerts or repeat the provider quest
 continue authorized eligible To Do tasks. Keep email
 readiness unfinished and preserve the selected mailbox and its pending work.
 
-Resume eligible claimed work in Email Alerts and To Do only. Do not list, read,
+Run npm run tasks -- work for the shared active-board routes. Resume application work from Email Alerts and To Do and eligible prepared content from Content Creation. Do not list, read,
 hash or inspect linked context for Blocked tasks in routine check-ins. Review
-Blocked only when the human explicitly asks; review or a context edit does not
-automatically requeue a task. The user moves the existing ticket to To Do after
-resolving the blocker. That move is the pickup signal. Read only that selected
+Blocked only in the selected user resolution workflow. A verified complete resolution can move the same ticket to To Do for applications or Content Creation for content. Manual moves remain a pickup signal. Read only that selected
 task's required context, preserve its checkpoint and original source, and verify
 actual dependency resolution before sensitive actions. For a selected email-derived
 To Do ticket, use automation/email/requeue.ts to reconcile the existing source
@@ -78,6 +76,12 @@ Check To Do and the configured job-alert inbox, paginating metadata and preservi
 active message-to-vacancy/task associations. Do not compare unrelated email/manual
 tasks or scan historical Applied files. Do not reread a previously parsed body
 when its active progress record supplies the unfinished tasks.
+
+For the content route, follow Content Creation Workflow/README.md and use the
+same native schedule reference for capability evidence and board-work. Process
+prepared content in this run and keep independent work available if either
+route fails. In Autonomous mode prepare a future ticket after dispatch, or
+between runs, for pickup at the next shared check-in.
 
 Select an enabled role using role routing, then read only that self-contained
 profile, designated upload CV and verification-access instructions. Reuse the saved
@@ -152,4 +156,4 @@ mode and do not create a schedule as part of a task-status change.
 
 While an interactive settings menu is open, preserve its checkpoint and leave its unchanged question quiet. Do not open or answer it on the user's behalf. Its saved settings still use the existing eligibility, active-task and pending-cleanup rules.
 
-Blocked-task reminders use automation/attention/README.md and a separately opted-in notification-only schedule. Do not populate its index by scanning Blocked or execution mirrors during this check-in. Register only actual newly committed human-required blockers from the selected task workflow. Keep pending attention questions quiet and retain shared settings/onboarding focus. Replies do not requeue tasks; use the user's existing To Do move signal. A reminder projection failure never changes a confirmed outcome or authorizes another submission.
+Blocked-task reminders use automation/attention/README.md and a separately opted-in notification-only schedule. Do not populate its index by scanning Blocked or execution mirrors during this check-in. Register only actual newly committed human-required blockers from the selected task workflow. Keep pending attention questions quiet and retain shared settings/onboarding focus. Only a guarded, verified resolution moves the selected Blocked ticket. A reminder projection failure never changes a confirmed outcome or authorizes another submission.

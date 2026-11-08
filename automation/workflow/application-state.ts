@@ -21,6 +21,7 @@ export interface Blocker {
   resumeCheckpoint: string;
   resolvedAt?: string;
   resolutionEvidence?: string;
+  dependencyIds?: string[];
 }
 
 export interface ApplicationTask {
@@ -89,6 +90,7 @@ export function canMarkApplied(task: ApplicationTask): boolean {
 export function assertTaskMove(
   task: ApplicationTask, from: BoardFolder, to: BoardFolder, decision?: TaskDecision,
 ): void {
+  if (from === "Content Creation" || to === "Content Creation") throw new Error("Content tickets use the content workflow.");
   if (from === "Applied") throw new Error("An Applied task is not active intake.");
   if (!["Blocked", "To Do", "Cancelled", "Deferred"].includes(from) && from !== task.originalIntake) throw new Error("Preserve the original source; resumed work is queued in To Do.");
   if (to === "Cancelled" || to === "Deferred" || from === "Cancelled" || from === "Deferred") {
@@ -120,6 +122,14 @@ export function assertTaskMove(
     // The user's move queues inspection of this task. It does not clear its
     // blocker, CAPTCHA, access handoff or uncertain submission checkpoint.
     if (to !== "To Do") throw new Error("The user requeues a Blocked task in To Do.");
+    if (decision?.action === "unblock") {
+      validateDecision(decision);
+      if (decision.from !== from || decision.to !== to || !validTime(task.blocker?.resolvedAt) || !supplied(task.blocker?.resolutionEvidence) ||
+        task.captchaHandoffs?.some(handoff => handoff.state !== "resolved") || task.accessHandoffs?.some(handoff => handoff.state !== "resolved") ||
+        task.browserExecution?.handoffs.some(handoff => handoff.state === "awaitingResume") || ["submissionAttempted", "confirmed"].includes(task.checkpoint)) {
+        throw new Error("Verify every dependency and resolve any submission or browser handoff before automatic requeue.");
+      }
+    }
     return;
   }
   if (to !== "Applied" || !canMarkApplied(task)) {

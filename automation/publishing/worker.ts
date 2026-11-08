@@ -50,7 +50,7 @@ export async function publish(root: string, request: RunRequest, prepare: Prepar
     } finally { dispatch.release(); }
     try {
       const receipt = await prepared.confirm();
-      confirmPost(root, worker, target.post.id, attempt.id, receipt);
+      confirmPost(root, worker, target.post.id, attempt.id, receipt, request.kind === "board");
       return { action: "published" as const, postId: target.post.id, receipt };
     } catch {
       return { action: "verifyAttempt" as const, postId: target.post.id, attemptId: attempt.id };

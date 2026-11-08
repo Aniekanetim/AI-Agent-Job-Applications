@@ -1,9 +1,11 @@
 import type { FileEvidence } from "../email/evidence.js";
 
-export const boardFolders = ["Email Alerts", "To Do", "Blocked", "Applied", "Cancelled", "Deferred"] as const;
+export const boardFolders = ["Email Alerts", "To Do", "Blocked", "Applied", "Cancelled", "Deferred", "Content Creation"] as const;
 export type BoardFolder = typeof boardFolders[number];
 export type IntakeFolder = "Email Alerts" | "To Do";
-export type TaskDecisionAction = "cancel" | "defer" | "resume" | "restore";
+export type WorkKind = "application" | "content";
+export type TaskDecisionAction = "cancel" | "defer" | "resume" | "restore" | "unblock";
+export const pickupFolder = (kind: WorkKind) => kind === "content" ? "Content Creation" as const : "To Do" as const;
 export interface TaskDecision {
   id: string;
   action: TaskDecisionAction;
@@ -24,11 +26,12 @@ export function ticketFolder(path: string): BoardFolder {
 export function validateDecision(d: TaskDecision): void {
   if (!d || ![d.id, d.reason, d.actor].every(v => typeof v === "string" && !!v.trim()) ||
     !Number.isFinite(Date.parse(d.observedAt)) || !boardFolders.includes(d.from) || !boardFolders.includes(d.to) ||
-    !["cancel", "defer", "resume", "restore"].includes(d.action) || !d.authority?.path || !/^[a-f0-9]{64}$/.test(d.authority.sha256)) {
+    !["cancel", "defer", "resume", "restore", "unblock"].includes(d.action) || !d.authority?.path || !/^[a-f0-9]{64}$/.test(d.authority.sha256)) {
     throw new Error("Record the actual decision, actor, reason, time and saved authority.");
   }
-  const destination = { cancel: "Cancelled", defer: "Deferred", resume: "To Do", restore: "To Do" };
-  if (destination[d.action] !== d.to || d.action === "resume" && d.from !== "Deferred" || d.action === "restore" && d.from !== "Cancelled") {
+  const destination = { cancel: "Cancelled", defer: "Deferred", resume: "To Do", restore: "To Do", unblock: "To Do" };
+  if (destination[d.action] !== d.to || d.action === "resume" && d.from !== "Deferred" ||
+    d.action === "restore" && d.from !== "Cancelled" || d.action === "unblock" && d.from !== "Blocked") {
     throw new Error("The decision must describe this exact transition.");
   }
 }

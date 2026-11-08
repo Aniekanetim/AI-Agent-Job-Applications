@@ -332,6 +332,29 @@ test("existing Blocked moves and user requeue can refresh selected control witho
   refreshTaskTicket(f.root, blocked, old.ticket.sha256, f.path);
   assert.equal(loadTaskControl(f.root, f.task.taskId).data!.task.blocker!.resolvedAt, undefined);
 });
+test("automatic verified requeue keeps the same protected email source and sibling vacancy", t => {
+  const f = email(t, 2);
+  bindTaskTicket(f.root, f.task, f.path);
+  const original = loadTaskControl(f.root, f.task.taskId).data!;
+  const path = `Task Board/Blocked/${f.task.taskId}.md`;
+  fs.mkdirSync(resolve(f.root, "Task Board/Blocked"), { recursive: true });
+  fs.renameSync(resolve(f.root, f.path), resolve(f.root, path));
+  const resolved = { ...f.task, blocker: { reason: "Synthetic answer needed", contextPath: f.authority.path,
+    lastCompletedStep: "Questions", nextAction: "User supplies answer", resumeCheckpoint: "Questions",
+    resolvedAt: fixtureNow, resolutionEvidence: f.authority.path } };
+  const before = f.current(), sibling = structuredClone(before.vacancies[1]), ticket = evidenceFile(f.root, path);
+  Object.assign(before.vacancies[0], { disposition: "blocked", taskPath: path, taskEvidence: ticket });
+  saveEmailRecord(f.root, before, loadInboxState(f.root).revision);
+  refreshTaskTicket(f.root, resolved, original.ticket.sha256, path);
+  const authority = writeFixture(f.root, ".local/unblock.json", { taskId: f.task.taskId, ticketSha256: ticket.sha256,
+    resolvedAt: fixtureNow, dependencies: [{ id: "blocker", evidence: f.authority }] });
+  const moved = transitionTask({ ...f, path, authority, action: "unblock", task: resolved });
+  assert.equal(moved.kind, "moved");
+  assert.equal(f.current().vacancies[0].taskPath, `Task Board/To Do/${f.task.taskId}.md`);
+  assert.equal(f.current().vacancies[0].taskId, f.task.taskId);
+  assert.deepEqual(f.current().vacancies[1], sibling);
+  assert.equal(f.current().cleanupState, "notReady");
+});
 test("an uncertain upload cannot be bypassed through a cached task or the ordinary site guard", t => {
   const f = manual(t), prepared: ApplicationTask = { ...f.task, checkpoint: "prepared", selectedRoleId: "qa", cvVersion: "v1", cvSha256: "a".repeat(64) };
   const site = readySite(t, prepared, undefined, f.root), task = bindTaskTicket(f.root, site.task, f.path);

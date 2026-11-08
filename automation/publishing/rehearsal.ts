@@ -1,10 +1,11 @@
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
-import { evidenceFile } from "../email/evidence.js";
+import { digest, evidenceFile } from "../email/evidence.js";
 import { savePrivateJson } from "../workflow/private-json.js";
 import { accountProbe, publishingPath, recordScheduledCheck, type Draft } from "./store.js";
 import { liveComposer, openComposer, openPublishingBrowser, prepareComposer } from "./browser.js";
+import { readBoardConfig, saveSharedPublishingCheck } from "./board-config.js";
 
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jP2cAAAAASUVORK5CYII=", "base64");
 const video = Buffer.from("00000018667479706d703432000000006d70343269736f6d", "hex");
@@ -99,4 +100,21 @@ export async function publishingRehearsal(root: string, schedule?: { reference: 
     checkedAt: new Date().toISOString(), composerOpened: true,
     syntheticRehearsal: evidenceFile(root, syntheticPath) }, null);
   return recordScheduledCheck(root, evidenceFile(root, reportPath));
+}
+
+export async function sharedPublishingRehearsal(root: string, scheduleReference: string, runReference: string) {
+  const account = readBoardConfig(root).data?.account;
+  if (!account || !scheduleReference.trim() || !runReference.trim()) throw new Error("Bind the exact account and actual shared scheduled run.");
+  const synthetic = await exerciseComposer(root), session = await liveComposer(root, account);
+  try { await openComposer(session.page, account); }
+  finally { await session.close(); }
+  const prefix = `.local/publishing/evidence/shared-${randomUUID()}`;
+  const syntheticPath = `${prefix}-synthetic.json`, reportPath = `${prefix}-scheduled.json`;
+  savePrivateJson(root, syntheticPath, synthetic, null);
+  savePrivateJson(root, reportPath, { workingRoot: resolve(root), executionContext: "scheduled", scheduleReference, runReference,
+    profileUrl: account.profileUrl, accountRevision: digest(JSON.stringify(account)),
+    checkedAt: new Date().toISOString(), composerOpened: true, synthetic: evidenceFile(root, syntheticPath) }, null);
+  const evidence = evidenceFile(root, reportPath);
+  saveSharedPublishingCheck(root, evidence, scheduleReference, account);
+  return { evidence };
 }

@@ -5,6 +5,11 @@ import { disablePublishing, enablePublishing, publishingBrief, publishingPath, q
   savePublishingPreferences, showDraft, skipPost } from "./store.js";
 import { publish } from "./worker.js";
 import { publishingRehearsal } from "./rehearsal.js";
+import { adoptPublishingBoard, authorizeContentTool, chooseContentTool, configureBoardMode, contentBrief, contentHistory, createContentTask,
+  observeContentOutcome, previewPublishingCutover, recoverBoardPublication, runBoardPost, stageBoardDraft, transitionContent } from "./board-flow.js";
+import { readBoardConfig } from "./board-config.js";
+import { readBoardPost } from "./store.js";
+import { sharedPublishingRehearsal } from "./rehearsal.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const args = process.argv.slice(2), command = args.shift() ?? "brief";
@@ -25,6 +30,20 @@ function readRequest() {
 }
 
 async function run() {
+  if (command === "board-brief") return contentBrief(root);
+  if (command === "board-cutover-preview") return previewPublishingCutover(root);
+  if (command === "board-preview") return readBoardPost(root, value("--id"));
+  if (command === "board-recover") return recoverBoardPublication(root, value("--id"));
+  if (command === "board-work") {
+    const schedule = args.includes("--schedule") ? value("--schedule") : undefined;
+    if (!schedule) value("--source");
+    return runBoardPost(root, value("--id"), schedule);
+  }
+  if (command === "board-rehearse") return sharedPublishingRehearsal(root, value("--schedule"), value("--scheduled-run"));
+  if (command === "disable" && readBoardConfig(root).data) return configureBoardMode(root, "off", value("--source"));
+  if (readBoardConfig(root).data && ["configure", "draft", "queue", "skip", "pilot", "enable", "publish-now", "reconcile", "rehearse"].includes(command)) {
+    throw new Error("Use the Task Board publishing workflow.");
+  }
   if (command === "brief") return publishingBrief(root, now);
   if (command === "preview") return showDraft(root, value("--id"));
   if (command === "skip") return skipPost(root, value("--id"));
@@ -34,6 +53,24 @@ async function run() {
   if (command === "rehearse") return publishingRehearsal(root,
     args.includes("--schedule") ? { reference: value("--schedule"), runReference: value("--scheduled-run") } : undefined);
   const request = readRequest();
+  if (command === "board-history") return contentHistory(root, request as Parameters<typeof contentHistory>[1]);
+  if (command === "board-configure") {
+    const p = request as { mode: Parameters<typeof configureBoardMode>[1]; sourceReference: string; account?: Parameters<typeof configureBoardMode>[3] };
+    return configureBoardMode(root, p.mode, p.sourceReference, p.account);
+  }
+  if (command === "board-create") return createContentTask(root, request as Parameters<typeof createContentTask>[1]);
+  if (command === "board-draft") return stageBoardDraft(root, request as Parameters<typeof stageBoardDraft>[1], now);
+  if (command === "board-transition") return transitionContent(root, request as Parameters<typeof transitionContent>[1]);
+  if (command === "board-observe") return observeContentOutcome(root, request as Parameters<typeof observeContentOutcome>[1]);
+  if (command === "board-authorize-tool") return authorizeContentTool(root, request as Parameters<typeof authorizeContentTool>[1]);
+  if (command === "board-tool") {
+    const p = request as { preferred: string; tools: Parameters<typeof chooseContentTool>[2]; action: string };
+    return chooseContentTool(root, p.preferred, p.tools, p.action);
+  }
+  if (command === "board-adopt") {
+    const p = request as { sourceReference: string; stoppedTimer?: Parameters<typeof adoptPublishingBoard>[2] };
+    return adoptPublishingBoard(root, p.sourceReference, p.stoppedTimer);
+  }
   if (command === "configure") return savePublishingPreferences(root, request as Parameters<typeof savePublishingPreferences>[1]);
   if (command === "draft") {
     const p = request as { draft: Parameters<typeof saveDraft>[1]; id?: string };
@@ -61,12 +98,12 @@ async function run() {
 }
 
 try {
-  if (command === "help") console.log(`LinkedIn publishing
-  brief | preview --id ID | skip --id ID
-  configure | draft | queue | pilot | enable | reconcile   use --file .local/publishing/requests/FILE.json
-  rehearse [--schedule REF --scheduled-run REF]  run the loopback rehearsal and optionally check the scheduled composer
-  publish-now --id ID --source REF | tick --schedule REF | disable --source REF
-See automation/publishing/README.md for the saved permissions, schedule and private proposal shapes.`);
+  if (command === "help") console.log(`Task Board publishing
+  board-brief | board-cutover-preview | board-preview --id ID | board-recover --id ID
+  board-configure | board-create | board-draft | board-transition | board-adopt | board-history   use --file .local/publishing/requests/FILE.json
+  board-tool | board-authorize-tool | board-observe   use --file .local/publishing/requests/FILE.json
+  board-work --id ID (--schedule REF or --source REF) | board-rehearse --schedule REF --scheduled-run REF | disable --source REF
+See Content Creation Workflow for the guarded commands and shared check-in.`);
   else console.log(JSON.stringify(await run(), null, 2));
 } catch (error) {
   console.error(error instanceof Error && !(error instanceof SyntaxError) && !/^(?:ENOENT|EACCES|EPERM|Command failed|browserType\.|browser\.|page\.|locator\.)/.test(error.message)

@@ -2,6 +2,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readPrivateJson } from "./private-json.js";
 import { attentionHealthy } from "../attention/state.js";
+import { boardWork } from "./dispatch.js";
 import { bindTaskTicket, saveTaskTicket, transitionTask, recoverTaskTransition, loadTaskControl, recordTaskCheckpoint, refreshTaskTicket,
   resumeMovedDeferredTask, authorizeTaskAction, assertAuthorizedTaskAction, observeTaskAction } from "./task-control.js";
 
@@ -10,7 +11,8 @@ function option(key: string) { const i = args.indexOf(`--${key}`); if (i < 0 || 
 const root = args.includes("--root") ? resolve(option("root")) : resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 try {
   let result: unknown;
-  if (command === "help") result = { commands: ["bind --file .local/proposal.json", "write --file .local/proposal.json", "transition --file .local/proposal.json", "pickup --file .local/proposal.json", "recover --task-id ID", "status --task-id ID", "checkpoint --file .local/proposal.json", "refresh --file .local/proposal.json", "action-authorize --file .local/proposal.json", "action-invoke --task-id ID --token TOKEN", "action-observe --file .local/proposal.json"], note: "No command opens a website or calls an email provider. Use private JSON proposals and actual saved decision evidence. Task cancellation is separate from email native-cancel." };
+  if (command === "help") result = { commands: ["work", "bind --file .local/proposal.json", "write --file .local/proposal.json", "transition --file .local/proposal.json", "pickup --file .local/proposal.json", "recover --task-id ID", "status --task-id ID", "checkpoint --file .local/proposal.json", "refresh --file .local/proposal.json", "action-authorize --file .local/proposal.json", "action-invoke --task-id ID --token TOKEN", "action-observe --file .local/proposal.json"], note: "No command opens a website or calls an email provider. Use private JSON proposals and actual saved decision evidence. Task cancellation is separate from email native-cancel." };
+  else if (command === "work") result = boardWork(root);
   else if (command === "recover") result = recoverTaskTransition(root, option("task-id"));
   else if (command === "status") {
     const data = loadTaskControl(root, option("task-id")).data;

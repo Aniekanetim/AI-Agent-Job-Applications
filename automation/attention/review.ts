@@ -35,6 +35,11 @@ function startReview(root: string, key: string, sourceReference: string, now: st
     const current = loadAttentionSession(root).session;
     if (current.response) throw new Error("Recover the retained attention answer first.");
     if (!["closed", "suspended", "awaitingContinue"].includes(current.phase) && current.key !== key) throw new Error("Finish or stop the current task review first.");
+    if (item.taskId.startsWith("CONTENT-")) {
+      const ticket = selectedTicketEvidence(root, item.path);
+      return { action: "inspectSelectedContent" as const, ticket, contents: readEvidence(root, ticket).toString("utf8"),
+        next: "Use the selected content ticket's dependency checklist and verified board transition." };
+    }
     const control = loadTaskControl(root, item.taskId).data;
     if (control?.transition || control?.action || control?.request) throw new Error("Preserve the existing task/browser owner and recovery checkpoint.");
     if (control && control.path !== item.path || queuedNames(root).has(item.path.split("/").at(-1)!.toLowerCase())) {

@@ -37,7 +37,7 @@ export const settings: Setting[] = [
   { id: "per-day", area: "operating", label: "Applications per day", scope: "global", path: ".local/operation-preferences.json", field: "perDayLimit", procedure: "onboarding:operation", prompt: "What daily application limit should apply, or should there be no fixed limit?" },
   { id: "reporting", area: "operating", label: "Results reporting", scope: "global", path: ".local/operation-preferences.json", field: "reporting", procedure: "onboarding:operation", prompt: "How would you like application results reported?" },
   { id: "blocked-reminders", area: "operating", label: "Blocked-task reminders", scope: "global", path: ".local/attention-preferences.json", field: "mode", procedure: "attention preferences / verified native notification-only schedule", prompt: "Would you like to review waiting tasks only when asked, or receive a grouped reminder at an interval you choose?" },
-  { id: "linkedin-publishing", area: "publishing", label: "Publishing profile and schedule", scope: "global", path: ".local/publishing/state.json", procedure: "publishing configure / dedicated publishing schedule", prompt: "What would you like to set up or change for LinkedIn publishing?" },
+  { id: "linkedin-publishing", area: "publishing", label: "Content creation mode and profile", scope: "global", path: ".local/publishing/board.json", procedure: "publishing board-configure / shared check-in", prompt: "Should the agent prepare content autonomously, work on demand from your posts and media, or turn content work off?" },
 ];
 export function settingById(id: string) {
   const setting = settings.find(s => s.id === id);

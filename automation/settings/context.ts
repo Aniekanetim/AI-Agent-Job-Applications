@@ -9,6 +9,7 @@ import { loadSites } from "../sites/registry.js";
 import { validateAttentionPreferences } from "../attention/preferences.js";
 import { loadReusableAnswers, scopeKeys } from "../answers/context.js";
 import { loadPublishing } from "../publishing/store.js";
+import { readBoardConfig } from "../publishing/board-config.js";
 
 export interface Role { id: string; path: string; label: string; enabled: boolean }
 export interface CurrentSetting { status: "saved" | "notConfigured" | "default" | "unavailable"; text: string; path: string | null; sha256: string | null; fingerprint: string }
@@ -73,6 +74,11 @@ export function currentSetting(root: string, setting: Setting, roleId: string | 
   }
   if (setting.id === "linkedin-publishing") {
     try {
+      const board = readBoardConfig(root);
+      if (board.data) {
+        const mode = board.data.mode === "autonomous" ? "Autonomous" : board.data.mode === "onDemand" ? "On demand" : "Off";
+        return value("saved", `${mode}. Uses the shared task-board check-in.`, board.revision);
+      }
       const { state, revision } = loadPublishing(root), p = state.preferences;
       if (!p) return value("default", "Off. Open publishing setup to choose a schedule.");
       const mode = p.paused ? "Paused" : state.access ? "Enabled" : "Private drafts only";

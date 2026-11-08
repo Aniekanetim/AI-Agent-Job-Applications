@@ -1,8 +1,8 @@
 # Application task lifecycle
 
-[Blocked-task attention](../attention/README.md) is private notification metadata alongside this lifecycle. Commit new human-required blocks with the bound `refreshTaskTicket` boundary after saving the actual ticket. Move/requeue/completion helpers suppress or retire its row; interrupted projection work stays pending/quarantined. Repair one explicitly selected committed task with `attention repair-selected`; never retry an application to repair reminders. Answer recording does not move a task, release uncertain ownership, clear a CAPTCHA or change cleanup authority.
+[Blocked-task attention](../attention/README.md) is private notification metadata alongside this lifecycle. Commit new human-required blocks with the bound `refreshTaskTicket` boundary after saving the actual ticket. Move/requeue/completion helpers suppress or retire its row; interrupted projection work stays pending/quarantined. Repair one explicitly selected committed task with `attention repair-selected`; never retry an application to repair reminders. After answer recording, verify each dependency before calling the guarded unblock transition. Preserve uncertain ownership, CAPTCHA and cleanup checks.
 
-The board has six status folders: Email Alerts, To Do, Blocked, Applied, Cancelled and Deferred. The containing folder is the task's status. Only Email Alerts and To Do are execution queues. Low priority is not a status.
+The board has seven status folders. Email Alerts and To Do are application queues. Content Creation uses the shared lifecycle folders and its own active pickup. The containing folder is the task's status. Low priority is not a status.
 
 Cancelled means stop pursuing the application. Deferred means set it aside until the user requeues the same ticket in To Do. Blocked still means an actual dependency prevents otherwise desired work. Applied still requires a confirmed submission. Do not automatically move legacy concluded tasks or migrate inactive ticket folders.
 
@@ -24,7 +24,7 @@ The private proposal contains:
 }
 ```
 
-This is a synthetic shape, not a supplied instruction or evidence. Use the selected task's actual saved state and hash. Supported actions are `cancel`, `defer`, `resume` (Deferred to To Do) and `restore` (Cancelled to To Do). Original source, ID, filename, role/CV references, blocker/handoff history and submission checkpoint survive. A task that never reached role/CV selection can be cancelled or deferred without invented candidate fields.
+This is a synthetic shape, not a supplied instruction or evidence. Use the selected task's actual saved state and hash. Application actions are `cancel`, `defer`, `resume` (Deferred to To Do), `restore` (Cancelled to To Do) and `unblock` (verified Blocked to To Do). For unblock, save the actual selected resolved task checkpoint, then supply an authority JSON evidence reference for `{taskId,ticketSha256,resolvedAt,dependencies:[{id,evidence}]}`. Use the saved dependency IDs or `blocker` for a legacy single blocker. The same task transition reconciles protected email pointers and attention. Original source, ID, filename, role/CV references, blocker/handoff history and submission checkpoint survive. A task that never reached role/CV selection can be cancelled or deferred without invented candidate fields.
 
 The helper owns this task's move and, for an email task, the same protected source alert. It journals source bytes, destination bytes and decision before moving. Never overwrite a destination or directly edit the inbox ledger. If another worker owns a browser action, a stop instruction becomes `requested`; it is not yet a completed move. If source cleanup is owned/pending, preserve it and reconcile that operation before recovering the move. This is distinct from `email:work native-cancel`, which cancels an email-cleanup attempt, not a job task.
 

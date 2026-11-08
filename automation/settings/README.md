@@ -59,7 +59,7 @@ Each edit returns its canonical context path and procedure. Read [the update rul
 | Browser default | Use `onboarding:browser`; recheck actual capabilities |
 | Playwright visibility | Use `browser -- visibility`; recheck the selected mode |
 | Check-in interval | Use the existing scheduling procedure and reconcile an actual schedule when present; a local edit alone does not reschedule work |
-| LinkedIn publishing | Use the [dedicated publishing workflow](../publishing/README.md), then `settings complete` for the selected edit |
+| LinkedIn publishing | Use the [content workflow](../../Content%20Creation%20Workflow/README.md) to save the mode and profile, then `settings complete` for the selected edit |
 | Limits/reporting | Use `onboarding:operation` with only changed flags, preserving omitted values |
 | Email/source/cleanup | Use shared email onboarding and its protected connection store; keep pending-alert checks |
 | Board account access | Follow the selected board's existing private authentication procedure |

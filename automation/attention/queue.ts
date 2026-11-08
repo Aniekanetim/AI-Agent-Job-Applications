@@ -5,6 +5,7 @@ import { loadAttention, attentionHealthy } from "./state.js";
 import { loadAttentionPreferences } from "./preferences.js";
 import { hasAttentionFocus, otherConversationFocus } from "./session-state.js";
 import { itemKey, time, type AttentionKind, type AttentionItem } from "./types.js";
+import { listContentTickets } from "../workflow/intake.js";
 
 /** Metadata-only To Do listing. Never stat/read the former Blocked path or execution mirror. */
 export function queuedNames(root: string): Set<string> {
@@ -18,6 +19,9 @@ export function queuedNames(root: string): Set<string> {
 export function attentionQueue(root: string, now: string, options: { explicit?: boolean; kind?: AttentionKind } = {}) {
   if (!time(now)) throw new Error("Use the actual reminder observation time.");
   const { state } = loadAttention(root), p = loadAttentionPreferences(root).value, moved = queuedNames(root);
+  if (state.items.some(item => item.taskId.startsWith("CONTENT-") && item.state !== "retired")) {
+    for (const ticket of listContentTickets(root)) moved.add(ticket.name.toLowerCase());
+  }
   const pending = new Set(state.events.filter(e => e.state === "staged").map(e => e.taskId));
   const recorded = state.items.filter(i => i.state !== "retired"), waiting = recorded.filter(i => i.state === "waiting");
   const candidates = waiting.filter(i => !pending.has(i.taskId) && !moved.has(basename(i.path).toLowerCase()) && !p.muted.includes(itemKey(i)) && (!options.kind || i.kind === options.kind));

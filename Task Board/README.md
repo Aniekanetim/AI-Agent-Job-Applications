@@ -1,6 +1,6 @@
-# Job-application task board
+# Task Board
 
-The board says what to do. [The application workflow](../Application%20Workflow/application-workflow.md) says how to do it. [Job Context](../Job%20Context/README.md) supplies human-maintained facts and instructions.
+The board says what to do. Follow the [application workflow](../Application%20Workflow/application-workflow.md) or the [content workflow](../Content%20Creation%20Workflow/README.md) for the selected ticket.
 
 ## Folders and transitions
 
@@ -8,16 +8,17 @@ The board says what to do. [The application workflow](../Application%20Workflow/
 | --- | --- | --- |
 | Email Alerts | Active vacancy tasks derived from configured job-alert messages | Claim and execute/resume |
 | To Do | User-authored application tasks | Claim and execute/resume |
-| Blocked | A concrete dependency prevents completion | Wait; inspect only on an explicit user request. User requeues the existing ticket in To Do. |
-| Applied | Confirmed successful submissions | Retain outcome; do not routinely scan as an intake step |
-| Cancelled | Explicitly stopped applications | Preserve history; restore only under an explicit instruction |
-| Deferred | Applications set aside for later | Wait until the user requeues the existing ticket in To Do |
+| Content Creation | Content tasks and prepared posts | Shared check-in picks up ready tickets. |
+| Blocked | A concrete dependency prevents completion | A selected verified resolution can return the same ticket to its active route. |
+| Applied | Confirmed submissions and publications | Retain the outcome and its type-specific receipt |
+| Cancelled | Explicitly stopped work | Preserve history and require explicit restoration |
+| Deferred | Work set aside for later | Wait for the user to return the same ticket to its active route |
 
-Six status folders. New work has two sources: the configured inbox and To Do. Blocked is interrupted work, not a third intake channel.
+Seven status folders. The application routes use Email Alerts and To Do. Content uses Content Creation. The remaining folders are shared lifecycle states.
 
-[Blocked-task attention](../automation/attention/README.md) offers one recorded task preview, optional ten-row browse pages and one selected question/action at a time. After replying, choose Continue or Stop for now. Snoozing suppresses the whole reminder digest; it does not move a task to Deferred. Automatic reminders start off. No installation scans/imports existing Blocked tasks, and counts cover partial recorded items. Review/answers never requeue a task; the user moves the same resolved ticket to To Do.
+[Blocked-task attention](../automation/attention/README.md) offers one recorded task preview, optional ten-row browse pages and one selected question/action at a time. After replying, choose Continue or Stop for now. Snoozing suppresses the whole reminder digest; it does not move a task to Deferred. Automatic reminders start off. No installation scans/imports existing Blocked tasks, and counts cover partial recorded items. After saving a reply, verify every dependency on the selected ticket before a guarded requeue.
 
-Move a confirmed submission from its intake to Applied. Move an unresolved dependency to Blocked. After resolving it, the user moves the same ticket to To Do; the agent resumes from that queue. Keep original intake/source as provenance, including email associations. The containing folder is status; do not maintain a conflicting second status field. A task can have a checkpoint/disposition without creating another folder.
+Move a confirmed submission or publication to Applied. Move an unresolved dependency to Blocked. After verifying resolution, return the same ticket to To Do for applications or Content Creation for content. The agent resumes from that active queue. Keep original intake and source as provenance, including email associations. The containing folder is the status. A task's checkpoint records its progress within that status.
 
 Keep one stable descriptive ID/filename, full history and original email association through every move. For agent-created tickets, use `APP-<unique ID>-<short employer-role>` filenames; a UUID or collision-checked sequence is acceptable. A manual ticket can simply be named `task.md` and contain a job URL and instructions. The agent supplies missing operational metadata from actual context; the user need not complete every template field. Preserve a supplied filename or record an intentional descriptive rename. Check the destination and never overwrite it. Update incoming links and active message pointers after a move.
 
@@ -25,7 +26,7 @@ Keep one stable descriptive ID/filename, full history and original email associa
 
 1. Read AGENTS, private shared progress when present, the human context index and application workflow. Check the configured onboarding scope and current readiness. For a relevant setup gap, follow [onboarding](../Application%20Workflow/onboarding-workflow.md), show the remaining roadmap and preserve existing profiles, selected-board maps and unanswered questions. Keep setup-only dependencies in progress; an unrelated deferred board does not block a task on a prepared one. Check configured inbox access separately; its absence does not prevent a valid manual task.
 2. Resume eligible work claimed by this worker first. Respect another worker's claim; never assume silence means its final-submit action did not occur.
-3. List only Email Alerts and To Do with `automation/workflow/intake.ts`. Do not list/read/hash Blocked tickets or their context during routine check-ins. Inspect Blocked only when the human explicitly asks. The user signals readiness by moving the existing ticket to To Do; inspect that selected ticket's dependency and checkpoint before resuming. A context change or reply while it remains in Blocked does not trigger pickup.
+3. Use `npm run tasks -- work` to list the active application and Content Creation routes. Do not list/read/hash Blocked tickets or their context during routine check-ins. Inspect Blocked only when the human explicitly asks. Use the selected verified resolution flow or the existing user move as the requeue signal. Verify the selected task before sensitive actions.
 4. If email intake is enabled and not explicitly deferred, verify the selected connection and paginate configured alert headers. An email deferral in `.local/email-onboarding.json` pauses email intake while eligible To Do work can continue; preserve the mailbox and checkpoint. Use the private active-message map to find an existing task for this exact message/vacancy. Capture and reconcile each new alert through [its full source inventory](../automation/email/alert-completion.md), then record all distinct vacancy dispositions; do not compare across unrelated email/manual tasks or historical Applied records.
 5. Select one actionable task using explicit priority, creation time, then ID. Read its complete ticket, claim and checkpoint before acting.
 6. Perform the workflow autonomously. Learn missing website steps where possible; move a genuine dependency to Blocked. Save confirmation and move only actual successful submissions to Applied.
@@ -40,7 +41,7 @@ An unfamiliar site is agent preparation work under [the site procedure](../autom
 
 A blocker states the observed issue, last completed action, exact required input/access, canonical role/platform context path, source version checked, resume checkpoint and original intake. A role mismatch points to role-routing; a mandatory missing answer points to the selected profile's application-answers; a missing CV points to its document index. A login challenge can name the platform's access-and-instructions with the human sign-in action.
 
-The user can provide the answer in conversation or supply the required access action. The agent saves the answer in the named local context file. The user then moves the existing ticket to To Do when ready for the agent to pick it up; no automatic Blocked review or move follows an answer. Direct context editing remains optional. On pickup, preserve the response and verify actual resolution. Moving the ticket alone does not establish factual answers, CAPTCHA clearance or a prior submission outcome.
+The user can provide the answer in conversation or supply the required access action. The agent saves the answer in the named local context file. After the selected dependency checklist is verified, the app can return the same ticket to its active pickup status. Direct context editing remains optional. On pickup, preserve the response and verify actual resolution. Moving the ticket alone does not establish factual answers, CAPTCHA clearance or a prior submission outcome.
 
 For a selected moved email ticket, use `requeueMovedEmailTicket` from `automation/email/requeue.ts`. It matches the existing source assignment by the unchanged ticket filename and bytes, then updates the protected source pointer and pending disposition without reading the old Blocked path. Preserve task state, original email identity and attempt history. If the ticket was also edited or the match is ambiguous, review only this selected To Do file and its saved source/state; reconcile through the protected interfaces rather than creating a second assignment. Refresh the selected task state's current path/checkpoint through guarded artifacts before further execution. No scan of other Blocked files is required.
 
@@ -113,7 +114,7 @@ reference, cleanup state/date. Do not delete while sibling vacancies are unresol
 
 Extend the existing ticket's private execution checkpoint with the saved default browser, active browser and whether upload is required. For a midway upload handoff, retain the same task ID, source/vacancy identity, selected role/CV versions, draft identity when visible, last completed step, checkpoint evidence, handoff time/state and actual resume checks. Keep signed URLs, credentials and OTPs out of the ticket.
 
-Follow [the handoff procedure](../automation/browser/upload-fallback.md): establish the authorized Playwright session and same draft before resuming. Keep that application in Playwright; a new task returns to the saved default. Never switch or retry while a prior submission is uncertain. Preserve handoff history through Blocked and Applied. The board has six status folders.
+Follow [the handoff procedure](../automation/browser/upload-fallback.md): establish the authorized Playwright session and same draft before resuming. Keep that application in Playwright; a new task returns to the saved default. Never switch or retry while a prior submission is uncertain. Preserve handoff history through Blocked and Applied. The board shares the lifecycle folders with the content route.
 
 Use the selected role's verification-access reference when a challenge needs help, and preserve the same checkpoint while waiting. Apply saved operating limits and reporting preferences during each check-in. Neither a missing in-app capability nor a document-format issue creates a new intake source or routine approval gate.
 

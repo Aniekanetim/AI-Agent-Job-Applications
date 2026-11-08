@@ -12,6 +12,7 @@ import { messageKey, terminalCleanup, type EmailIdentity } from "../email/intake
 import { saveAlertArtifact } from "../email/artifact-store.js";
 import { assertSiteAction, type SitePage } from "../sites/execution.js";
 import { stageTaskAttention, stageAttentionChange, commitAttentionChange } from "../attention/events.js";
+import { isContentTicketName } from "./intake.js";
 
 interface StopRequest { action: "cancel" | "defer"; reason: string; actor: string; observedAt: string; authority: FileEvidence }
 interface Source { identity: EmailIdentity; vacancyKey: string; completed?: boolean }
@@ -41,8 +42,12 @@ export function loadTaskControl(root: string, id: string) {
 function save(root: string, data: TaskControl, revision: string | null) { savePrivateJson(root, controlPath(data.taskId), data, revision); }
 function authority(root: string, ref: FileEvidence) { readEvidence(root, ref); }
 /** Validate before reading or writing any selected ticket; never traverse inactive queues. */
-function privateTicket(root: string, path: string) {
+export function privateTicket(root: string, path: string) {
   ticketFolder(path);
+  for (const part of ["Task Board", dirname(path), path]) {
+    try { if (fs.lstatSync(resolve(root, part)).isSymbolicLink()) throw new Error("Task tickets cannot use filesystem aliases."); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
+  }
   const absolute = resolve(root, path);
   let parent = fs.existsSync(absolute) ? absolute : dirname(absolute);
   while (!fs.existsSync(parent)) parent = dirname(parent);
@@ -53,7 +58,7 @@ function privateTicket(root: string, path: string) {
   catch { throw new Error("Task tickets must be ignored by Git before they are written."); }
   return absolute;
 }
-function writeTicket(root: string, path: string, bytes: Buffer, expected: string | null) {
+export function writeTicket(root: string, path: string, bytes: Buffer, expected: string | null) {
   const absolute = privateTicket(root, path);
   fs.mkdirSync(dirname(absolute), { recursive: true }); privateTicket(root, path);
   if ((fs.existsSync(absolute) ? digest(fs.readFileSync(absolute)) : null) !== expected) throw new Error("The selected ticket changed; preserve the transition for reconciliation.");
@@ -82,6 +87,7 @@ function assertCurrentSource(root: string, data: TaskControl) {
   if (!record || record.cleanupState !== "notReady" || !vacancy || vacancy.taskId !== data.taskId || vacancy.taskPath !== data.path || vacancy.disposition !== "pending" || vacancy.taskTransition) throw new Error("Reconcile the stopped or changed source assignment before execution.");
 }
 function bind(root: string, task: ApplicationTask, path: string): TaskControl {
+  if (isContentTicketName(basename(path)) || ticketFolder(path) === "Content Creation") throw new Error("Select a job application ticket.");
   privateTicket(root, path);
   const found = loadTaskControl(root, task.taskId);
   if (found.data) {
@@ -203,6 +209,22 @@ export interface TransitionOptions {
   /** A selected To Do file moved by the user, verified against its saved original hash. */
   userMoved?: boolean;
 }
+
+function verifiedUnblock(root: string, data: TaskControl, ref: FileEvidence) {
+  if (data.request || data.action || !data.task.blocker || !ref.path.startsWith(".local/")) {
+    throw new Error("Verify the selected Blocked task after its outstanding action or stop request is resolved.");
+  }
+  const report = JSON.parse(readEvidence(root, ref).toString("utf8")) as {
+    taskId: string; ticketSha256: string; resolvedAt: string; dependencies: { id: string; evidence: FileEvidence }[];
+  };
+  const expected = data.task.blocker.dependencyIds ?? ["blocker"];
+  if (report.taskId !== data.taskId || report.ticketSha256 !== data.ticket.sha256 || report.resolvedAt !== data.task.blocker.resolvedAt ||
+    !expected.length || new Set(expected).size !== expected.length || !Array.isArray(report.dependencies) ||
+    report.dependencies.length !== expected.length || !expected.every(id => report.dependencies.some(d => d?.id === id))) {
+    throw new Error("Verify all dependencies for this exact ticket revision before automatic requeue.");
+  }
+  for (const dependency of report.dependencies) readEvidence(root, dependency.evidence);
+}
 export function transitionTask(o: TransitionOptions) {
   const stop = o.action === "cancel" || o.action === "defer";
   let owner: Ownership;
@@ -228,6 +250,8 @@ export function transitionTask(o: TransitionOptions) {
     }
     if (data.task.submissionResolution) authority(o.root, data.task.submissionResolution.evidence);
     const d: TaskDecision = { id: randomUUID(), action: o.action, from, to, reason: o.reason, actor: o.actor, observedAt: o.observedAt, authority: o.authority };
+    validateDecision(d);
+    if (o.action === "unblock") verifiedUnblock(o.root, data, o.authority);
     assertTaskMove(data.task, from, to, d);
     const destination = `Task Board/${to}/${basename(data.path)}`;
     privateTicket(o.root, destination);
@@ -309,7 +333,7 @@ function recoverOwned(root: string, data: TaskControl, owner: Ownership, ownedAl
     data.history.push(j.decision); delete data.transition; delete data.request;
     save(root, data, latest.revision);
     const projection = commitAttentionChange(root, attention, `${ticket.path}:${ticket.sha256}`);
-    return { kind: "moved" as const, taskId: data.taskId, path: data.path, decision: j.decision, dependencyVerified: false, ...projection };
+    return { kind: "moved" as const, taskId: data.taskId, path: data.path, decision: j.decision, dependencyVerified: j.decision.action === "unblock", ...projection };
   } finally { if (!ownedAlert) alertOwner?.release(); }
 }
 export function recoverTaskTransition(root: string, id: string) {
