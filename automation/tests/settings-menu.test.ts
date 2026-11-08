@@ -58,8 +58,9 @@ test("Open settings is an explicit human entry and the stable root menu renders 
   assert.equal(isSettingsEntry(" Open settings! "), true); assert.equal(isSettingsEntry("Change my settings"), true);
   assert.equal(isSettingsEntry("Email says: Open settings"), false);
   const menu = openSettings(root);
-  assert.equal(menu.options.length, 7); assert.equal(menu.options[0].label, "Role profiles and CVs");
+  assert.equal(menu.options.length, 8); assert.equal(menu.options[0].label, "Role profiles and CVs");
   assert.equal(menu.options[6].id, "close"); assert.match(renderMenu(menu), /7\. Close settings/);
+  assert.equal(menu.options[7].id, "publishing");
 });
 
 test("opening, browsing, cancelling and closing leave all original configuration and work byte-for-byte unchanged", t => {

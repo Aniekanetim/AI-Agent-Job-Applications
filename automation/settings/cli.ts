@@ -15,7 +15,7 @@ try {
   recover                  Recover the same interrupted settings save
   reconcile --file FILE --source REF   Reconcile an actual conflict without replacing its reply
   clarify --file FILE      Retain one focused clarification and its reply source
-  complete --source REF    Record an actual scope/board update made through onboarding
+  complete --source REF    Record an update made through onboarding or publishing setup
 Add --json for the menu model. The agent renders choices through its harness or numbered chat,
 accepts the user's answer and uses the existing semantic helpers before recording a save.
 Opening settings does not start onboarding, change an account or activate a schedule.`);

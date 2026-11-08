@@ -18,6 +18,7 @@ Settings
 5. Check-in schedule
 6. Application limits and reporting
 7. Close settings
+8. LinkedIn publishing
 ```
 
 Choose an area, then a setting. The agent shows its current saved value, asks one focused question, saves your answer and returns to that area. For role-specific information it selects the relevant profile first when necessary. You can use **Back**, **Cancel this edit** or **Close settings**. Completed saves remain effective; navigation does not undo them.
@@ -58,6 +59,7 @@ Each edit returns its canonical context path and procedure. Read [the update rul
 | Browser default | Use `onboarding:browser`; recheck actual capabilities |
 | Playwright visibility | Use `browser -- visibility`; recheck the selected mode |
 | Check-in interval | Use the existing scheduling procedure and reconcile an actual schedule when present; a local edit alone does not reschedule work |
+| LinkedIn publishing | Use the [dedicated publishing workflow](../publishing/README.md), then `settings complete` for the selected edit |
 | Limits/reporting | Use `onboarding:operation` with only changed flags, preserving omitted values |
 | Email/source/cleanup | Use shared email onboarding and its protected connection store; keep pending-alert checks |
 | Board account access | Follow the selected board's existing private authentication procedure |

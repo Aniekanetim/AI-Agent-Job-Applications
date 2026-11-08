@@ -65,7 +65,8 @@ export function settingsView(root: string, s = loadMenu(root).state): MenuView {
   if (s.phase === "closed") return { ...view, question: "Settings closed. Your previous work remains saved.", input: "none" };
   if (s.pendingSave) return { ...view, title: "Finish saving settings", question: "Recover the interrupted save before editing or leaving this menu.",
     options: [{ id: "recover", label: "Recover saved answer" }] };
-  if (s.phase === "root") view.options = [...areas.map(a => ({ ...a })), { id: "close", label: "Close settings" }];
+  if (s.phase === "root") view.options = [...areas.filter(a => a.id !== "publishing"), { id: "close", label: "Close settings" },
+    areas.find(a => a.id === "publishing")!];
   else if (s.phase === "role") view = { ...view, title: areaLabel(s), question: "Which role profile should this change apply to?",
     options: roles(root).filter(r => r.enabled).map(r => ({ id: r.id, label: r.label })) };
   else if (s.phase === "board") view = { ...view, title: areaLabel(s), question: "Which website should this change apply to?",
@@ -87,8 +88,12 @@ export function settingsView(root: string, s = loadMenu(root).state): MenuView {
   }
   if (s.phase !== "root") view.options.push({ id: "back", label: "Back" }, { id: "close", label: "Close settings" });
   if (s.lastSave) {
-    const ready = inspectReadiness(root, loadProgress(root).state);
-    view.notice = `${s.lastSave.changed ? "Change saved" : "Current value retained"}. ${ready.ready && ready.state.phase === "complete" ? "Ready for the configured scope." : "Recheck affected preparation before claiming the updated setup is ready."}`;
+    const saved = s.lastSave.changed ? "Change saved." : "Current value retained.";
+    if (s.lastSave.settingId === "linkedin-publishing") view.notice = saved;
+    else {
+      const ready = inspectReadiness(root, loadProgress(root).state);
+      view.notice = `${saved} ${ready.ready && ready.state.phase === "complete" ? "Ready for the configured scope." : "Recheck affected preparation before claiming the updated setup is ready."}`;
+    }
   }
   return view;
 }
@@ -147,6 +152,7 @@ function finishSave(root: string, s: MenuState) {
 export function saveSettingsReply(root: string, proposalPath: string) {
   return update(root, (s, persist) => {
     if (s.phase !== "edit") throw new Error("Select the setting to change before saving an answer.");
+    if (s.settingId === "linkedin-publishing") throw new Error("Use the dedicated publishing configuration command, then complete this Settings edit.");
     const bundle = readConversationInput(root, proposalPath) as ResponseBundle;
     if (!bundle?.id || !bundle.sourceReference) throw new Error("Use the actual focused-response proposal and source.");
     const setting = settingById(s.settingId!), target = currentSetting(root, setting, s.roleId, s.board);
@@ -186,10 +192,10 @@ export function reconcileSettingsSave(root: string, proposalPath: string, review
     persist(); finishSave(root, s);
   });
 }
-/** Boards and scope are owned by onboarding, never rewritten as an answer file. */
+/** These settings are saved by their dedicated workflow, outside the focused-answer journal. */
 export function completeSetupChange(root: string, sourceReference: string) {
   return update(root, s => {
-    if (s.phase !== "edit" || s.pendingSave || !["boards", "intake"].includes(s.settingId ?? "") || !sourceReference.trim()) throw new Error("Complete only a selected scope/board change with its actual user source.");
+    if (s.phase !== "edit" || s.pendingSave || !["boards", "intake", "linkedin-publishing"].includes(s.settingId ?? "") || !sourceReference.trim()) throw new Error("Complete only a selected setup change with its actual user source.");
     const current = currentSetting(root, settingById(s.settingId!), s.roleId, s.board);
     if (current.status !== "saved" || !current.sha256) throw new Error("Save the actual scope/board choice through onboarding first.");
     s.lastSave = { settingId: s.settingId!, responseId: null, sourceReference, changed: current.fingerprint !== s.editFingerprint };

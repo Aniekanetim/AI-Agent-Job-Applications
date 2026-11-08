@@ -202,7 +202,7 @@ test("settings suspends attention; onboarding cannot open a competing question",
   assert.equal(nextQuestion(f.root).next.action, "attention");
   queueQuestions(f.root, [{ ...f.binding, id: "future-notice", field: "notice", prompt: "Synthetic future question?", required: true }]);
   recordAttentionPresentation(f.root, "synthetic-current-question", now);
-  const view = openSettings(f.root, "synthetic-open-settings"); assert.equal(view.options.length, 7);
+  const view = openSettings(f.root, "synthetic-open-settings"); assert.equal(view.options[6].id, "close");
   assert.equal(loadAttentionSession(f.root).session.phase, "suspended");
   chooseSetting(f.root, "operating"); const edit = chooseSetting(f.root, "blocked-reminders");
   assert.match(edit.current!.text, /automatic reminders are off/);

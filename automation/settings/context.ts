@@ -8,6 +8,7 @@ import { type Setting } from "./catalog.js";
 import { loadSites } from "../sites/registry.js";
 import { validateAttentionPreferences } from "../attention/preferences.js";
 import { loadReusableAnswers, scopeKeys } from "../answers/context.js";
+import { loadPublishing } from "../publishing/store.js";
 
 export interface Role { id: string; path: string; label: string; enabled: boolean }
 export interface CurrentSetting { status: "saved" | "notConfigured" | "default" | "unavailable"; text: string; path: string | null; sha256: string | null; fingerprint: string }
@@ -69,6 +70,16 @@ export function currentSetting(root: string, setting: Setting, roleId: string | 
       return `${answer.fieldId.replaceAll("_", " ")} — ${String(answer.value)} (${scope || "all roles"}${validity})`;
     });
     return value(sha256 ? "saved" : "notConfigured", lines.join("\n") || "No reusable answers saved", sha256);
+  }
+  if (setting.id === "linkedin-publishing") {
+    try {
+      const { state, revision } = loadPublishing(root), p = state.preferences;
+      if (!p) return value("default", "Off. Open publishing setup to choose a schedule.");
+      const mode = p.paused ? "Paused" : state.access ? "Enabled" : "Private drafts only";
+      const schedule = p.schedule.kind === "onDemand" ? "On demand" : p.schedule.kind === "monthly" ? "Monthly" :
+        p.schedule.everyWeeks === 1 ? "Weekly" : `Every ${p.schedule.everyWeeks} weeks`;
+      return value("saved", `${mode}. ${schedule}. ${p.timezone}.`, revision);
+    } catch { return value("unavailable", "Reconcile the private LinkedIn publishing settings before editing."); }
   }
   if (setting.id === "blocked-reminders" && path && !existsSync(containedFile(root, path))) return value("default", "Review only when asked; automatic reminders are off");
   if (!path || !existsSync(containedFile(root, path))) return value(setting.id === "visibility" ? "default" : "notConfigured",
