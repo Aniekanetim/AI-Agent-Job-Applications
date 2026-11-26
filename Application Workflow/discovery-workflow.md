@@ -50,6 +50,8 @@ Do not hard-code candidate answers, passwords, document paths or tokens in sourc
 
 Type-check after changing code. Exercise nonsubmitting page recognition where possible before the real final action. Compilation and offline fixtures do not establish that a live portal works. Preserve the task's prior attempts and the actual verification conditions.
 
+Record verified WebMCP actions separately from conventional locators. Link each [WebMCP mapping](../automation/chrome-devtools/README.md#discover-execute-and-verify) from the site's private architecture with its actual page, account and behavior evidence.
+
 ## 5. Resume the application and refresh narrowly
 
 Record which gap was resolved, updated knowledge/code versions and the application checkpoint. Resume the existing task without a new approval gate. If its final-submit outcome is uncertain, establish that outcome before any further submission action.

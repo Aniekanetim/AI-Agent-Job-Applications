@@ -10,7 +10,7 @@ export interface SiteExecution extends SitePage {
   siteId: string; taskId: string; accessPath: string; architecturePath: string;
   access?: { report: SiteEvidence; context: SiteEvidence; architecture: SiteEvidence };
 }
-export type SiteAction = "credentials" | "upload" | "submit";
+export type SiteAction = "credentials" | "upload" | "submit" | "webmcp";
 /** An observation report binds actual browser evidence to one task/account/session. It is not a live browser probe. */
 export interface SiteAccessReport extends SitePage {
   schemaVersion: 1; siteId: string; taskId: string; observedAt: string;
@@ -46,7 +46,7 @@ function reportFor(root: string, task: ApplicationTask, evidence: SiteEvidence):
   if (r.schemaVersion !== 1 || r.siteId !== site.id || r.taskId !== task.taskId || r.browser !== binding.browser || r.sessionReference !== binding.sessionReference ||
     !matchesSite(site, r.url) || r.url !== binding.url || !Number.isFinite(Date.parse(r.observedAt)) || !["anonymous", "login", "authenticated"].includes(r.access) ||
     r.identityVerified !== true || r.challengeCleared !== true || !Array.isArray(r.permittedActions) || !r.permittedActions.length ||
-    r.permittedActions.some(v => !["credentials", "upload", "submit"].includes(v)) || r.access === "anonymous" && r.permittedActions.includes("credentials") || r.access === "login" && r.permittedActions.some(a => a !== "credentials")) throw new Error("Bind actual access observations to the same site, tenant, task and browser session.");
+    r.permittedActions.some(v => !["credentials", "upload", "submit", "webmcp"].includes(v)) || r.access === "anonymous" && r.permittedActions.includes("credentials") || r.access === "login" && r.permittedActions.some(a => a !== "credentials")) throw new Error("Bind actual access observations to the same site, tenant, task and browser session.");
   checkSiteEvidence(root, r.evidence); return { report: r, site };
 }
 export function recordSiteAccess(root: string, task: ApplicationTask, evidence: SiteEvidence): ApplicationTask {

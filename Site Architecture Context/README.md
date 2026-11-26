@@ -53,6 +53,8 @@ Observed controls support navigation; they do not establish hidden architecture 
 
 ## Shared journeys and browser-specific actions
 
+For a verified site-provided action, link its private WebMCP mapping and observed effect from the shared journey. Refresh the current page inventory before invoking it. See [the WebMCP procedure](../automation/chrome-devtools/README.md#discover-execute-and-verify).
+
 The common `architecture.md` describes pages, fields, decisions, upload requirements and confirmation signals. Each site's `in-app/actions.md` supplies the host-tool action template; actual account-specific methods go in ignored `actions.local.md`. Playwright methods stay under `playwright/`. Link both from the same observation when needed instead of copying the entire site map. All public in-app templates start unlearned, just like the Playwright stubs.
 
 Learn the selected default during onboarding and prepare the Playwright upload branch as applicable. Check provider, host, account/session, observation date and known limits before reuse. A tool change must preserve the same task/vacancy/draft and follow [upload handoff](../automation/browser/upload-fallback.md). In-app capability checks and Playwright checks are separate; compiled TypeScript does not establish host-tool compatibility.

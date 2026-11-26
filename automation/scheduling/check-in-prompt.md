@@ -103,6 +103,11 @@ submission, and never evade an access denial. Discover unfamiliar/changed applic
 instructions; maintain Markdown and TypeScript knowledge from actual observation.
 Never invent candidate facts or claim an unlearned flow works.
 
+For an eligible vacancy with a useful observed WebMCP action, follow
+automation/chrome-devtools/README.md. Verify that this scheduled execution
+can use the actual connection, account and page. Use the existing browser
+route when optional WebMCP is unavailable and the task can safely continue.
+
 For CAPTCHA, follow automation/browser/captcha-handoff.md. Preserve the same task,
 role/CV, browser/session and draft checkpoint; move the task to Blocked immediately
 and record the actual human request once through the configured reporting route.

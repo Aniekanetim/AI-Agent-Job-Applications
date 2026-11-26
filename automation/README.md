@@ -142,6 +142,8 @@ Each check-in resumes eligible work, reads new intake, picks up user-requeued ta
 
 ## Browser choice and readiness components
 
+[Optional WebMCP](chrome-devtools/README.md) adds website-provided actions to a verified Chrome connection when useful on an assigned vacancy. Its capability and session checks are separate from the existing browser preparation.
+
 | Component | Responsibility |
 | --- | --- |
 | [Browser preparation](browser/README.md) | Default choice, pinned CLI, synthetic form/upload/recovery rehearsal and host-tool checks |

@@ -1,0 +1,9 @@
+{
+  "name": "job-applications-webmcp-tooling",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "chrome-devtools-mcp": "1.12.0"
+  }
+}

@@ -10,7 +10,7 @@ import { digest, evidenceFile, readEvidence, type FileEvidence } from "../email/
 import { loadInboxState, alertOwnershipKey, saveTaskEmailRecord } from "../email/state-store.js";
 import { messageKey, terminalCleanup, type EmailIdentity } from "../email/intake.js";
 import { saveAlertArtifact } from "../email/artifact-store.js";
-import { assertSiteAction, type SitePage } from "../sites/execution.js";
+import { assertSiteAction, type SiteAction, type SitePage } from "../sites/execution.js";
 import { stageTaskAttention, stageAttentionChange, commitAttentionChange } from "../attention/events.js";
 import { registeredContentTicketId } from "./intake.js";
 
@@ -25,7 +25,7 @@ export interface TaskControl {
   source?: Source; history: TaskDecision[]; request?: StopRequest; transition?: MoveJournal;
   stopHistory?: StopRequest[];
   edits?: FileEvidence[];
-  action?: { id: string; kind: "credentials" | "upload" | "submit"; ownerId: string; token: string; invoked?: boolean; uncertain?: boolean; evidence?: FileEvidence };
+  action?: { id: string; kind: SiteAction; ownerId: string; token: string; invoked?: boolean; uncertain?: boolean; evidence?: FileEvidence };
 }
 export const taskOwnershipKey = (id: string) => `task:${id}`;
 const controlPath = (id: string) => {
@@ -342,14 +342,14 @@ export function recoverTaskTransition(root: string, id: string) {
   finally { owner.release(); }
 }
 /** Claim across native browser invocations. Tools are called by the agent, never by this module. */
-export function authorizeTaskAction(root: string, task: ApplicationTask, kind: "credentials" | "upload" | "submit", ownerId: string, page: SitePage) {
+export function authorizeTaskAction(root: string, task: ApplicationTask, kind: SiteAction, ownerId: string, page: SitePage) {
   if (!ownerId?.trim()) throw new Error("Use the actual stable worker identity.");
   const owner = acquireOwnership(root, taskOwnershipKey(task.taskId), { kind: "native", ownerId });
   try {
     assertTaskActive(root, task);
     assertSiteAction(root, task, page, kind);
     const found = loadTaskControl(root, task.taskId), data = found.data;
-    if (!data || data.action || !["credentials", "upload", "submit"].includes(kind) || kind === "submit" && (task.checkpoint !== "prepared" || data.task.checkpoint !== "prepared")) throw new Error("Bind and prepare this task before authorizing its one browser action.");
+    if (!data || data.action || !["credentials", "upload", "submit", "webmcp"].includes(kind) || kind === "submit" && (task.checkpoint !== "prepared" || data.task.checkpoint !== "prepared")) throw new Error("Bind and prepare this task before authorizing its one browser action.");
     data.action = { id: randomUUID(), kind, ownerId, token: owner.token };
     save(root, data, found.revision);
     return { taskId: task.taskId, ...data.action };

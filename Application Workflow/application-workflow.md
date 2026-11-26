@@ -36,6 +36,8 @@ Reuse observed actions for the active tool: in-app actions or a Playwright page 
 
 ## 4. Complete the application
 
+For a suitable action exposed by the current vacancy or employer page, use [WebMCP](../automation/chrome-devtools/README.md) within the same task and authorized browser session. Verify the action’s effect, bind the current page and preserve the submission checkpoint before a final call.
+
 Use the selected role's facts and CV. Adapt wording to the vacancy only where the supplied experience supports it. Keep employer names, dates, qualifications and actual contributions accurate. Do not manufacture achievements or screening answers.
 
 Fill required fields, choose actual options, upload the designated file and inspect conditional steps. Read an existing account's autofilled information before accepting it: it may refer to another role's CV. Record application progress and use minimum relevant evidence without credentials or signed links.
