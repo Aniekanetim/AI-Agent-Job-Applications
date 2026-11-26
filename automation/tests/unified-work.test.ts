@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { alertFixture, fixtureNow, writeFixture } from "./email-fixture.js";
 import { digest, evidenceFile } from "../email/evidence.js";
 import { boardWork } from "../workflow/dispatch.js";
+import { listIntakeTickets } from "../workflow/intake.js";
 import { bindTaskTicket, transitionTask, loadTaskControl } from "../workflow/task-control.js";
 import type { ApplicationTask } from "../workflow/application-state.js";
 import { adoptPublishingBoard, authorizeContentTool, chooseContentTool, configureBoardMode, createContentTask, observeContentOutcome,
@@ -66,6 +67,30 @@ test("one board routes applications and prepared content while leaving parked ti
   assert.equal(readContentTicket(root, `Task Board/Applied/CONTENT-${id}.md`).ticket.receipt?.url, receipt.url);
   assert.ok(historyMatch(root, account.profileUrl, draft.text, draft.topic, "Fixtures").exact);
   assert.throws(() => stageBoardDraft(root, { ...content, sourceReference: "other", angle: "Another angle" }, now), /fresh text/);
+});
+
+test("board intake preserves healthy work when either application folder is unavailable", t => {
+  const { root } = alertFixture(t, 1);
+  const manual = "Task Board/To Do/Content-Moderator.md";
+  const email = "Task Board/Email Alerts/APP-synthetic.md";
+  writeFixture(root, manual, "Synthetic manual application");
+  assert.deepEqual(boardWork(root).applications.map(item => item.path), [manual]);
+  assert.equal("applicationIssue" in boardWork(root), false);
+  writeFixture(root, "Task Board/Email Alerts", "Synthetic unavailable route");
+  const manualOnly = boardWork(root);
+  assert.deepEqual(manualOnly.applications.map(item => item.path), [manual]);
+  assert.deepEqual(manualOnly.applicationIssues.map(issue => [issue.folder, issue.reasonCode]), [["Email Alerts", "intakeUnavailable"]]);
+  assert.ok(manualOnly.applicationIssue);
+  fs.unlinkSync(resolve(root, "Task Board/Email Alerts"));
+
+  writeFixture(root, email, "Synthetic email application");
+  assert.deepEqual(boardWork(root).applications.map(({ kind, ...item }) => item), listIntakeTickets(root));
+  fs.unlinkSync(resolve(root, manual));
+  fs.rmdirSync(resolve(root, "Task Board/To Do"));
+  writeFixture(root, "Task Board/To Do", "Synthetic unavailable route");
+  const emailOnly = boardWork(root);
+  assert.deepEqual(emailOnly.applications.map(item => item.path), [email]);
+  assert.deepEqual(emailOnly.applicationIssues.map(issue => [issue.folder, issue.reasonCode]), [["To Do", "intakeUnavailable"]]);
 });
 
 test("verified content dependencies reroute the same ticket and partial replies keep it parked", t => {

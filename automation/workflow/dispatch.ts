@@ -1,14 +1,22 @@
-import { listContentTickets, listIntakeTickets } from "./intake.js";
+import { applicationIntakeFolders, listApplicationIntake, listContentTickets } from "./intake.js";
+import type { IntakeFolder } from "./board.js";
 import { readBoardConfig } from "../publishing/board-config.js";
 import { readContentTicket } from "../publishing/board-tickets.js";
 
 /** The agent dispatches these routes separately so one dependency cannot stop the other. */
 export function boardWork(root: string) {
-  const applicationRoute = () => {
-    try { return { applications: listIntakeTickets(root).map(ticket => ({ ...ticket, kind: "application" as const })) }; }
-    catch { return { applications: [], applicationIssue: "Reconcile the application intake folders." }; }
+  const applicationIssues: { folder: IntakeFolder; reasonCode: "intakeUnavailable"; message: string }[] = [];
+  const applications = applicationIntakeFolders.flatMap(folder => {
+    try { return listApplicationIntake(root, folder).map(ticket => ({ ...ticket, kind: "application" as const })); }
+    catch {
+      applicationIssues.push({ folder, reasonCode: "intakeUnavailable", message: `Check access to the ${folder} folder and its intake records.` });
+      return [];
+    }
+  }).sort((a, b) => a.path.localeCompare(b.path));
+  const application = {
+    applications, applicationIssues,
+    ...(applicationIssues.length ? { applicationIssue: "Reconcile the application intake folders." } : {}),
   };
-  const application = applicationRoute();
   try {
     const mode = readBoardConfig(root).data?.mode ?? "off";
     const content = mode === "off" ? [] : listContentTickets(root).map(item => {

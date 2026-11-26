@@ -17,31 +17,36 @@ export function registeredContentTicketId(root: string, name: string) {
   return id && contentIdentityExists(root, id) ? `CONTENT-${id}` : null;
 }
 
-/** Routine intake has no Blocked traversal, linked-context reads or hash sweep. */
-export function listIntakeTickets(root: string, readDirectory: typeof fs.readdirSync = fs.readdirSync): IntakeTicket[] {
-  const tickets: IntakeTicket[] = [];
-  for (const folder of ["Email Alerts", "To Do"] as const) {
-    const directory = resolve(root, "Task Board", folder);
-    if (!fs.existsSync(directory)) continue;
-    for (const entry of readDirectory(directory, { withFileTypes: true })) {
-      if (!entry.isFile() || !entry.name.endsWith(".md") || entry.name.toLowerCase() === "readme.md" || registeredContentTicketId(root, entry.name)) continue;
-      tickets.push({ folder, path: `Task Board/${folder}/${entry.name}`, name: entry.name });
-    }
-  }
-  return tickets.sort((a, b) => a.path.localeCompare(b.path));
-}
+export const applicationIntakeFolders = ["Email Alerts", "To Do"] as const satisfies readonly IntakeFolder[];
 
-export function listContentTickets(root: string): ContentIntakeTicket[] {
-  for (const part of ["Task Board", "Task Board/Content Creation"]) {
+function listBoardFolder(root: string, folder: IntakeFolder | "Content Creation", readDirectory: typeof fs.readdirSync) {
+  const directory = resolve(root, "Task Board", folder);
+  for (const path of [resolve(root, "Task Board"), directory]) {
     try {
-      const stat = fs.lstatSync(resolve(root, part));
-      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error("Use the actual Content Creation folder in this private board.");
+      const stat = fs.lstatSync(path);
+      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error("Use the actual intake folders in this private board.");
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
       throw error;
     }
   }
-  return fs.readdirSync(resolve(root, "Task Board/Content Creation"), { withFileTypes: true })
+  return readDirectory(directory, { withFileTypes: true });
+}
+
+/** Routine intake lists active folders and uses only content identity metadata. */
+export function listApplicationIntake(root: string, folder: IntakeFolder, readDirectory: typeof fs.readdirSync = fs.readdirSync): IntakeTicket[] {
+  return listBoardFolder(root, folder, readDirectory)
+    .filter(entry => entry.isFile() && entry.name.endsWith(".md") && entry.name.toLowerCase() !== "readme.md" && !registeredContentTicketId(root, entry.name))
+    .map(entry => ({ folder, path: `Task Board/${folder}/${entry.name}`, name: entry.name }));
+}
+
+export function listIntakeTickets(root: string, readDirectory: typeof fs.readdirSync = fs.readdirSync): IntakeTicket[] {
+  return applicationIntakeFolders.flatMap(folder => listApplicationIntake(root, folder, readDirectory))
+    .sort((a, b) => a.path.localeCompare(b.path));
+}
+
+export function listContentTickets(root: string): ContentIntakeTicket[] {
+  return listBoardFolder(root, "Content Creation", fs.readdirSync)
     .filter(entry => entry.isFile() && contentTicketName.test(entry.name))
     .map(entry => ({ folder: "Content Creation" as const, path: `Task Board/Content Creation/${entry.name}`, name: entry.name }))
     .sort((a, b) => a.path.localeCompare(b.path));
