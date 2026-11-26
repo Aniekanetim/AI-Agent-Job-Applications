@@ -63,7 +63,7 @@ If email is explicitly deferred, do not read alerts or repeat the provider quest
 continue authorized eligible To Do tasks. Keep email
 readiness unfinished and preserve the selected mailbox and its pending work.
 
-Run npm run tasks -- work for the shared active-board routes. Resume application work from Email Alerts and To Do and eligible prepared content from Content Creation. Do not list, read,
+Run npm run tasks -- work for the shared active-board routes. Use applicationIssues to identify the affected application folder and continue work from healthy routes. Resume application work from Email Alerts and To Do and eligible prepared content from Content Creation. Do not list, read,
 hash or inspect linked context for Blocked tasks in routine check-ins. Review
 Blocked only in the selected user resolution workflow. A verified complete resolution can move the same ticket to To Do for applications or Content Creation for content. Manual moves remain a pickup signal. Read only that selected
 task's required context, preserve its checkpoint and original source, and verify
@@ -78,9 +78,16 @@ tasks or scan historical Applied files. Do not reread a previously parsed body
 when its active progress record supplies the unfinished tasks.
 
 For the content route, follow Content Creation Workflow/README.md and use the
-same native schedule reference for capability evidence and board-work. Process
-prepared content in this run and keep independent work available if either
-route fails. In Autonomous mode prepare a future ticket after dispatch, or
+same native schedule reference for capability evidence and board-work. Use the
+content row's nextAction to choose the existing workflow. For verifyAttempt,
+investigate the same publication and record the observed outcome before any retry.
+For finalizePublication, finish recording the confirmed post. For
+checkPublicationEligibility, follow the saved mode and the normal publishing guards.
+For inspectCheckpoint, reconcile only the selected record. The ready field indicates
+draft preparation. Keep independent work available if a route fails. On a selected
+application, use tasks status for guidance. Recover a pending move with tasks recover,
+and investigate the same vacancy when the status calls for verifySubmission. In
+Autonomous mode prepare a future ticket after dispatch, or
 between runs, for pickup at the next shared check-in.
 
 Select an enabled role using role routing, then read only that self-contained

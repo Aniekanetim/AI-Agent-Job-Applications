@@ -8,13 +8,13 @@ An alert may contain several jobs. The agent [accounts for every posting](automa
 
 Onboarding uses [one focused question at a time](automation/onboarding/focused-conversation.md), automatically saving any additional answers you volunteer. Say “Continue onboarding” after an interruption, or **“Open settings”** at any time to use the [interactive settings menu](automation/settings/README.md). Select an area, view the current value and change it through one focused question. Specific requests such as “Change my minimum salary” also work directly. The agent [continues the saved step or updates the requested setting](automation/onboarding/settings.md), preserving the rest of your setup. Playwright opens a visible browser by default so you can watch it work.
 
-A CAPTCHA pauses the existing application in **Blocked** for [human completion](automation/browser/captcha-handoff.md). If you are away, the agent saves the checkpoint, reports the blocker once and continues other eligible work. When you return, you move the existing ticket to To Do; the agent verifies that same application and resumes; browser sessions and drafts may need recovery. It does not solve CAPTCHAs automatically.
+A CAPTCHA pauses the existing application in **Blocked** for [human completion](automation/browser/captcha-handoff.md). If you are away, the agent saves the checkpoint, reports the blocker once and continues other eligible work. When you return, complete the challenge in the application browser. The agent verifies the same application and resumes from the saved checkpoint. An expired browser session or draft may need recovery.
 
 **Version:** 1.17.0 — 29 October 2026. **State:** unconfigured reusable package. No inbox connected, role enabled, live application submitted or schedule activated. Job-board maps start as unlearned templates. The Tezza example records a limited public form/CAPTCHA boundary; no complete employer integration is claimed.
 
 [Use this template](https://github.com/Aniekanetim/AI-Agent-Job-Applications/generate) · [Fork](https://github.com/Aniekanetim/AI-Agent-Job-Applications/fork) · [Setup](SETUP.md)
 
-Routine check-ins read **Email Alerts** and **To Do** only. **Blocked** stays untouched unless you explicitly ask the agent to inspect it. After resolving a blocker, move its existing ticket to **To Do** to resume its saved checkpoint. The original email association and task ID stay intact. A context edit alone does not requeue work.
+The shared check-in picks up applications from **Email Alerts** and **To Do**, and posts from **Content Creation** when enabled. Ask the agent to review a specific **Blocked** ticket. Once it verifies every dependency is resolved, it can return the same ticket to its pickup folder. You can also move the ticket back yourself, and the agent verifies the resolved dependency at pickup. The task ID, source, and checkpoint carry over.
 
 ## Start here
 
@@ -109,7 +109,7 @@ For URL-only adoption, forks and integration, see [use with another agent or pro
 
 | Component | Purpose |
 | --- | --- |
-| [Task Board](Task%20Board/README.md) | Email Alerts and To Do are the two intake sources; Blocked and Applied retain outcomes and progress |
+| [Task Board](Task%20Board/README.md) | Email Alerts and To Do route applications, and Content Creation routes posts |
 | [Job Context](Job%20Context/README.md) | Candidate-supplied profiles, CV references, platform access and application instructions, saved by the agent |
 | [Candidate onboarding](Application%20Workflow/onboarding-workflow.md) | Visible, resumable setup: tools, role profiles, selected boards, mapping and readiness |
 | [Site Architecture Context](Site%20Architecture%20Context/README.md) | Agent-maintained shared navigation maps, host-browser actions and Playwright TypeScript routines, including external application destinations |
@@ -161,9 +161,7 @@ Selected-site mapping covers observed routes and recorded boundaries. It does no
 
 ## Cancelled and Deferred applications
 
-The task board has six statuses: Email Alerts, To Do, Blocked, Applied, Cancelled
-and Deferred. Tell the agent to cancel an application to stop pursuing it, or defer
-it to set it aside. It preserves the same ticket and checkpoint. Return a Deferred
-ticket to To Do when ready; Cancelled requires an explicit restoration. Normal
-processing still uses only the two intake folders. See [task lifecycle](automation/workflow/task-lifecycle.md)
+Tell the agent to cancel an application to stop pursuing it, or defer it to set it aside.
+The ticket and checkpoint carry over. Return a Deferred application to To Do when ready.
+Restore a Cancelled application through an explicit request. See [task lifecycle](automation/workflow/task-lifecycle.md)
 for guarded transitions, interruption recovery and source-email safeguards.
