@@ -39,7 +39,8 @@ try {
           const current = await observePage(call, target);
           if (command === "inventory") return saveInventory(root, current);
           const action = prepareWebMcpAction(root, current, request!);
-          return { actionId: action.actionId, invocation: await invokeTool(call, { pageId: action.pageId, toolName: action.toolName }, request!.input),
+          return { actionId: action.actionId, invocation: await invokeTool(call, { pageId: action.pageId, toolName: action.toolName },
+            request!.input, request!.purpose === "inspect"),
             next: "Inspect the actual state, then record the independent observation." };
         };
         if (target.method === "mcp") result = await useMcp(root, target, run);

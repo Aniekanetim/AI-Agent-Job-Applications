@@ -2,13 +2,13 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, appendFileSync } from "n
 import { resolve, dirname, join, relative, isAbsolute } from "node:path";
 import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
-import type { TestContext } from "node:test";
 import type { ApplicationTask } from "../workflow/application-state.js";
 import { siteEvidence } from "../sites/files.js";
 import { ensureSite } from "../sites/registry.js";
 import { bindTaskSite, recordSiteAccess, type SitePage } from "../sites/execution.js";
 export const siteNow = "2026-10-29T12:00:00Z";
-export function siteBox(t: TestContext) {
+type FixtureCleanup = { after(cleanup: () => void): void };
+export function siteBox(t: FixtureCleanup) {
   const root = mkdtempSync(join(tmpdir(), "sites-synthetic-")); execFileSync("git", ["init", "--quiet", root], { windowsHide: true });
   writeFileSync(resolve(root, ".gitignore"), ".local/\n**/*.local.md\n**/*.local.ts\n**/.env\n");
   t.after(() => { const p = relative(tmpdir(), root); if (!p || p.startsWith("..") || isAbsolute(p)) throw new Error("Unsafe temporary path."); rmSync(root, { recursive: true }); });
@@ -16,7 +16,7 @@ export function siteBox(t: TestContext) {
   return { root, write };
 }
 /** Synthetic metadata/evidence only. The caller's browser test remains responsible for observing its own UI. */
-export function readySite(t: TestContext, task: ApplicationTask, url = "https://employer.example.invalid/jobs/synthetic-qa/apply", existingRoot?: string) {
+export function readySite(t: FixtureCleanup, task: ApplicationTask, url = "https://employer.example.invalid/jobs/synthetic-qa/apply", existingRoot?: string) {
   const box = existingRoot ? { root: existingRoot } : siteBox(t), root = box.root;
   if (existingRoot) appendFileSync(resolve(root, ".gitignore"), "\n**/*.local.md\n**/*.local.ts\n**/.env\n");
   const base = `.local/site-fixture/${task.taskId.replace(/[^a-zA-Z0-9-]/g, "-")}`;

@@ -27,20 +27,46 @@ export interface Context {
 }
 export interface DocumentObservation {
   url: string;
+  observedAt: string;
   apiObserved: boolean;
   documents: { path: string; documentId: string; url: string }[] | null;
 }
 export interface Observation {
   target: Context;
+  checkedAt: string;
   document: DocumentObservation;
   tools: { name: string; inputSchema: unknown; description?: string; annotations?: unknown }[];
+  nativeEvidence?: FileEvidence;
 }
 interface Inventory {
   targetHash: string;
   documentsHash: string;
   tools: { name: string; schemaHash: string; definitionHash: string }[];
   expiresAt: number;
+  checkedAt: string;
   access: FileEvidence;
+  nativeEvidence?: FileEvidence;
+}
+const observationLifetime = 5 * 60_000;
+
+function observationTime(root: string, observation: Observation) {
+  const checkedAt = Date.parse(observation.checkedAt);
+  const age = Date.now() - checkedAt;
+  if (!Number.isFinite(age) || age < -30_000 || age >= observationLifetime ||
+    observation.document?.observedAt !== observation.checkedAt) {
+    throw new Error("Use the original, fresh WebMCP observation time.");
+  }
+  if (observation.target.method === "native") {
+    const ref = observation.nativeEvidence;
+    if (!ref?.path.startsWith(".local/")) throw new Error("Retain the actual native WebMCP call evidence in .local.");
+    checkSiteEvidence(root, ref);
+    const { nativeEvidence, ...call } = observation;
+    const stored = JSON.parse(readFileSync(siteFile(root, ref.path), "utf8"));
+    if (fingerprint(stored, 256_000) !== fingerprint(call, 256_000)) {
+      throw new Error("Native WebMCP evidence must match the observed connection, execution context, time and catalogue.");
+    }
+  }
+  return checkedAt;
 }
 
 /** Read only document identity. The bridge does not attribute tool names to frames. */
@@ -56,7 +82,8 @@ export const documentObservationScript = `() => {
     } catch { complete = false; }
   };
   visit(window, "0", 0);
-  return {url: location.href, apiObserved: !!document.modelContext, documents: complete ? documents : null};
+  return {url: location.href, observedAt: new Date().toISOString(),
+    apiObserved: !!document.modelContext, documents: complete ? documents : null};
 }`;
 
 function text(value: unknown): value is string {
@@ -65,9 +92,9 @@ function text(value: unknown): value is string {
 function object(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
-function fingerprint(value: unknown): string {
+function fingerprint(value: unknown, limit = 32_768): string {
   const raw = JSON.stringify(value);
-  if (typeof raw !== "string" || Buffer.byteLength(raw) > 32_768) throw new Error("WebMCP data exceeds the supported size.");
+  if (typeof raw !== "string" || Buffer.byteLength(raw) > limit) throw new Error("WebMCP data exceeds the supported size.");
   const sort = (key: string, val: unknown) => object(val)
     ? Object.fromEntries(Object.keys(val).sort().map(name => [name, val[name]]))
     : val;
@@ -123,12 +150,14 @@ function recordPath(kind: "inventories" | "actions", id: string) {
 }
 
 export function saveInventory(root: string, observation: Observation) {
+  const checkedAt = observationTime(root, observation);
   const task = currentTask(root, observation.target);
   const observed = snapshot(observation);
   if (!observed.tools.length) return { status: "noTools" as const, tools: [] };
   const id = randomUUID();
   const inventory: Inventory = { ...observed, targetHash: targetHash(root, observation.target, task),
-    expiresAt: Date.now() + 5 * 60_000, access: observation.target.evidence };
+    checkedAt: observation.checkedAt, expiresAt: checkedAt + observationLifetime,
+    access: observation.target.evidence, nativeEvidence: observation.nativeEvidence };
   savePrivateJson(root, recordPath("inventories", id), inventory, null);
   return { status: "available" as const, id, tools: inventory.tools };
 }
@@ -161,13 +190,19 @@ export function prepareWebMcpAction(root: string, observation: Observation, requ
     throw new Error("Use an observed, mapped vacancy action and its necessary fields.");
   }
   const { target } = observation;
+  const checkedAt = observationTime(root, observation);
   const task = currentTask(root, target);
   const inventory = readPrivateJson(root, recordPath("inventories", request.inventoryId)).data as Inventory | null;
-  if (!inventory || !Number.isFinite(inventory.expiresAt) || Date.now() >= inventory.expiresAt ||
+  if (!inventory || !Number.isFinite(inventory.expiresAt) || !Number.isFinite(Date.parse(inventory.checkedAt)) ||
+    Date.now() >= inventory.expiresAt || checkedAt < Date.parse(inventory.checkedAt) ||
     targetHash(root, target, task) !== inventory.targetHash) {
     throw new Error("Refresh the inventory for this exact vacancy, account, connection and execution context.");
   }
   checkSiteEvidence(root, inventory.access);
+  if (target.method === "native") {
+    if (!inventory.nativeEvidence) throw new Error("Refresh the native WebMCP inventory using the original call evidence.");
+    checkSiteEvidence(root, inventory.nativeEvidence);
+  }
   checkSiteEvidence(root, request.mapping);
   if (!request.mapping.path.startsWith("Site Architecture Context/")) throw new Error("Link this action's observed site mapping.");
   if (!request.mapping.path.startsWith(task.siteExecution!.architecturePath.split("/").slice(0, -1).join("/") + "/")) {

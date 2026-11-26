@@ -11,6 +11,7 @@ import { setTimeout as pause } from "node:timers/promises";
 import { chromium } from "playwright";
 import { chromeArguments, cliCall, cliConfiguration, invokeTool, observePage, startCli, withMcp } from "./bridge.js";
 import type { Context } from "./webmcp.js";
+import { rehearseDeclarative } from "./declarative-rehearsal.js";
 
 const html = `<!doctype html>
 <meta charset="utf-8">
@@ -80,7 +81,9 @@ async function rehearseCli(executable: string, origin: string) {
     target.pageId = match.id ?? match.pageId;
     const inventory = await observePage(call, target);
     assert.ok(inventory.tools.find(tool => tool.name === "inspect_fixture"));
-    assert.equal(await invokeTool(call, { pageId: target.pageId, toolName: "inspect_fixture" }, {}), "completed");
+    const inspection = await invokeTool(call, { pageId: target.pageId, toolName: "inspect_fixture" }, {}, true);
+    assert.equal(inspection.status, "completed");
+    assert.ok(JSON.stringify(inspection.untrustedOutput).includes("Synthetic vacancy"));
     assert.equal(submissions, 1);
     console.log("WebMCP CLI rehearsal passed: owned daemon, contextual discovery and read-only inspection.");
   } finally {
@@ -143,13 +146,14 @@ try {
     assert.equal(observed.document.apiObserved, true);
     assert.ok(observed.tools.find(tool => tool.name === "submit_fixture"));
     const invocation = await invokeTool(call, { pageId, toolName: "submit_fixture" }, { name: "Synthetic candidate" });
-    assert.equal(invocation, "completed");
+    assert.equal(invocation.status, "completed");
     const ui = await call("evaluate_script", { pageId, function: '() => document.querySelector("#receipt").textContent' });
     assert.ok(JSON.stringify(ui.content).includes("Synthetic receipt R-001"));
     assert.equal(submissions, 1);
     console.log("WebMCP rehearsal passed: native Chrome discovery, MCP invocation, visible receipt and one loopback submission.");
   });
   await rehearseCli(executable, origin);
+  await rehearseDeclarative(root, executable);
 } catch (error) {
   console.error(error instanceof Error ? error.message : "The loopback rehearsal did not finish.");
   process.exitCode = 1;

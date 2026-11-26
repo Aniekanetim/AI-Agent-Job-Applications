@@ -146,19 +146,46 @@ export async function observePage(call: Call, target: Context): Promise<Observat
   const before = await readDocument();
   const catalogue = await call("list_webmcp_tools", { pageId: target.pageId });
   const after = await readDocument();
-  if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error("The page changed during WebMCP discovery.");
+  if (before.url !== after.url || before.apiObserved !== after.apiObserved ||
+    JSON.stringify(before.documents) !== JSON.stringify(after.documents)) throw new Error("The page changed during WebMCP discovery.");
   const tools = catalogue.structuredContent?.webmcpTools;
   if (catalogue.isError || !Array.isArray(tools)) throw new Error("This connection did not return a verified WebMCP catalogue.");
-  return { target, document: after, tools };
+  return { target, document: after, checkedAt: after.observedAt, tools };
 }
 
-export async function invokeTool(call: Call, details: { pageId: number; toolName: string }, input: Record<string, unknown>) {
+type InvocationStatus = "completed" | "awaitingSubmission" | "canceled" | "reportedError" | "unknown";
+interface ToolInvocation {
+  status: InvocationStatus;
+  untrustedOutput?: unknown;
+  outputOmitted?: "tooLarge";
+}
+
+function inspectionOutput(value: unknown): Pick<ToolInvocation, "untrustedOutput" | "outputOmitted"> {
+  const safe = JSON.stringify(value, (name, child) => {
+    if (/authorization|password|secret|token|otp|cookie|api.?key/i.test(name)) return "[redacted]";
+    if (typeof child !== "string") return child;
+    return child.replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [redacted]")
+      .replace(/https?:\/\/[^\s"'<>]+/gi, address => {
+        try { const url = new URL(address); return url.origin + url.pathname; }
+        catch { return "[invalid URL]"; }
+      });
+  });
+  if (!safe) return {};
+  return Buffer.byteLength(safe) <= 16_384 ? { untrustedOutput: JSON.parse(safe) } : { outputOmitted: "tooLarge" };
+}
+
+export async function invokeTool(call: Call, { pageId, toolName }: { pageId: number; toolName: string },
+  input: Record<string, unknown>, includeInspectionOutput = false): Promise<ToolInvocation> {
   try {
-    const response = await call("execute_webmcp_tool", { ...details, input: JSON.stringify(input) });
-    if (response.isError) return "unknown";
+    const response = await call("execute_webmcp_tool", { pageId, toolName, input: JSON.stringify(input) });
+    if (response.isError) return { status: "reportedError" };
     // A transport success is separate from what the site did.
     const result = JSON.parse(replyText(response).trim());
-    const value = typeof result?.status === "string" ? result.status.toLowerCase() : null;
-    return value === "completed" || value === "awaitingsubmission" || value === "canceled" ? value : "unknown";
-  } catch { return "unknown"; }
+    const value = typeof result?.status === "string" ? result.status.toLowerCase() : "";
+    if (["canceled", "cancelled"].includes(value)) return { status: "canceled" };
+    if (result?.error || ["error", "failed"].includes(value)) return { status: "reportedError" };
+    if (["pending", "inprogress", "in_progress", "awaitingsubmission"].includes(value)) return { status: "awaitingSubmission" };
+    if (!["completed", "success"].includes(value)) return { status: "unknown" };
+    return { status: "completed", ...(includeInspectionOutput ? inspectionOutput(result.output) : {}) };
+  } catch { return { status: "unknown" }; }
 }
