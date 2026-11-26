@@ -13,8 +13,9 @@ import { adoptPublishingBoard, authorizeContentTool, chooseContentTool, configur
 import { contentPath, readContentTicket } from "../publishing/board-tickets.js";
 import { boardConfigFile, readBoardConfig, saveSharedPublishingCheck } from "../publishing/board-config.js";
 import { historyMatch } from "../publishing/history.js";
-import { queuePost, readBoardPost, saveDraft, savePublishingPreferences, skipPost } from "../publishing/store.js";
+import { confirmPost, publishingWorker, queuePost, readBoardPost, saveDraft, savePublishingPreferences, skipPost } from "../publishing/store.js";
 import { publish } from "../publishing/worker.js";
+import { acquireOwnership } from "../workflow/ownership.js";
 
 const account = { profileUrl: "https://www.linkedin.com/in/synthetic/", audience: "Anyone" as const,
   storageState: ".auth/synthetic.json", routeReference: "synthetic-route" };
@@ -61,6 +62,7 @@ test("one board routes applications and prepared content while leaving parked ti
   assert.deepEqual(bound.ticket, application);
   assert.equal(plan.content.length, 1);
   assert.equal(plan.content[0].ready, true);
+  assert.equal(plan.content[0].nextAction, "checkPublicationEligibility");
   assert.equal((await runBoardPost(root, id, undefined, async () => prepared(), () => now)).action, "published");
   assert.equal(boardWork(root).content.length, 0);
   assert.equal(readBoardPost(root, id), null);
@@ -155,6 +157,37 @@ test("the fallback tool claims the same draft once and records a confirmed outco
     { ...report, observation: { kind: "matchingPublishedPost", evidence: observation } });
   const result = observeContentOutcome(root, { ...outcome, evidence: confirmed });
   assert.equal(result.action, "published");
+});
+
+test("board guidance distinguishes pending, confirmed and missing publishing checkpoints", async t => {
+  const root = setup(t), staged = stageBoardDraft(root, content, now);
+  const id = readContentTicket(root, staged.path).ticket.id;
+  const evidence = writeFixture(root, ".local/publishing/evidence/tool.json", {
+    tool: "host-browser", account: account.profileUrl, audience: account.audience,
+    draftSha256: digest(JSON.stringify(draft)), controlsVerified: true,
+  });
+  const attempt = authorizeContentTool(root, { id, tool: "host-browser", evidence }, now);
+  const missing = stageBoardDraft(root, {
+    ...content, sourceReference: "missing-draft", angle: "Lost draft", draft: { ...draft, text: "Synthetic missing content" },
+  }, now);
+  const missingId = readContentTicket(root, missing.path).ticket.id;
+  fs.unlinkSync(resolve(root, `.local/publishing/active/${digest(missingId)}.json`));
+
+  const queue = () => boardWork(root).content;
+  const pending = queue().find(item => item.path === staged.path)!;
+  assert.equal(pending.ready, true);
+  assert.equal(pending.nextAction, "verifyAttempt");
+  assert.equal(pending.reasonCode, "publicationOutcomeUnknown");
+  assert.equal(queue().find(item => item.path === missing.path)?.nextAction, "inspectCheckpoint");
+  const result = await runBoardPost(root, id, undefined, async () => assert.fail("An outstanding attempt must not prepare a browser"), () => now);
+  assert.equal(result.action, "verifyAttempt");
+  const worker = acquireOwnership(root, publishingWorker);
+  try { confirmPost(root, worker, id, attempt.attemptId, receipt, true); }
+  finally { worker.release(); }
+  assert.equal(queue().find(item => item.path === staged.path)?.nextAction, "finalizePublication");
+  assert.equal(readBoardPost(root, id)?.status, "published");
+  assert.deepEqual(evidenceFile(root, staged.path), staged);
+  assert.equal(fs.existsSync(resolve(root, `Task Board/Applied/CONTENT-${id}.md`)), false);
 });
 
 test("legacy cutover imports unfinished posts as Deferred and fences the old publishing callback", async t => {

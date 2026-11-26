@@ -3,8 +3,43 @@ import { fileURLToPath } from "node:url";
 import { readPrivateJson } from "./private-json.js";
 import { attentionHealthy } from "../attention/state.js";
 import { boardWork } from "./dispatch.js";
+import { ticketFolder } from "./board.js";
+import { canMarkApplied } from "./application-state.js";
 import { bindTaskTicket, saveTaskTicket, transitionTask, recoverTaskTransition, loadTaskControl, recordTaskCheckpoint, refreshTaskTicket,
-  resumeMovedDeferredTask, authorizeTaskAction, assertAuthorizedTaskAction, observeTaskAction } from "./task-control.js";
+  resumeMovedDeferredTask, authorizeTaskAction, assertAuthorizedTaskAction, observeTaskAction, type TaskControl } from "./task-control.js";
+
+function taskGuidance(data: TaskControl) {
+  const { task, action } = data;
+  const folder = ticketFolder(data.path);
+  if (data.transition) {
+    return { nextAction: "recoverMove", reasonCode: "taskMovePending", nextActionMessage: "Recover the existing ticket move." };
+  }
+  if (action?.kind === "submit" && (action.invoked || action.uncertain) ||
+      task.checkpoint === "submissionAttempted" && task.submissionResolution?.state !== "notSubmitted") {
+    return { nextAction: "verifySubmission", reasonCode: "submissionOutcomeUnknown", nextActionMessage: "Check whether the application went through." };
+  }
+  if (action) {
+    return { nextAction: "inspectCheckpoint", reasonCode: "browserActionPending", nextActionMessage: "Review the existing browser action and its ownership." };
+  }
+  if (task.checkpoint === "confirmed") {
+    if (!canMarkApplied(task)) {
+      return { nextAction: "inspectCheckpoint", reasonCode: "confirmationIncomplete", nextActionMessage: "Review the saved application confirmation." };
+    }
+    return folder === "Applied"
+      ? { nextAction: "none", reasonCode: "applicationCompleted", nextActionMessage: "The confirmed application is recorded." }
+      : { nextAction: "finalizeApplication", reasonCode: "submissionConfirmed", nextActionMessage: "Finish recording the confirmed application on the board." };
+  }
+  if (data.request) {
+    return { nextAction: "inspectCheckpoint", reasonCode: "stopRequested", nextActionMessage: "Review the pending stop request before continuing." };
+  }
+  if (["Blocked", "Deferred", "Cancelled"].includes(folder)) {
+    return { nextAction: "waitForRequeue", reasonCode: "applicationParked", nextActionMessage: "This application is parked. Review its saved status before requeueing." };
+  }
+  if (!["To Do", "Email Alerts"].includes(folder) || task.checkpoint === "submissionAttempted") {
+    return { nextAction: "inspectCheckpoint", reasonCode: "taskCheckpointNeedsReview", nextActionMessage: "Review the selected application's saved checkpoint." };
+  }
+  return { nextAction: "checkApplicationEligibility", reasonCode: "applicationTicketActive", nextActionMessage: "Check eligibility before resuming the application." };
+}
 
 const args = process.argv.slice(2), command = args.shift() ?? "help";
 function option(key: string) { const i = args.indexOf(`--${key}`); if (i < 0 || !args[i + 1] || args[i + 1].startsWith("--")) throw new Error(`Supply --${key}.`); return args[i + 1]; }
@@ -15,8 +50,16 @@ try {
   else if (command === "work") result = boardWork(root);
   else if (command === "recover") result = recoverTaskTransition(root, option("task-id"));
   else if (command === "status") {
-    const data = loadTaskControl(root, option("task-id")).data;
-    result = data ? { taskId: data.taskId, path: data.path, checkpoint: data.task.checkpoint, stopRequested: data.request?.action ?? null, transitionPending: !!data.transition, browserActionPending: !!data.action, decisions: data.history.length } : { registered: false };
+    const id = option("task-id");
+    try {
+      const data = loadTaskControl(root, id).data;
+      result = data ? { taskId: data.taskId, path: data.path, checkpoint: data.task.checkpoint, stopRequested: data.request?.action ?? null,
+        transitionPending: !!data.transition, browserActionPending: !!data.action, decisions: data.history.length, ...taskGuidance(data) } :
+        { registered: false, nextAction: "inspectCheckpoint", reasonCode: "taskControlMissing", nextActionMessage: "Check the selected ticket and its task ID." };
+    } catch {
+      result = { nextAction: "inspectCheckpoint", reasonCode: "taskControlUnreadable", nextActionMessage: "Inspect the selected application's control record." };
+      process.exitCode = 1;
+    }
   } else if (command === "action-invoke") { assertAuthorizedTaskAction(root, option("task-id"), option("token")); result = { invokeOnce: true }; }
   else {
     const proposal = readPrivateJson(root, option("file")).data as any;

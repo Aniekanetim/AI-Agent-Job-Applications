@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { resolve } from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { syncBuiltinESMExports } from "node:module";
 import { alertFixture, bindFixture, fixtureNow, writeFixture } from "./email-fixture.js";
 import { readySite } from "./sites-fixture.js";
@@ -240,7 +240,34 @@ test("the task CLI operates only on explicit private proposals and exposes compa
   assert.equal(result.kind, "moved");
   const status = JSON.parse(execFileSync(process.execPath, [cli, "status", "--root", f.root, "--task-id", f.task.taskId], { encoding: "utf8", windowsHide: true }));
   assert.equal(status.path, `Task Board/Deferred/${f.task.taskId}.md`); assert.equal(status.transitionPending, false);
+  assert.equal(status.nextAction, "waitForRequeue");
 });
+test("selected task status explains an interrupted move or submission without writing", t => {
+  const f = manual(t);
+  bindTaskTicket(f.root, f.task, f.path);
+  const controlPath = `.local/task-controls/${digest(f.task.taskId)}.json`;
+  const cli = resolve(import.meta.dirname, "../workflow/task-cli.js");
+  const status = () => JSON.parse(execFileSync(process.execPath, [cli, "status", "--root", f.root, "--task-id", f.task.taskId], { encoding: "utf8", windowsHide: true }));
+
+  const attempted = { ...f.task, checkpoint: "submissionAttempted" };
+  const data = { ...loadTaskControl(f.root, f.task.taskId).data, task: attempted };
+  const pending = writeFixture(f.root, controlPath, data);
+  assert.equal(status().checkpoint, "submissionAttempted");
+  assert.equal(status().nextAction, "verifySubmission");
+  assert.deepEqual(evidenceFile(f.root, controlPath), pending);
+
+  const moving = writeFixture(f.root, controlPath, { ...data, task: f.task, transition: {} });
+  const observed = status();
+  assert.equal(observed.transitionPending, true);
+  assert.equal(observed.nextAction, "recoverMove");
+  assert.deepEqual(evidenceFile(f.root, controlPath), moving);
+
+  writeFixture(f.root, controlPath, "{broken");
+  const unreadable = spawnSync(process.execPath, [cli, "status", "--root", f.root, "--task-id", f.task.taskId], { encoding: "utf8", windowsHide: true });
+  assert.equal(unreadable.status, 1);
+  assert.equal(JSON.parse(unreadable.stdout).nextAction, "inspectCheckpoint");
+});
+
 test("ticket paths reject traversal and invalid status folders", () => {
   for (const path of ["Task Board/Deferred/../secret.md", "Task Board/Low priority/a.md", "Task Board/Cancelled/C:bad.md", "Task Board/Cancelled/.md"]) assert.throws(() => ticketFolder(path));
 });
